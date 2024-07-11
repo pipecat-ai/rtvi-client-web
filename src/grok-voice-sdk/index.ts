@@ -1,53 +1,56 @@
 import * as Errors from "./error";
 import { Transport } from "./transport";
 import { DailyTransport } from "./transport";
+import { APIClient } from "./core";
 
 export interface VoiceClientOptions {
-  apiKey?: string;
-
   /**
    * Override the default transport for media streaming.
    *
    * Defaults to DailyTransport
    */
-  transport?: Transport;
+  transport?: new () => Transport | undefined;
+
+  /**
+   * Enable user mic input
+   *
+   * Default to true
+   */
+  enableMic?: boolean;
+
+  /**
+   * Join the session with the user's mic muted
+   *
+   * Default to false
+   */
+  startMicMuted?: boolean;
 }
 
 /**
  * API Client for interfacing with the Groq API.
- *
- * @param {string | undefined} [opts.apiKey]
  */
-export class VoiceClient {
-  private readonly apiKey: string;
+export class VoiceClient extends APIClient {
   private _options: VoiceClientOptions;
-  private _transport: Transport | undefined;
 
-  constructor({ apiKey, ...opts }: VoiceClientOptions = {}) {
-    if (apiKey === undefined || apiKey === "") {
-      throw new Errors.GroqVoiceError(
-        "You must pass a valid Groq API key to the VoiceClient constructor."
-      );
+  constructor(
+    { ...opts }: VoiceClientOptions = {
+      enableMic: true,
+      startMicMuted: false,
+      transport: DailyTransport,
     }
-
+  ) {
+    // Validate client options
     const options: VoiceClientOptions = {
-      apiKey,
       ...opts,
     };
 
-    this.apiKey = apiKey;
+    super({
+      transport: options.transport
+        ? new options.transport()!
+        : new DailyTransport(),
+    });
+
     this._options = options;
-  }
-
-  async start() {
-    console.log("VoiceClient starting");
-
-    this._transport = new DailyTransport();
-
-    // @DEBUG
-    console.log(this.apiKey);
-    console.log(this._options);
-    console.log(this._transport);
   }
 }
 
