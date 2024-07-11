@@ -1,10 +1,14 @@
-import { VoiceClient } from "./grok-voice-sdk";
+import { VoiceClient, VoiceEvent } from "./grok-voice-sdk";
 // import { StubTransport } from "./grok-voice-sdk/transport";
 
 const voiceClient = new VoiceClient({
   enableMic: true,
   startMicMuted: false,
   // transport: StubTransport,
+});
+
+voiceClient.on(VoiceEvent.Ready, () => {
+  console.log("READY");
 });
 
 await voiceClient.start();

@@ -1,15 +1,14 @@
 import * as Errors from "./error";
+import * as Events from "./events";
 import { Transport } from "./transport";
 import { DailyTransport } from "./transport";
 import { APIClient } from "./core";
 
 export interface VoiceClientOptions {
   /**
-   * Override the default transport for media streaming.
-   *
-   * Defaults to DailyTransport
+   * The starting system prompt passed to the LLM
    */
-  transport?: new () => Transport | undefined;
+  systemPrompt?: string | undefined;
 
   /**
    * Enable user mic input
@@ -24,6 +23,13 @@ export interface VoiceClientOptions {
    * Default to false
    */
   startMicMuted?: boolean;
+
+  /**
+   * Override the default transport for media streaming.
+   *
+   * Defaults to DailyTransport
+   */
+  transport?: new () => Transport | undefined;
 }
 
 /**
@@ -52,6 +58,11 @@ export class VoiceClient extends APIClient {
 
     this._options = options;
   }
+
+  public getOptions = (): VoiceClientOptions => {
+    return this._options;
+  };
 }
 
 export const { GroqVoiceError } = Errors;
+export const { VoiceEvent } = Events;

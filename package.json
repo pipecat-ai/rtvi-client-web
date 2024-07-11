@@ -11,5 +11,10 @@
   "devDependencies": {
     "typescript": "^5.2.2",
     "vite": "^5.3.1"
+  },
+  "dependencies": {
+    "@types/events": "^3.0.3",
+    "events": "^3.3.0",
+    "typed-emitter": "^2.1.0"
   }
 }
