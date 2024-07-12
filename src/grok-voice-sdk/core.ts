@@ -37,7 +37,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }: {
     baseUrl: string | undefined;
     callbacks: VoiceEventCallbacks;
-    transport: new () => Transport | undefined;
+    transport: new (callbacks: VoiceEventCallbacks) => Transport | undefined;
   }) {
     super();
     this._baseUrl = baseUrl || "https://voice.daily.co/";
@@ -62,7 +62,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     this._callbacks = wrappedCallbacks;
 
     // Instantiate the transport
-    this._transport = transport ? new transport()! : new DailyTransport();
+    this._transport = transport
+      ? new transport(this._callbacks)!
+      : new DailyTransport(this._callbacks);
   }
 
   public async start() {
@@ -70,17 +72,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     console.log("Handshaking with web service", this._baseUrl);
 
     // const { url, token } = await fetch(this._baseUrl).then((res) => res.json());
-
     await this._transport.connect({
       url: "https://jpt.daily.co/hello", // @NOTE: this will be abstracted by a web service
     });
-
-    this._callbacks.onConnected?.();
   }
 
   public async disconnect() {
     await this._transport.disconnect();
-
-    this._callbacks.onDisconnected?.();
   }
 }

@@ -1,3 +1,5 @@
+import { VoiceEventCallbacks } from "../core";
+
 export enum TransportState {
   Idle = "idle",
   Connecting = "connecting",
@@ -13,7 +15,11 @@ export type Participant = {
 };
 
 export abstract class Transport {
-  constructor() {}
+  protected declare _callbacks: VoiceEventCallbacks;
+
+  constructor(callbacks: VoiceEventCallbacks) {
+    this._callbacks = callbacks;
+  }
 
   abstract connect({ url }: { url: string }): void;
 

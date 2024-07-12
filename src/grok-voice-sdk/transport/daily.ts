@@ -1,12 +1,13 @@
 import Daily, { DailyCall } from "@daily-co/daily-js";
 
-import { Transport } from ".";
-//import { VoiceEventCallbacks } from "../core";
+import { Transport, VoiceEventCallbacks } from ".";
 
-export class DailyTransport implements Transport {
+export class DailyTransport extends Transport {
   private _daily: DailyCall | null;
 
-  constructor() {
+  constructor(callbacks: VoiceEventCallbacks) {
+    super(callbacks);
+
     this._daily = Daily.createCallObject({
       videoSource: false,
       audioSource: false,
@@ -27,10 +28,7 @@ export class DailyTransport implements Transport {
       return;
     }
 
-    // Add event listeners here...
-
-    //onConnected?.();
-    //onStateChange?.(TransportState.Connected);
+    this._callbacks.onConnected?.();
   }
 
   async disconnect() {
@@ -40,5 +38,7 @@ export class DailyTransport implements Transport {
 
     await this._daily.leave();
     await this._daily.destroy();
+
+    this._callbacks.onDisconnected?.();
   }
 }
