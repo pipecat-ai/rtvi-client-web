@@ -2,6 +2,8 @@ export enum VoiceEvent {
   Started = "started",
   Disconnected = "disconnected",
   TransportStateChanged = "stateChanged",
+
+  // @@ Not yet implemented @@
   ParticipantConnected = "participantConnected",
   ParticipantLeft = "participantLeft",
   TrackStarted = "trackStarted",
