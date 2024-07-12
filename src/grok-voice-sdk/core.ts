@@ -15,11 +15,14 @@ export type VoiceEventCallbacks = {
   onTrackStarted?: (track: MediaStreamTrack) => void;
   onTrackStopped?: (track: MediaStreamTrack) => void;
 
-  // Stretch
-  onTextFrame?: (text: string) => void;
-  onLocalAudioLevel?: (level: number) => void;
-  onRemoteAudioLevel?: (level: number) => void;
-  onTranscription?: (transcription: string) => void;
+  // @@ Not yet implemented @@
+  // onBotStartedTalking?: (participant: Participant) => void;
+  // onBotStoppedTalking?: (participant: Participant) => void;
+  // onLocalStartedTalking?: () => void;
+  // onLocalStoppedTalking?: () => void;
+  // onTextFrame?: (text: string) => void;
+  // onLocalAudioLevel?: (level: number) => void;
+  // onRemoteAudioLevel?: (level: number) => void;
 };
 
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
