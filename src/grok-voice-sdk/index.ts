@@ -1,14 +1,18 @@
+import * as API from "./core";
 import * as Errors from "./error";
 import * as Events from "./events";
-import { Transport } from "./transport";
-import { DailyTransport } from "./transport";
-import { APIClient } from "./core";
+import { DailyTransport, Transport } from "./transport";
 
 export interface VoiceClientOptions {
   /**
+   * Base URL for the transport service
+   */
+  baseUrl?: string;
+
+  /**
    * The starting system prompt passed to the LLM
    */
-  systemPrompt?: string | undefined;
+  systemPrompt?: string;
 
   /**
    * Enable user mic input
@@ -25,24 +29,52 @@ export interface VoiceClientOptions {
   startMicMuted?: boolean;
 
   /**
+   * Optional callback methods for voice events
+   */
+  callbacks?: API.VoiceEventCallbacks;
+
+  /**
+   * Configuration options for services and further customization
+   *
+   */
+  config?: VoiceClientConfigOptions;
+
+  // @@ Not yet implemented @@
+  // pipeline?: Array<object>;
+  // tools?: Array<object>;
+  // enableCamera?: boolean;
+  // startCameraMuted?: boolean;
+}
+
+export interface VoiceClientConfigOptions {
+  /**
    * Override the default transport for media streaming.
    *
    * Defaults to DailyTransport
    */
-  transport?: new () => Transport | undefined;
+  transport?: new () => Transport;
+
+  // Not yet implemented
+  idleTimeout?: number;
+  idlePrompt?: string;
+  llm?: object;
+  tts?: object;
 }
 
 /**
  * API Client for interfacing with the Groq API.
  */
-export class VoiceClient extends APIClient {
+export class VoiceClient extends API.Client {
   private _options: VoiceClientOptions;
 
   constructor(
     { ...opts }: VoiceClientOptions = {
       enableMic: true,
       startMicMuted: false,
-      transport: DailyTransport,
+      callbacks: {},
+      config: {
+        transport: DailyTransport,
+      },
     }
   ) {
     // Validate client options
@@ -51,9 +83,9 @@ export class VoiceClient extends APIClient {
     };
 
     super({
-      transport: options.transport
-        ? new options.transport()!
-        : new DailyTransport(),
+      baseUrl: options.baseUrl,
+      callbacks: options.callbacks!,
+      transport: options.config!.transport!,
     });
 
     this._options = options;
@@ -62,6 +94,13 @@ export class VoiceClient extends APIClient {
   public getOptions = (): VoiceClientOptions => {
     return this._options;
   };
+
+  // @@ Not yet implemented @@
+  // public async sendMessage() {}
+  // public tracks() {}
+  // public async setMicrophoneMuteState() {}
+  // public getServiceMetrics() {}
+  // public getLatencyMetrics() {}
 }
 
 export const { GroqVoiceError } = Errors;

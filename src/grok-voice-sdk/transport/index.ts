@@ -1,5 +1,5 @@
-import { Transport } from "./core";
+import { Participant, Transport, TransportState } from "./core";
 import { DailyTransport } from "./daily";
-import { StubTransport } from "./stub";
 
-export { Transport, DailyTransport, StubTransport };
+export { DailyTransport, Transport, TransportState };
+export type { Participant };

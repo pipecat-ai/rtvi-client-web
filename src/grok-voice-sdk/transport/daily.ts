@@ -1,8 +1,50 @@
-import { Transport } from ".";
+import Daily, { DailyCall } from "@daily-co/daily-js";
 
-export class DailyTransport extends Transport {
+import { Transport } from ".";
+//import { VoiceEventCallbacks } from "../core";
+
+export class DailyTransport implements Transport {
+  private _daily: DailyCall | null;
+
   constructor() {
-    super();
-    console.log("DailyTransport constructor");
+    this._daily = Daily.createCallObject({
+      videoSource: false,
+      audioSource: false,
+      dailyConfig: {},
+    });
+  }
+
+  async connect({
+    url,
+  }: //callbacks: { onConnected, onStateChange },
+  {
+    url: string;
+    //callbacks: VoiceEventCallbacks;
+  }) {
+    if (!this._daily) {
+      throw new Error("Daily call object not initialized");
+    }
+
+    try {
+      await this._daily.join({ url });
+    } catch (e) {
+      //@TODO: Error handling here
+      console.error("Failed to join call", e);
+      return;
+    }
+
+    // Add event listeners here...
+
+    //onConnected?.();
+    //onStateChange?.(TransportState.Connected);
+  }
+
+  async disconnect() {
+    if (!this._daily) {
+      return;
+    }
+
+    await this._daily.leave();
+    await this._daily.destroy();
   }
 }
