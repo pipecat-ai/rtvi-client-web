@@ -67,19 +67,14 @@ export interface VoiceClientConfigOptions {
 export class VoiceClient extends API.Client {
   private _options: VoiceClientOptions;
 
-  constructor(
-    { ...opts }: VoiceClientOptions = {
-      enableMic: true,
-      startMicMuted: false,
-      callbacks: {},
-      config: {
-        transport: DailyTransport,
-      },
-    }
-  ) {
+  constructor({ ...opts }: VoiceClientOptions = {}) {
     // Validate client options
     const options: VoiceClientOptions = {
       ...opts,
+      config: {
+        ...opts.config,
+        transport: opts.config?.transport || DailyTransport,
+      },
     };
 
     super({

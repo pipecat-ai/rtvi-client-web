@@ -1,5 +1,5 @@
 export enum VoiceEvent {
-  Started = "started",
+  Connected = "connected",
   Disconnected = "disconnected",
   TransportStateChanged = "stateChanged",
 
@@ -11,7 +11,7 @@ export enum VoiceEvent {
 }
 
 export type VoiceEvents = {
-  started: () => void;
+  connected: () => void;
   disconnected: () => void;
   stateChanged: (state: string) => void;
 };

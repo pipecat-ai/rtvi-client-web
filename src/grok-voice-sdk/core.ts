@@ -45,6 +45,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     // Wrap transport callbacks with events for developer convenience
     const wrappedCallbacks: VoiceEventCallbacks = {
       ...callbacks,
+      onConnected: () => {
+        callbacks.onConnected?.();
+        this.emit(VoiceEvent.Connected);
+      },
+      onDisconnected: () => {
+        callbacks.onDisconnected?.();
+        this.emit(VoiceEvent.Disconnected);
+      },
       onStateChange: (state) => {
         callbacks.onStateChange?.(state);
         this.emit(VoiceEvent.TransportStateChanged, state);
@@ -67,13 +75,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       url: "https://jpt.daily.co/hello", // @NOTE: this will be abstracted by a web service
     });
 
-    this.emit(VoiceEvent.Started);
+    this._callbacks.onConnected?.();
   }
 
   public async disconnect() {
     await this._transport.disconnect();
-    this._callbacks.onDisconnected?.();
 
-    this.emit(VoiceEvent.Disconnected);
+    this._callbacks.onDisconnected?.();
   }
 }

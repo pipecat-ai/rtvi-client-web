@@ -36,9 +36,11 @@ const voiceClient = new VoiceClient({
 voiceClient.on(VoiceEvent.TransportStateChanged, (state) => {
   console.log("[EVENT] Transport state change:", state);
 });
-
-voiceClient.on(VoiceEvent.Started, () => {
+voiceClient.on(VoiceEvent.Connected, () => {
   console.log("[EVENT] Voice client session has started");
+});
+voiceClient.on(VoiceEvent.Disconnected, () => {
+  console.log("[EVENT] Disconnected");
 });
 
 // Asynchronously start the voice client. This resolves when the client is connected

@@ -14,13 +14,7 @@ export class DailyTransport implements Transport {
     });
   }
 
-  async connect({
-    url,
-  }: //callbacks: { onConnected, onStateChange },
-  {
-    url: string;
-    //callbacks: VoiceEventCallbacks;
-  }) {
+  async connect({ url }: { url: string }) {
     if (!this._daily) {
       throw new Error("Daily call object not initialized");
     }
