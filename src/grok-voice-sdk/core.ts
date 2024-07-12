@@ -12,6 +12,7 @@ export type VoiceEventCallbacks = {
   // Not yet implemented
   onBotConnected?: (participant: Participant) => void;
   onBotDisconnected?: (participant: Participant) => void;
+  onParticipantJoined?: (participants: Participant | Participant[]) => void;
   onTrackStarted?: (track: MediaStreamTrack) => void;
   onTrackStopped?: (track: MediaStreamTrack) => void;
 

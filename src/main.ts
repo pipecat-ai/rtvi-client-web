@@ -1,10 +1,5 @@
 import { VoiceClient, VoiceEvent } from "./grok-voice-sdk";
 
-/*const callbacks: VoiceEventCallbacks = {
-  onStateChange: (state) =>
-    this.emit(VoiceEvent.TransportStateChanged, state),
-};*/
-
 const voiceClient = new VoiceClient({
   enableMic: true,
   callbacks: {
@@ -16,6 +11,9 @@ const voiceClient = new VoiceClient({
     },
     onStateChange: (state: string) => {
       console.log("[CALLBACK] State change:", state);
+    },
+    onBotConnected: () => {
+      console.log("[CALLBACK] Bot connected");
     },
   },
 });

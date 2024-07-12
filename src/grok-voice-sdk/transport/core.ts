@@ -11,11 +11,11 @@ export enum TransportState {
 export type Participant = {
   id: string;
   name: string;
-  isLocal: boolean;
+  local: boolean;
 };
 
 export abstract class Transport {
-  protected declare _callbacks: VoiceEventCallbacks;
+  protected _callbacks: VoiceEventCallbacks;
 
   constructor(callbacks: VoiceEventCallbacks) {
     this._callbacks = callbacks;

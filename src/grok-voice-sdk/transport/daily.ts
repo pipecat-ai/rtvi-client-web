@@ -1,9 +1,9 @@
 import Daily, { DailyCall } from "@daily-co/daily-js";
 
-import { Transport, VoiceEventCallbacks } from ".";
+import { Participant, Transport, VoiceEventCallbacks } from ".";
 
 export class DailyTransport extends Transport {
-  private _daily: DailyCall | null;
+  private _daily: DailyCall;
 
   constructor(callbacks: VoiceEventCallbacks) {
     super(callbacks);
@@ -16,9 +16,7 @@ export class DailyTransport extends Transport {
   }
 
   async connect({ url }: { url: string }) {
-    if (!this._daily) {
-      throw new Error("Daily call object not initialized");
-    }
+    this.attachEventListeners();
 
     try {
       await this._daily.join({ url });
@@ -31,11 +29,24 @@ export class DailyTransport extends Transport {
     this._callbacks.onConnected?.();
   }
 
-  async disconnect() {
-    if (!this._daily) {
-      return;
-    }
+  private attachEventListeners() {
+    this._daily.on("track-started", () => {});
+    this._daily.on("track-stopped", () => {});
+    this._daily.on(
+      "participant-joined",
+      ({ participant: { user_id, user_name, local } }) => {
+        const p = { id: user_id, name: user_name, local } as Participant;
 
+        this._callbacks.onParticipantJoined?.(p);
+
+        if (local) return;
+
+        this._callbacks.onBotConnected?.(p);
+      }
+    );
+  }
+
+  async disconnect() {
     await this._daily.leave();
     await this._daily.destroy();
 
