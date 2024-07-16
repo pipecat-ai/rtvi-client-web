@@ -8,19 +8,20 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import { Participant, Transport, VoiceEventCallbacks } from ".";
+import { Participant, Transport } from ".";
+import { VoiceClientOptions } from "..";
 
 export class DailyTransport extends Transport {
   private _daily: DailyCall;
   private _localAudioLevelObserver: (level: number) => void;
   private _botAudioLevelObserver: (level: number) => void;
 
-  constructor(callbacks: VoiceEventCallbacks) {
-    super(callbacks);
+  constructor(options: VoiceClientOptions) {
+    super(options);
 
     this._daily = Daily.createCallObject({
       videoSource: false,
-      audioSource: false,
+      audioSource: options.enableMic ?? false,
       dailyConfig: {},
     });
 

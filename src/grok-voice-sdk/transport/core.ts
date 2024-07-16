@@ -1,3 +1,4 @@
+import { VoiceClientConfigOptions, VoiceClientOptions } from "..";
 import { VoiceEventCallbacks } from "../core";
 
 export enum TransportState {
@@ -15,10 +16,14 @@ export type Participant = {
 };
 
 export abstract class Transport {
+  protected _options: VoiceClientOptions;
   protected _callbacks: VoiceEventCallbacks;
+  protected _config: VoiceClientConfigOptions;
 
-  constructor(callbacks: VoiceEventCallbacks) {
-    this._callbacks = callbacks;
+  constructor(options: VoiceClientOptions) {
+    this._options = options;
+    this._callbacks = options.callbacks ?? {};
+    this._config = options.config ?? {};
   }
 
   abstract connect({ url }: { url: string }): Promise<void>;

@@ -3,6 +3,7 @@ import type TypedEmitter from "typed-emitter";
 
 import { VoiceEvent, VoiceEvents } from "./events";
 import { DailyTransport, Participant, Transport } from "./transport";
+import { VoiceClientOptions } from ".";
 
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
@@ -32,44 +33,39 @@ export type VoiceEventCallbacks = Partial<{
 
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
   private _transport: Transport;
-  private _callbacks: VoiceEventCallbacks;
   private readonly _baseUrl: string;
 
-  constructor({
-    baseUrl,
-    callbacks,
-    transport,
-  }: {
-    baseUrl: string | undefined;
-    callbacks: VoiceEventCallbacks;
-    transport: new (callbacks: VoiceEventCallbacks) => Transport | undefined;
-  }) {
+  constructor(options: VoiceClientOptions) {
     super();
-    this._baseUrl = baseUrl || "https://voice.daily.co/";
+    this._baseUrl = options.baseUrl || "https://voice.daily.co/";
 
     // Wrap transport callbacks with events for developer convenience
     const wrappedCallbacks: VoiceEventCallbacks = {
-      ...callbacks,
+      ...options.callbacks,
       onConnected: () => {
-        callbacks.onConnected?.();
+        options?.callbacks?.onConnected?.();
         this.emit(VoiceEvent.Connected);
       },
       onDisconnected: () => {
-        callbacks.onDisconnected?.();
+        options?.callbacks?.onDisconnected?.();
         this.emit(VoiceEvent.Disconnected);
       },
       onStateChange: (state) => {
-        callbacks.onStateChange?.(state);
+        options?.callbacks?.onStateChange?.(state);
         this.emit(VoiceEvent.TransportStateChanged, state);
       },
     };
 
-    this._callbacks = wrappedCallbacks;
-
     // Instantiate the transport
-    this._transport = transport
-      ? new transport(this._callbacks)!
-      : new DailyTransport(this._callbacks);
+    this._transport = options?.config?.transport
+      ? new options.config.transport({
+          ...options,
+          callbacks: wrappedCallbacks,
+        })!
+      : new DailyTransport({
+          ...options,
+          callbacks: wrappedCallbacks,
+        });
   }
 
   public async start() {
