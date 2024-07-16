@@ -13,6 +13,7 @@ export default [
       "simple-import-sort/imports": "error",
       "simple-import-sort/exports": "error",
     },
+    extends: ["prettier"],
   },
   { languageOptions: { globals: globals.browser } },
   pluginJs.configs.recommended,
