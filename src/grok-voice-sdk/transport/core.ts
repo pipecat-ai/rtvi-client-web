@@ -21,7 +21,7 @@ export abstract class Transport {
     this._callbacks = callbacks;
   }
 
-  abstract connect({ url }: { url: string }): void;
+  abstract connect({ url }: { url: string }): Promise<void>;
 
-  abstract disconnect(): void;
+  abstract disconnect(): Promise<void>;
 }

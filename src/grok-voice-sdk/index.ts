@@ -52,7 +52,7 @@ export interface VoiceClientConfigOptions {
    *
    * Defaults to DailyTransport
    */
-  transport?: new () => Transport;
+  transport?: new (callbacks: API.VoiceEventCallbacks) => Transport;
 
   // Not yet implemented
   idleTimeout?: number;

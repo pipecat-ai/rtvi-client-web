@@ -9,21 +9,25 @@ export type VoiceEventCallbacks = {
   onStateChange?: (state: string) => void;
   onDisconnected?: () => void;
 
-  // Not yet implemented
   onBotConnected?: (participant: Participant) => void;
   onBotDisconnected?: (participant: Participant) => void;
-  onParticipantJoined?: (participants: Participant | Participant[]) => void;
-  onTrackStarted?: (track: MediaStreamTrack) => void;
-  onTrackStopped?: (track: MediaStreamTrack) => void;
+
+  onParticipantJoined?: (participant: Participant) => void;
+  onParticipantLeft?: (participant: Participant) => void;
+
+  onTrackStarted?: (track: MediaStreamTrack, participant?: Participant) => void;
+  onTrackStopped?: (track: MediaStreamTrack, participant?: Participant) => void;
+
+  onLocalAudioLevel?: (level: number) => void;
+  onRemoteAudioLevel?: (level: number, participant: Participant) => void;
+
+  onBotStartedTalking?: (participant: Participant) => void;
+  onBotStoppedTalking?: (participant: Participant) => void;
+  onLocalStartedTalking?: () => void;
+  onLocalStoppedTalking?: () => void;
 
   // @@ Not yet implemented @@
-  // onBotStartedTalking?: (participant: Participant) => void;
-  // onBotStoppedTalking?: (participant: Participant) => void;
-  // onLocalStartedTalking?: () => void;
-  // onLocalStoppedTalking?: () => void;
   // onTextFrame?: (text: string) => void;
-  // onLocalAudioLevel?: (level: number) => void;
-  // onRemoteAudioLevel?: (level: number) => void;
 };
 
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {

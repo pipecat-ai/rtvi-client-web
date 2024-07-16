@@ -1,9 +1,19 @@
-import Daily, { DailyCall } from "@daily-co/daily-js";
+import Daily, {
+  DailyCall,
+  DailyEventObjectLocalAudioLevel,
+  DailyEventObjectParticipant,
+  DailyEventObjectParticipantLeft,
+  DailyEventObjectRemoteParticipantsAudioLevel,
+  DailyEventObjectTrack,
+  DailyParticipant,
+} from "@daily-co/daily-js";
 
 import { Participant, Transport, VoiceEventCallbacks } from ".";
 
 export class DailyTransport extends Transport {
   private _daily: DailyCall;
+  private _localAudioLevelObserver: (level: number) => void;
+  private _botAudioLevelObserver: (level: number) => void;
 
   constructor(callbacks: VoiceEventCallbacks) {
     super(callbacks);
@@ -13,6 +23,9 @@ export class DailyTransport extends Transport {
       audioSource: false,
       dailyConfig: {},
     });
+
+    this._localAudioLevelObserver = () => {};
+    this._botAudioLevelObserver = () => {};
   }
 
   async connect({ url }: { url: string }) {
@@ -27,29 +40,152 @@ export class DailyTransport extends Transport {
     }
 
     this._callbacks.onConnected?.();
+
+    this._localAudioLevelObserver = this.createAudioLevelProcessor(
+      dailyParticipantToParticipant(this._daily.participants().local)
+    );
+
+    this._daily.startLocalAudioLevelObserver(100);
+    this._daily.startRemoteParticipantsAudioLevelObserver(100);
   }
 
   private attachEventListeners() {
-    this._daily.on("track-started", () => {});
-    this._daily.on("track-stopped", () => {});
+    this._daily.on("track-started", this.handleTrackStarted.bind(this));
+    this._daily.on("track-stopped", this.handleTrackStopped.bind(this));
     this._daily.on(
       "participant-joined",
-      ({ participant: { user_id, user_name, local } }) => {
-        const p = { id: user_id, name: user_name, local } as Participant;
+      this.handleParticipantJoined.bind(this)
+    );
+    this._daily.on("participant-left", this.handleParticipantLeft.bind(this));
 
-        this._callbacks.onParticipantJoined?.(p);
+    this._daily.on("local-audio-level", this.handleLocalAudioLevel.bind(this));
+    this._daily.on(
+      "remote-participants-audio-level",
+      this.handleRemoteAudioLevel.bind(this)
+    );
+  }
 
-        if (local) return;
+  private detachEventListeners() {
+    this._daily.off("track-started", this.handleTrackStarted);
+    this._daily.off("track-stopped", this.handleTrackStopped);
+    this._daily.off("participant-joined", this.handleParticipantJoined);
+    this._daily.off("participant-left", this.handleParticipantLeft);
 
-        this._callbacks.onBotConnected?.(p);
-      }
+    this._daily.on("local-audio-level", this.handleLocalAudioLevel);
+    this._daily.on(
+      "remote-participants-audio-level",
+      this.handleRemoteAudioLevel
     );
   }
 
   async disconnect() {
+    this.detachEventListeners();
+
+    this._daily.stopLocalAudioLevelObserver();
+    this._daily.stopRemoteParticipantsAudioLevelObserver();
+
     await this._daily.leave();
     await this._daily.destroy();
 
     this._callbacks.onDisconnected?.();
   }
+
+  private handleTrackStarted(ev: DailyEventObjectTrack) {
+    this._callbacks.onTrackStarted?.(
+      ev.track,
+      ev.participant ? dailyParticipantToParticipant(ev.participant) : undefined
+    );
+  }
+
+  private handleTrackStopped(ev: DailyEventObjectTrack) {
+    this._callbacks.onTrackStopped?.(
+      ev.track,
+      ev.participant ? dailyParticipantToParticipant(ev.participant) : undefined
+    );
+  }
+
+  private handleParticipantJoined(ev: DailyEventObjectParticipant) {
+    const p = dailyParticipantToParticipant(ev.participant);
+
+    this._callbacks.onParticipantJoined?.(p);
+
+    if (p.local) return;
+
+    this._botAudioLevelObserver = this.createAudioLevelProcessor(p);
+
+    this._callbacks.onBotConnected?.(p);
+  }
+
+  private handleParticipantLeft(ev: DailyEventObjectParticipantLeft) {
+    const p = dailyParticipantToParticipant(ev.participant);
+
+    this._callbacks.onParticipantLeft?.(p);
+
+    if (p.local) return;
+
+    this._callbacks.onBotDisconnected?.(p);
+  }
+
+  private handleLocalAudioLevel(ev: DailyEventObjectLocalAudioLevel) {
+    this._localAudioLevelObserver(ev.audioLevel);
+    this._callbacks.onLocalAudioLevel?.(ev.audioLevel);
+  }
+
+  private handleRemoteAudioLevel(
+    ev: DailyEventObjectRemoteParticipantsAudioLevel
+  ) {
+    const participants = this._daily.participants();
+    const ids = Object.keys(ev.participantsAudioLevel);
+    for (let i = 0; i < ids.length; i++) {
+      const id = ids[i];
+      const level = ev.participantsAudioLevel[id];
+      this._botAudioLevelObserver(level);
+      this._callbacks.onRemoteAudioLevel?.(
+        level,
+        dailyParticipantToParticipant(participants[id])
+      );
+    }
+  }
+
+  private createAudioLevelProcessor(
+    participant: Participant,
+    startThreshold: number = 0.05,
+    stopThreshold: number = 0.05,
+    batchSize: number = 6
+  ) {
+    const levels: number[] = [];
+    let speaking = false;
+
+    return (level: number) => {
+      levels.push(level);
+      if (levels.length > batchSize) {
+        levels.shift(); // Remove the oldest level to maintain the batch size
+      }
+
+      const avgLevel =
+        levels.reduce((sum, val) => sum + val, 0) / levels.length;
+
+      if (!speaking && avgLevel > startThreshold) {
+        speaking = true;
+        if (participant.local) {
+          this._callbacks.onLocalStartedTalking?.();
+        } else {
+          this._callbacks.onBotStartedTalking?.(participant);
+        }
+      } else if (speaking && avgLevel < stopThreshold) {
+        speaking = false;
+        if (participant.local) {
+          this._callbacks.onLocalStoppedTalking?.();
+        } else {
+          this._callbacks.onBotStoppedTalking?.(participant);
+        }
+      }
+    };
+  }
 }
+
+const dailyParticipantToParticipant = (p: DailyParticipant): Participant => ({
+  id: p.user_id,
+  local: p.local,
+  name: p.user_name,
+});
