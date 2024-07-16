@@ -4,31 +4,31 @@ import type TypedEmitter from "typed-emitter";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { DailyTransport, Participant, Transport } from "./transport";
 
-export type VoiceEventCallbacks = {
-  onConnected?: () => void;
-  onStateChange?: (state: string) => void;
-  onDisconnected?: () => void;
+export type VoiceEventCallbacks = Partial<{
+  onConnected: () => void;
+  onStateChange: (state: string) => void;
+  onDisconnected: () => void;
 
-  onBotConnected?: (participant: Participant) => void;
-  onBotDisconnected?: (participant: Participant) => void;
+  onBotConnected: (participant: Participant) => void;
+  onBotDisconnected: (participant: Participant) => void;
 
-  onParticipantJoined?: (participant: Participant) => void;
-  onParticipantLeft?: (participant: Participant) => void;
+  onParticipantJoined: (participant: Participant) => void;
+  onParticipantLeft: (participant: Participant) => void;
 
-  onTrackStarted?: (track: MediaStreamTrack, participant?: Participant) => void;
-  onTrackStopped?: (track: MediaStreamTrack, participant?: Participant) => void;
+  onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
+  onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
 
-  onLocalAudioLevel?: (level: number) => void;
-  onRemoteAudioLevel?: (level: number, participant: Participant) => void;
+  onLocalAudioLevel: (level: number) => void;
+  onRemoteAudioLevel: (level: number, participant: Participant) => void;
 
-  onBotStartedTalking?: (participant: Participant) => void;
-  onBotStoppedTalking?: (participant: Participant) => void;
-  onLocalStartedTalking?: () => void;
-  onLocalStoppedTalking?: () => void;
+  onBotStartedTalking: (participant: Participant) => void;
+  onBotStoppedTalking: (participant: Participant) => void;
+  onLocalStartedTalking: () => void;
+  onLocalStoppedTalking: () => void;
 
   // @@ Not yet implemented @@
-  // onTextFrame?: (text: string) => void;
-};
+  // onTextFrame: (text: string) => void;
+}>;
 
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
   private _transport: Transport;
