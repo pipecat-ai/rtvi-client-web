@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
-import { VoiceClient, VoiceEvent } from "./grok-voice-sdk";
+import { VoiceClient, VoiceEvent } from "voice-sdk";
+import { VoiceClientProvider } from "voice-sdk-react";
 
-import { VoiceClientProvider } from "./voice-sdk-react";
 import { DemoApp } from "./DemoApp";
 
 const voiceClient = new VoiceClient({
