@@ -2,6 +2,7 @@ import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
 import { VoiceEvent, VoiceEvents } from "./events";
+import { VoiceMessage } from "./messages";
 import { DailyTransport, Participant, Transport } from "./transport";
 import { VoiceClientOptions } from ".";
 
@@ -146,6 +147,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       url: room,
       token,
     });
+  }
+
+  public async speak(message: string) {
+    this._transport.sendMessage(VoiceMessage.speak(message));
   }
 
   public async disconnect() {

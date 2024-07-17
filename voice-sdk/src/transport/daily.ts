@@ -10,6 +10,7 @@ import Daily, {
 
 import { Participant, Transport } from ".";
 import { VoiceClientOptions } from "..";
+import { VoiceMessage } from "../messages";
 
 export class DailyTransport extends Transport {
   private _daily: DailyCall;
@@ -96,6 +97,11 @@ export class DailyTransport extends Transport {
     await this._daily.destroy();
 
     this._callbacks.onDisconnected?.();
+  }
+
+  async sendMessage(message: VoiceMessage) {
+    console.log(message.serialize());
+    console.log("Sending message", message);
   }
 
   private handleTrackStarted(ev: DailyEventObjectTrack) {

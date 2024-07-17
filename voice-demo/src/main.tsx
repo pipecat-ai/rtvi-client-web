@@ -36,6 +36,8 @@ const voiceClient = new VoiceClient({
   },
 });
 
+voiceClient.speak("Hello I am a friendly bot");
+
 /**
  * Note: you can override the transport type for future interoperability
  *

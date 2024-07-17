@@ -1,5 +1,6 @@
 import { VoiceClientConfigOptions, VoiceClientOptions } from "..";
 import { VoiceEventCallbacks } from "../core";
+import { VoiceMessage } from "../messages";
 
 export enum TransportState {
   Idle = "idle",
@@ -35,4 +36,6 @@ export abstract class Transport {
   }): Promise<void>;
 
   abstract disconnect(): Promise<void>;
+
+  abstract sendMessage(message: VoiceMessage): void;
 }
