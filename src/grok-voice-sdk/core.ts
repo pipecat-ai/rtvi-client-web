@@ -54,6 +54,46 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onStateChange?.(state);
         this.emit(VoiceEvent.TransportStateChanged, state);
       },
+      onParticipantJoined: (p) => {
+        options?.callbacks?.onParticipantJoined?.(p);
+        this.emit(VoiceEvent.ParticipantConnected, p);
+      },
+      onParticipantLeft: (p) => {
+        options?.callbacks?.onParticipantLeft?.(p);
+        this.emit(VoiceEvent.ParticipantLeft, p);
+      },
+      onTrackStarted: (track, p) => {
+        options?.callbacks?.onTrackStarted?.(track, p);
+        this.emit(VoiceEvent.TrackStarted, track, p);
+      },
+      onTrackStopped: (track, p) => {
+        options?.callbacks?.onTrackStopped?.(track, p);
+        this.emit(VoiceEvent.TrackedStopped, track, p);
+      },
+      onBotStartedTalking: (p) => {
+        options?.callbacks?.onBotStartedTalking?.(p);
+        this.emit(VoiceEvent.BotStartedTalking, p);
+      },
+      onBotStoppedTalking: (p) => {
+        options?.callbacks?.onBotStoppedTalking?.(p);
+        this.emit(VoiceEvent.BotStoppedTalking, p);
+      },
+      onRemoteAudioLevel: (level, p) => {
+        options?.callbacks?.onRemoteAudioLevel?.(level, p);
+        this.emit(VoiceEvent.RemoteAudioLevel, level, p);
+      },
+      onLocalStartedTalking: () => {
+        options?.callbacks?.onLocalStartedTalking?.();
+        this.emit(VoiceEvent.LocalStartedTalking);
+      },
+      onLocalStoppedTalking: () => {
+        options?.callbacks?.onLocalStoppedTalking?.();
+        this.emit(VoiceEvent.LocalStoppedTalking);
+      },
+      onLocalAudioLevel: (level) => {
+        options?.callbacks?.onLocalAudioLevel?.(level);
+        this.emit(VoiceEvent.LocalAudioLevel, level);
+      },
     };
 
     // Instantiate the transport
