@@ -2,6 +2,9 @@ import { Client, VoiceEventCallbacks } from "./core";
 import { DailyTransport, Transport } from "./transport";
 
 export interface VoiceClientOptions {
+  // @TODO: NOT API KEY, SOME OTEHR TOKEN INSTEAD
+  apiKey: string;
+
   /**
    * Base URL for the transport service
    */
@@ -65,7 +68,7 @@ export interface VoiceClientConfigOptions {
 export class VoiceClient extends Client {
   private _options: VoiceClientOptions;
 
-  constructor({ ...opts }: VoiceClientOptions = {}) {
+  constructor({ ...opts }: VoiceClientOptions = { apiKey: "" }) {
     // Validate client options
     const options: VoiceClientOptions = {
       ...opts,

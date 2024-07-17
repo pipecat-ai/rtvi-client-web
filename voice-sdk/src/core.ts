@@ -34,10 +34,12 @@ export type VoiceEventCallbacks = Partial<{
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
   private _transport: Transport;
   private readonly _baseUrl: string;
+  private readonly _apiKey: string;
 
   constructor(options: VoiceClientOptions) {
     super();
     this._baseUrl = options.baseUrl || "https://rtvi.pipecat.bot";
+    this._apiKey = options.apiKey;
 
     // Wrap transport callbacks with events for developer convenience
     const wrappedCallbacks: VoiceEventCallbacks = {
@@ -119,7 +121,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`, // Placeholder
+        Authorization: `Bearer ${this._apiKey}`, // Placeholder
       },
     }).then((res) => res.json());
 
