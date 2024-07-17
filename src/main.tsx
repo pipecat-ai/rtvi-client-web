@@ -1,17 +1,17 @@
+import { createRoot } from "react-dom/client";
 import { VoiceClient, VoiceEvent } from "./grok-voice-sdk";
+
+import { VoiceClientProvider } from "./voice-sdk-react";
+import { DemoApp } from "./DemoApp";
 
 const voiceClient = new VoiceClient({
   enableMic: true,
   callbacks: {
     onConnected: () => {
       console.log("[CALLBACK] Connected");
-      connectBtn.disabled = true;
-      disconnectBtn.disabled = false;
     },
     onDisconnected: () => {
       console.log("[CALLBACK] Disconnected");
-      connectBtn.disabled = false;
-      disconnectBtn.disabled = true;
     },
     onStateChange: (state: string) => {
       console.log("[CALLBACK] State change:", state);
@@ -30,13 +30,6 @@ const voiceClient = new VoiceClient({
     },
     onLocalStoppedTalking: () => {
       console.log("[CALLBACK] Local stopped talking");
-    },
-    onTrackStarted: (track, participant) => {
-      if (participant?.local || track.kind !== "audio") return;
-      const audioEl = document.getElementById("bot-audio") as HTMLAudioElement;
-      if (!audioEl) return;
-      audioEl.srcObject = new MediaStream([track]);
-      audioEl.play();
     },
   },
 });
@@ -64,26 +57,12 @@ voiceClient.on(VoiceEvent.Disconnected, () => {
   console.log("[EVENT] Disconnected");
 });
 
-// Render something to the screen
-document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
-  <div>
-    Hello I am demo
-  </div>
-  <button id="connect">Connect</button>
-  <button id="disconnect" disabled>Disonnect</button>
-  <audio id="bot-audio" autoplay></audio>
-`;
+const rootContainer = document.querySelector("#app") ?? document.body;
 
-const connectBtn = document.getElementById("connect") as HTMLButtonElement;
-const disconnectBtn = document.getElementById(
-  "disconnect"
-) as HTMLButtonElement;
+const root = createRoot(rootContainer);
 
-connectBtn?.addEventListener("click", () => {
-  connectBtn.disabled = true;
-  voiceClient.start();
-});
-
-disconnectBtn?.addEventListener("click", () => {
-  voiceClient.disconnect();
-});
+root.render(
+  <VoiceClientProvider voiceClient={voiceClient}>
+    <DemoApp />
+  </VoiceClientProvider>
+);
