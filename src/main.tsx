@@ -5,6 +5,7 @@ import { VoiceClientProvider } from "./voice-sdk-react";
 import { DemoApp } from "./DemoApp";
 
 const voiceClient = new VoiceClient({
+  baseUrl: import.meta.env.VITE_BASE_URL,
   enableMic: true,
   callbacks: {
     onConnected: () => {
