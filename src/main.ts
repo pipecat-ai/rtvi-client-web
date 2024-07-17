@@ -5,9 +5,13 @@ const voiceClient = new VoiceClient({
   callbacks: {
     onConnected: () => {
       console.log("[CALLBACK] Connected");
+      connectBtn.disabled = true;
+      disconnectBtn.disabled = false;
     },
     onDisconnected: () => {
       console.log("[CALLBACK] Disconnected");
+      connectBtn.disabled = false;
+      disconnectBtn.disabled = true;
     },
     onStateChange: (state: string) => {
       console.log("[CALLBACK] State change:", state);
@@ -60,21 +64,26 @@ voiceClient.on(VoiceEvent.Disconnected, () => {
   console.log("[EVENT] Disconnected");
 });
 
-// Asynchronously start the voice client. This resolves when the client is connected
-await voiceClient.start();
-
-// Do cool voice stuff here
-console.log("away we go");
-
-// Leave after 3 seconds
-setTimeout(async () => {
-  await voiceClient.disconnect();
-}, 60000);
-
 // Render something to the screen
 document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
   <div>
     Hello I am demo
   </div>
+  <button id="connect">Connect</button>
+  <button id="disconnect" disabled>Disonnect</button>
   <audio id="bot-audio" autoplay></audio>
 `;
+
+const connectBtn = document.getElementById("connect") as HTMLButtonElement;
+const disconnectBtn = document.getElementById(
+  "disconnect"
+) as HTMLButtonElement;
+
+connectBtn?.addEventListener("click", () => {
+  connectBtn.disabled = true;
+  voiceClient.start();
+});
+
+disconnectBtn?.addEventListener("click", () => {
+  voiceClient.disconnect();
+});
