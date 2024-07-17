@@ -112,13 +112,36 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     //@TODO: Ping webservice here and get url and token
     console.log("Handshaking with web service", this._baseUrl);
 
-    const { room_url, token } = await fetch(`${this._baseUrl}/start_bot`, {
+    // Handshake with the server to get the room and token
+    // Note: this should be done on the server side
+    const { room, token } = await fetch(`${this._baseUrl}/authenticate`, {
       method: "POST",
       mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_API_KEY}`, // Placeholder
+      },
     }).then((res) => res.json());
 
+    if (!room || !token) {
+      throw new Error("Failed to authenticate with the server");
+    }
+
+    try {
+      await fetch(`${this._baseUrl}/start_bot`, {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ room }),
+      });
+    } catch {
+      throw new Error(`Failed to start bot at URL ${room}`);
+    }
+
     await this._transport.connect({
-      url: room_url,
+      url: room,
       token,
     });
   }
