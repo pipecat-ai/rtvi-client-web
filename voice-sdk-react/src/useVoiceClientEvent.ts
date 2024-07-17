@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { VoiceEvent, VoiceEventHandler } from "../grok-voice-sdk/events";
+import type { VoiceEvent, VoiceEventHandler } from "voice-sdk";
 import { useVoiceClient } from "./useVoiceClient";
 
 export const useVoiceClientEvent = <E extends VoiceEvent>(

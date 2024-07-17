@@ -1,0 +1,31 @@
+{
+  "name": "voice-sdk",
+  "private": true,
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "module": "dist/index.module.js",
+  "types": "dist/index.d.ts",
+  "source": "src/index.ts",
+  "scripts": {
+    "build": "parcel build",
+    "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0"
+  },
+  "devDependencies": {
+    "@daily-co/daily-js": "^0.67.0",
+    "@typescript-eslint/eslint-plugin": "^7.16.0",
+    "@typescript-eslint/parser": "^7.16.0",
+    "eslint": "9.x",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-simple-import-sort": "^12.1.1",
+    "parcel": "^2.12.0",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@types/events": "^3.0.3",
+    "events": "^3.3.0",
+    "typed-emitter": "^2.1.0"
+  },
+  "peerDependencies": {
+    "@daily-co/daily-js": ">=0.67.0"
+  }
+}

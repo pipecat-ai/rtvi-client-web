@@ -33,7 +33,10 @@ export class DailyTransport extends Transport {
     this.attachEventListeners();
 
     try {
-      await this._daily.join({ url, token });
+      await this._daily.join({
+        url: `https://pipecat-demos.daily.co/${url}`,
+        token,
+      });
     } catch (e) {
       //@TODO: Error handling here
       console.error("Failed to join call", e);

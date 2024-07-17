@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import { VoiceClient } from "../grok-voice-sdk";
+import { VoiceClient } from "voice-sdk";
 
 interface Props {
   voiceClient: VoiceClient;

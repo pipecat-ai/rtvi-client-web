@@ -1,9 +1,10 @@
-import * as API from "./core";
-import * as Errors from "./error";
-import * as Events from "./events";
+import { Client, VoiceEventCallbacks } from "./core";
 import { DailyTransport, Transport } from "./transport";
 
 export interface VoiceClientOptions {
+  // @TODO: NOT API KEY, SOME OTEHR TOKEN INSTEAD
+  apiKey: string;
+
   /**
    * Base URL for the transport service
    */
@@ -31,7 +32,7 @@ export interface VoiceClientOptions {
   /**
    * Optional callback methods for voice events
    */
-  callbacks?: API.VoiceEventCallbacks;
+  callbacks?: VoiceEventCallbacks;
 
   /**
    * Configuration options for services and further customization
@@ -64,10 +65,10 @@ export interface VoiceClientConfigOptions {
 /**
  * API Client for interfacing with the Groq API.
  */
-export class VoiceClient extends API.Client {
+export class VoiceClient extends Client {
   private _options: VoiceClientOptions;
 
-  constructor({ ...opts }: VoiceClientOptions = {}) {
+  constructor({ ...opts }: VoiceClientOptions = { apiKey: "" }) {
     // Validate client options
     const options: VoiceClientOptions = {
       ...opts,
@@ -94,5 +95,6 @@ export class VoiceClient extends API.Client {
   // public getLatencyMetrics() {}
 }
 
-export const { GroqVoiceError } = Errors;
-export const { VoiceEvent } = Events;
+export * from "./core";
+export * from "./error";
+export * from "./events";
