@@ -37,7 +37,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   constructor(options: VoiceClientOptions) {
     super();
-    this._baseUrl = options.baseUrl || "https://voice.daily.co/";
+    this._baseUrl = options.baseUrl || "https://rtvi.pipecat.bot";
 
     // Wrap transport callbacks with events for developer convenience
     const wrappedCallbacks: VoiceEventCallbacks = {
@@ -72,9 +72,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     //@TODO: Ping webservice here and get url and token
     console.log("Handshaking with web service", this._baseUrl);
 
-    // const { url, token } = await fetch(this._baseUrl).then((res) => res.json());
+    const { room_url, token } = await fetch(`${this._baseUrl}/start_bot`, {
+      method: "POST",
+      mode: "cors",
+    }).then((res) => res.json());
+
     await this._transport.connect({
-      url: "https://jpt.daily.co/hello", // @NOTE: this will be abstracted by a web service
+      url: room_url,
+      token,
     });
   }
 

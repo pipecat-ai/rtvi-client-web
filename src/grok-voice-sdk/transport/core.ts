@@ -26,7 +26,13 @@ export abstract class Transport {
     this._config = options.config ?? {};
   }
 
-  abstract connect({ url }: { url: string }): Promise<void>;
+  abstract connect({
+    url,
+    token,
+  }: {
+    url: string;
+    token: string;
+  }): Promise<void>;
 
   abstract disconnect(): Promise<void>;
 }

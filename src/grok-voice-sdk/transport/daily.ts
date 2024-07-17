@@ -29,11 +29,11 @@ export class DailyTransport extends Transport {
     this._botAudioLevelObserver = () => {};
   }
 
-  async connect({ url }: { url: string }) {
+  async connect({ url, token }: { url: string; token: string }) {
     this.attachEventListeners();
 
     try {
-      await this._daily.join({ url });
+      await this._daily.join({ url, token });
     } catch (e) {
       //@TODO: Error handling here
       console.error("Failed to join call", e);
