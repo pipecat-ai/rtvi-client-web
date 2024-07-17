@@ -150,36 +150,36 @@ export class DailyTransport extends Transport {
 
   private createAudioLevelProcessor(
     participant: Participant,
-    startThreshold: number = 0.05,
-    stopThreshold: number = 0.05,
-    batchSize: number = 6
+    threshold: number = 0.05,
+    silenceDelay: number = 750 // in milliseconds
   ) {
-    const levels: number[] = [];
     let speaking = false;
+    let silenceTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    return (level: number) => {
-      levels.push(level);
-      if (levels.length > batchSize) {
-        levels.shift(); // Remove the oldest level to maintain the batch size
-      }
-
-      const avgLevel =
-        levels.reduce((sum, val) => sum + val, 0) / levels.length;
-
-      if (!speaking && avgLevel > startThreshold) {
-        speaking = true;
-        if (participant.local) {
-          this._callbacks.onLocalStartedTalking?.();
-        } else {
-          this._callbacks.onBotStartedTalking?.(participant);
+    return (level: number): void => {
+      if (level > threshold) {
+        if (silenceTimeout) {
+          clearTimeout(silenceTimeout);
+          silenceTimeout = null;
         }
-      } else if (speaking && avgLevel < stopThreshold) {
-        speaking = false;
-        if (participant.local) {
-          this._callbacks.onLocalStoppedTalking?.();
-        } else {
-          this._callbacks.onBotStoppedTalking?.(participant);
+        if (!speaking) {
+          speaking = true;
+          if (participant.local) {
+            this._callbacks.onLocalStartedTalking?.();
+          } else {
+            this._callbacks.onBotStartedTalking?.(participant);
+          }
         }
+      } else if (speaking && !silenceTimeout) {
+        silenceTimeout = setTimeout(() => {
+          speaking = false;
+          if (participant.local) {
+            this._callbacks.onLocalStoppedTalking?.();
+          } else {
+            this._callbacks.onBotStoppedTalking?.(participant);
+          }
+          silenceTimeout = null; // Ensure to reset the timeout to null
+        }, silenceDelay);
       }
     };
   }
