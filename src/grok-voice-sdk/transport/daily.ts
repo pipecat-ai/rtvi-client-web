@@ -64,6 +64,8 @@ export class DailyTransport extends Transport {
       "remote-participants-audio-level",
       this.handleRemoteAudioLevel.bind(this)
     );
+
+    this._daily.on("left-meeting", this.handleLeftMeeting.bind(this));
   }
 
   private detachEventListeners() {
@@ -77,6 +79,8 @@ export class DailyTransport extends Transport {
       "remote-participants-audio-level",
       this.handleRemoteAudioLevel
     );
+
+    this._daily.off("left-meeting", this.handleLeftMeeting);
   }
 
   async disconnect() {
@@ -146,6 +150,10 @@ export class DailyTransport extends Transport {
         dailyParticipantToParticipant(participants[id])
       );
     }
+  }
+
+  private handleLeftMeeting() {
+    this._callbacks.onDisconnected?.();
   }
 
   private createAudioLevelProcessor(
