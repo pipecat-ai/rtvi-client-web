@@ -93,7 +93,6 @@ export class DailyTransport extends Transport {
     this._daily.stopRemoteParticipantsAudioLevelObserver();
 
     await this._daily.leave();
-    await this._daily.destroy();
 
     this._callbacks.onDisconnected?.();
   }
