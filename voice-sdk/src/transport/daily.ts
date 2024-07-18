@@ -108,8 +108,8 @@ export class DailyTransport extends Transport {
     this._daily.off("participant-joined", this.handleParticipantJoined);
     this._daily.off("participant-left", this.handleParticipantLeft);
 
-    this._daily.on("local-audio-level", this.handleLocalAudioLevel);
-    this._daily.on(
+    this._daily.off("local-audio-level", this.handleLocalAudioLevel);
+    this._daily.off(
       "remote-participants-audio-level",
       this.handleRemoteAudioLevel
     );
