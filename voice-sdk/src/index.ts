@@ -11,11 +11,6 @@ export interface VoiceClientOptions {
   baseUrl?: string;
 
   /**
-   * The starting system prompt passed to the LLM
-   */
-  systemPrompt?: string;
-
-  /**
    * Enable user mic input
    *
    * Default to true
@@ -35,7 +30,7 @@ export interface VoiceClientOptions {
   callbacks?: VoiceEventCallbacks;
 
   /**
-   * Configuration options for services and further customization
+   * Service configuration options for services and further customization
    *
    */
   config?: VoiceClientConfigOptions;
@@ -47,6 +42,18 @@ export interface VoiceClientOptions {
   // startCameraMuted?: boolean;
 }
 
+export type ConfigLLMOptions = {
+  model?: string;
+  messages?: Array<{
+    role: string;
+    content: string;
+  }>;
+};
+
+export type ConfigTTSOptions = {
+  voice?: string;
+};
+
 export interface VoiceClientConfigOptions {
   /**
    * Override the default transport for media streaming.
@@ -55,11 +62,16 @@ export interface VoiceClientConfigOptions {
    */
   transport?: new (options: VoiceClientOptions) => Transport;
 
+  /**
+   * LLM service configuration options
+   */
+  llm?: ConfigLLMOptions;
+
   // Not yet implemented
   idleTimeout?: number;
   idlePrompt?: string;
-  llm?: object;
   tts?: object;
+  stt?: object;
 }
 
 /**
@@ -83,9 +95,27 @@ export class VoiceClient extends Client {
     this._options = options;
   }
 
-  public getOptions = (): VoiceClientOptions => {
-    return this._options;
-  };
+  public async start() {
+    // Start session with initial config
+    super.start(this._options.config!);
+  }
+
+  public get config(): VoiceClientConfigOptions {
+    return this._options.config!;
+  }
+
+  public updateConfig(
+    config: VoiceClientConfigOptions
+  ): VoiceClientConfigOptions {
+    super.handleConfigUpdate(config);
+
+    this._options = {
+      ...this._options,
+      config: { ...this._options.config, ...config },
+    };
+
+    return config;
+  }
 
   // @@ Not yet implemented @@
   // public async sendMessage() {}
@@ -97,3 +127,4 @@ export class VoiceClient extends Client {
 export * from "./core";
 export * from "./errors";
 export * from "./events";
+export * from "./messages";

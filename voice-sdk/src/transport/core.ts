@@ -1,4 +1,4 @@
-import { VoiceClientConfigOptions, VoiceClientOptions } from "..";
+import { VoiceClientConfigOptions, VoiceClientOptions, VoiceMessage } from "..";
 import { VoiceEventCallbacks } from "../core";
 
 export enum TransportState {
@@ -37,6 +37,8 @@ export abstract class Transport {
   abstract disconnect(): Promise<void>;
 
   abstract enableMic(enable: boolean): void;
+
+  abstract sendMessage(message: VoiceMessage): void;
 
   abstract get isMicEnabled(): boolean;
 }

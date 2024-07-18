@@ -4,12 +4,14 @@ import type TypedEmitter from "typed-emitter";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { DailyTransport, Participant, Transport } from "./transport";
 import * as VoiceErrors from "./errors";
-import { VoiceClientOptions } from ".";
+import { VoiceClientConfigOptions, VoiceClientOptions, VoiceMessage } from ".";
 
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
   onDisconnected: () => void;
   onStateChange: (state: string) => void;
+
+  onConfigUpdated: (config: VoiceClientConfigOptions) => void;
 
   onBotConnected: (participant: Participant) => void;
   onBotDisconnected: (participant: Participant) => void;
@@ -56,6 +58,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onStateChange: (state) => {
         options?.callbacks?.onStateChange?.(state);
         this.emit(VoiceEvent.TransportStateChanged, state);
+      },
+      onConfigUpdated: (config: VoiceClientConfigOptions) => {
+        options?.callbacks?.onConfigUpdated?.(config);
+        this.emit(VoiceEvent.ConfigUpdated, config);
       },
       onParticipantJoined: (p) => {
         options?.callbacks?.onParticipantJoined?.(p);
@@ -111,7 +117,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         });
   }
 
-  public async start() {
+  public async start(config: VoiceClientConfigOptions) {
     if (!this._apiKey) {
       throw new Error("API Key is required");
     }
@@ -156,6 +162,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       url: room,
       token,
     });
+
+    // Send app message with config to the transport
+    //this._transport.sendMessage(VoiceMessage.config(config));
   }
 
   public async disconnect() {
@@ -168,5 +177,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   public get isMicEnabled(): boolean {
     return this._transport.isMicEnabled;
+  }
+
+  // Handlers
+  protected handleConfigUpdate(config: VoiceClientConfigOptions) {
+    // Send app message on the transport
+    // If successfull, the transport will trigger the onConfigUpdate callback
+    this._transport.sendMessage(VoiceMessage.config(config));
   }
 }

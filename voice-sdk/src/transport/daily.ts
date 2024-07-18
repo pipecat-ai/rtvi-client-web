@@ -9,7 +9,7 @@ import Daily, {
 } from "@daily-co/daily-js";
 
 import { Participant, Transport } from ".";
-import { VoiceClientOptions } from "..";
+import { VoiceClientConfigOptions, VoiceClientOptions, VoiceMessage } from "..";
 
 export class DailyTransport extends Transport {
   private _daily: DailyCall;
@@ -43,7 +43,7 @@ export class DailyTransport extends Transport {
     try {
       await this._daily.join({
         // TODO: Remove hardcoded Daily domain
-        url: `https://pipecat-demos.daily.co/${url}`,
+        url: `https://rtvi.daily.co/${url}`,
         token,
       });
     } catch (e) {
@@ -104,6 +104,12 @@ export class DailyTransport extends Transport {
     await this._daily.leave();
 
     this._callbacks.onDisconnected?.();
+  }
+
+  public sendMessage(message: VoiceMessage) {
+    this._daily.sendAppMessage(message.serialize(), "*");
+
+    this._callbacks.onConfigUpdated?.(message.data as VoiceClientConfigOptions);
   }
 
   private handleTrackStarted(ev: DailyEventObjectTrack) {

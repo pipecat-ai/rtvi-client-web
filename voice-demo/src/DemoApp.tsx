@@ -56,6 +56,13 @@ export const DemoApp = () => {
     }, [])
   );
 
+  useVoiceClientEvent(
+    VoiceEvent.ConfigUpdated,
+    useCallback((config) => {
+      console.log(config);
+    }, [])
+  );
+
   return (
     <div>
       <style scoped>{`
@@ -93,6 +100,22 @@ export const DemoApp = () => {
       </button>
       <button disabled={!isConnected} onClick={() => voiceClient?.disconnect()}>
         Disconnect
+      </button>
+      <hr />
+      <button onClick={() => console.log(voiceClient?.config)}>
+        Log config
+      </button>
+      <button
+        disabled={!isConnected}
+        onClick={() => {
+          voiceClient?.updateConfig({
+            llm: {
+              model: "pewpew",
+            },
+          });
+        }}
+      >
+        Update config
       </button>
       <audio ref={botAudioRef} autoPlay />
     </div>

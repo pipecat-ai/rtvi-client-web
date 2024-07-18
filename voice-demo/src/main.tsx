@@ -34,6 +34,11 @@ const voiceClient = new VoiceClient({
       console.log("[CALLBACK] Local stopped talking");
     },
   },
+  config: {
+    llm: {
+      model: "hello-world",
+    },
+  },
 });
 
 /**
