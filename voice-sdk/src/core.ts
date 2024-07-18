@@ -169,4 +169,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public get isMicEnabled(): boolean {
     return this._transport.isMicEnabled;
   }
+
+  public tracks() {
+    return this._transport.tracks();
+  }
 }
