@@ -8,13 +8,14 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import { Participant, Transport } from ".";
+import { Participant, Tracks, Transport } from ".";
 import { VoiceClientConfigOptions, VoiceClientOptions, VoiceMessage } from "..";
 
 export class DailyTransport extends Transport {
   private _daily: DailyCall;
   private _localAudioLevelObserver: (level: number) => void;
   private _botAudioLevelObserver: (level: number) => void;
+  private _botId: string = "";
 
   constructor(options: VoiceClientOptions) {
     super(options);
@@ -35,6 +36,27 @@ export class DailyTransport extends Transport {
 
   get isMicEnabled() {
     return this._daily.localAudio();
+  }
+
+  tracks() {
+    const participants = this._daily?.participants() ?? {};
+    const bot = participants?.[this._botId];
+
+    const tracks: Tracks = {
+      local: {
+        audio: participants?.local?.tracks?.audio?.persistentTrack,
+        video: participants?.local?.tracks?.video?.persistentTrack,
+      },
+    };
+
+    if (bot) {
+      tracks.bot = {
+        audio: bot?.tracks?.audio?.persistentTrack,
+        video: bot?.tracks?.video?.persistentTrack,
+      };
+    }
+
+    return tracks;
   }
 
   async connect({ url, token }: { url: string; token: string }) {
@@ -86,8 +108,8 @@ export class DailyTransport extends Transport {
     this._daily.off("participant-joined", this.handleParticipantJoined);
     this._daily.off("participant-left", this.handleParticipantLeft);
 
-    this._daily.on("local-audio-level", this.handleLocalAudioLevel);
-    this._daily.on(
+    this._daily.off("local-audio-level", this.handleLocalAudioLevel);
+    this._daily.off(
       "remote-participants-audio-level",
       this.handleRemoteAudioLevel
     );
@@ -135,6 +157,8 @@ export class DailyTransport extends Transport {
 
     this._botAudioLevelObserver = this.createAudioLevelProcessor(p);
 
+    this._botId = ev.participant.session_id;
+
     this._callbacks.onBotConnected?.(p);
   }
 
@@ -144,6 +168,8 @@ export class DailyTransport extends Transport {
     this._callbacks.onParticipantLeft?.(p);
 
     if (p.local) return;
+
+    this._botId = "";
 
     this._callbacks.onBotDisconnected?.(p);
   }
@@ -170,6 +196,7 @@ export class DailyTransport extends Transport {
   }
 
   private handleLeftMeeting() {
+    this._botId = "";
     this._callbacks.onDisconnected?.();
   }
 

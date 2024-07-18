@@ -15,6 +15,17 @@ export type Participant = {
   local: boolean;
 };
 
+export type Tracks = {
+  local: {
+    audio?: MediaStreamTrack;
+    video?: MediaStreamTrack;
+  };
+  bot?: {
+    audio?: MediaStreamTrack;
+    video?: MediaStreamTrack;
+  };
+};
+
 export abstract class Transport {
   protected _options: VoiceClientOptions;
   protected _callbacks: VoiceEventCallbacks;
@@ -41,4 +52,6 @@ export abstract class Transport {
   abstract sendMessage(message: VoiceMessage): void;
 
   abstract get isMicEnabled(): boolean;
+
+  abstract tracks(): Tracks;
 }

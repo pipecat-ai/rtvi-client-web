@@ -164,7 +164,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     });
 
     // Send app message with config to the transport
-    //this._transport.sendMessage(VoiceMessage.config(config));
+    this._transport.sendMessage(VoiceMessage.config(config));
   }
 
   public async disconnect() {
@@ -184,5 +184,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     // Send app message on the transport
     // If successfull, the transport will trigger the onConfigUpdate callback
     this._transport.sendMessage(VoiceMessage.config(config));
+  }
+
+  public tracks() {
+    return this._transport.tracks();
   }
 }
