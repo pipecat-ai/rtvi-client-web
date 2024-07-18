@@ -44,11 +44,35 @@ export const DemoApp = () => {
 
   return (
     <div>
+      <style scoped>{`
+        .participants-wrapper {
+          display: flex;
+          gap: 8px;
+        }
+        .meter-wrapper {
+          align-items: center;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          justify-content: center;
+        }
+      `}</style>
       <h1>Hello Voice Client React Demo!</h1>
       <p>
         <strong>Bot is {isBotConnected ? "connected" : "not connected"}</strong>
       </p>
-      {isBotConnected && <BotMeter />}
+      <div className="participants-wrapper">
+        <div className="meter-wrapper">
+          <strong>You</strong>
+          <MicMeter type={VoiceEvent.LocalAudioLevel} />
+        </div>
+        {isBotConnected && (
+          <div className="meter-wrapper">
+            <strong>Bot</strong>
+            <MicMeter type={VoiceEvent.RemoteAudioLevel} />
+          </div>
+        )}
+      </div>
       <button disabled={isConnected} onClick={() => voiceClient?.start()}>
         Connect
       </button>
@@ -60,15 +84,29 @@ export const DemoApp = () => {
   );
 };
 
-const BotMeter = () => {
+type MeterType = VoiceEvent.LocalAudioLevel | VoiceEvent.RemoteAudioLevel;
+
+interface MeterProps {
+  type: MeterType;
+}
+
+const MicMeter: React.FC<MeterProps> = ({ type }) => {
   const meterRef = useRef<HTMLInputElement>(null);
 
   useVoiceClientEvent(
-    VoiceEvent.RemoteAudioLevel,
-    useCallback((level) => {
+    type,
+    useCallback((level: number) => {
       if (!meterRef.current) return;
       meterRef.current.style.width = 100 * Math.min(1, 3 * level) + "%";
     }, [])
+  );
+
+  useVoiceClientEvent(
+    VoiceEvent.Disconnected,
+    useCallback(() => {
+      if (!meterRef.current) return;
+      meterRef.current.style.width = "";
+    }, [type])
   );
 
   return (
