@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import {
   useVoiceClient,
   useVoiceClientEvent,
+  VoiceClientAudio,
 } from "@realtime-ai/voice-sdk-react";
 import { RateLimitError, VoiceEvent } from "@realtime-ai/voice-sdk";
 
@@ -10,7 +11,6 @@ export const DemoApp = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isBotConnected, setIsBotConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const botAudioRef = useRef<HTMLAudioElement>(null);
 
   async function start() {
     try {
@@ -32,6 +32,7 @@ export const DemoApp = () => {
     VoiceEvent.Disconnected,
     useCallback(() => {
       setIsConnected(false);
+      setIsBotConnected(false);
     }, [])
   );
   useVoiceClientEvent(
@@ -44,15 +45,6 @@ export const DemoApp = () => {
     VoiceEvent.ParticipantLeft,
     useCallback((p) => {
       if (!p.local) setIsBotConnected(false);
-    }, [])
-  );
-
-  useVoiceClientEvent(
-    VoiceEvent.TrackStarted,
-    useCallback((track, p) => {
-      if (p?.local || !botAudioRef.current) return;
-      botAudioRef.current.srcObject = new MediaStream([track]);
-      botAudioRef.current.play();
     }, [])
   );
 
@@ -94,7 +86,7 @@ export const DemoApp = () => {
       <button disabled={!isConnected} onClick={() => voiceClient?.disconnect()}>
         Disconnect
       </button>
-      <audio ref={botAudioRef} autoPlay />
+      <VoiceClientAudio />
     </div>
   );
 };
