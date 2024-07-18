@@ -3,12 +3,13 @@ import type TypedEmitter from "typed-emitter";
 
 import { VoiceEvent, VoiceEvents } from "./events";
 import { DailyTransport, Participant, Transport } from "./transport";
+import * as VoiceErrors from "./errors";
 import { VoiceClientOptions } from ".";
 
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
-  onStateChange: (state: string) => void;
   onDisconnected: () => void;
+  onStateChange: (state: string) => void;
 
   onBotConnected: (participant: Participant) => void;
   onBotDisconnected: (participant: Participant) => void;
@@ -111,9 +112,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   public async start() {
-    //@TODO: Ping webservice here and get url and token
-    console.log("Handshaking with web service", this._baseUrl);
+    if (!this._apiKey) {
+      throw new Error("API Key is required");
+    }
 
+    /**
+     * SOF: placeholder service-side logic
+     */
     // Handshake with the server to get the room and token
     // Note: this should be done on the server side
     const { room, token } = await fetch(`${this._baseUrl}/authenticate`, {
@@ -121,13 +126,18 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       mode: "cors",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${this._apiKey}`, // Placeholder
+        Authorization: `Bearer ${this._apiKey}`,
       },
     }).then((res) => res.json());
 
     if (!room || !token) {
-      throw new Error("Failed to authenticate with the server");
+      // In lieu of proper error codes, a failed authentication indicates
+      // the server is busy.
+      throw new VoiceErrors.RateLimitError();
     }
+    /**
+     * EOF: placeholder service-side logic
+     */
 
     try {
       await fetch(`${this._baseUrl}/start_bot`, {
@@ -139,7 +149,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         body: JSON.stringify({ room }),
       });
     } catch {
-      throw new Error(`Failed to start bot at URL ${room}`);
+      throw new VoiceErrors.BotStartError(`Failed to start bot at URL ${room}`);
     }
 
     await this._transport.connect({

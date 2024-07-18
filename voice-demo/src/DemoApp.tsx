@@ -3,13 +3,24 @@ import {
   useVoiceClient,
   useVoiceClientEvent,
 } from "@realtime-ai/voice-sdk-react";
-import { VoiceEvent } from "@realtime-ai/voice-sdk";
+import { RateLimitError, VoiceEvent } from "@realtime-ai/voice-sdk";
 
 export const DemoApp = () => {
   const voiceClient = useVoiceClient();
   const [isConnected, setIsConnected] = useState(false);
   const [isBotConnected, setIsBotConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const botAudioRef = useRef<HTMLAudioElement>(null);
+
+  async function start() {
+    try {
+      await voiceClient?.start();
+    } catch (e) {
+      if (e instanceof RateLimitError) {
+        setError("Demo is currently at capacity. Please try again later.");
+      }
+    }
+  }
 
   useVoiceClientEvent(
     VoiceEvent.Connected,
@@ -61,6 +72,7 @@ export const DemoApp = () => {
         }
       `}</style>
       <h1>Hello Voice Client React Demo!</h1>
+      {error}
       <p>
         <strong>Bot is {isBotConnected ? "connected" : "not connected"}</strong>
       </p>
@@ -76,7 +88,7 @@ export const DemoApp = () => {
           </div>
         )}
       </div>
-      <button disabled={isConnected} onClick={() => voiceClient?.start()}>
+      <button disabled={isConnected} onClick={() => start()}>
         Connect
       </button>
       <button disabled={!isConnected} onClick={() => voiceClient?.disconnect()}>
