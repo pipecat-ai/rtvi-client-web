@@ -35,4 +35,8 @@ export abstract class Transport {
   }): Promise<void>;
 
   abstract disconnect(): Promise<void>;
+
+  abstract enableMic(enable: boolean): void;
+
+  abstract get isMicEnabled(): boolean;
 }

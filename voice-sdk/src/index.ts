@@ -90,7 +90,6 @@ export class VoiceClient extends Client {
   // @@ Not yet implemented @@
   // public async sendMessage() {}
   // public tracks() {}
-  // public async setMicrophoneMuteState() {}
   // public getServiceMetrics() {}
   // public getLatencyMetrics() {}
 }

@@ -29,6 +29,14 @@ export class DailyTransport extends Transport {
     this._botAudioLevelObserver = () => {};
   }
 
+  enableMic(enable: boolean) {
+    this._daily.setLocalAudio(enable);
+  }
+
+  get isMicEnabled() {
+    return this._daily.localAudio();
+  }
+
   async connect({ url, token }: { url: string; token: string }) {
     this.attachEventListeners();
 
