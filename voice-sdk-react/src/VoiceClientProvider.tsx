@@ -1,6 +1,7 @@
 import { createContext } from "react";
 
 import { VoiceClient } from "@realtime-ai/voice-sdk";
+import { Provider as JotaiProvider } from "jotai/react";
 
 interface Props {
   voiceClient: VoiceClient;
@@ -15,8 +16,10 @@ export const VoiceClientProvider: React.FC<React.PropsWithChildren<Props>> = ({
   voiceClient,
 }) => {
   return (
-    <VoiceClientContext.Provider value={{ voiceClient }}>
-      {children}
-    </VoiceClientContext.Provider>
+    <JotaiProvider>
+      <VoiceClientContext.Provider value={{ voiceClient }}>
+        {children}
+      </VoiceClientContext.Provider>
+    </JotaiProvider>
   );
 };

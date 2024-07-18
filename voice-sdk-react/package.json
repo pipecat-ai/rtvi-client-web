@@ -34,5 +34,8 @@
     "@realtime-ai/voice-sdk": "*",
     "react": ">=18",
     "react-dom": ">=18"
+  },
+  "dependencies": {
+    "jotai": "^2.9.0"
   }
 }
