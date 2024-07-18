@@ -151,4 +151,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public async disconnect() {
     await this._transport.disconnect();
   }
+
+  public enableMic(enable: boolean) {
+    this._transport.enableMic(enable);
+  }
+
+  public get isMicEnabled(): boolean {
+    return this._transport.isMicEnabled;
+  }
 }
