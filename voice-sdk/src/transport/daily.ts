@@ -34,6 +34,7 @@ export class DailyTransport extends Transport {
 
     try {
       await this._daily.join({
+        // TODO: Remove hardcoded Daily domain
         url: `https://pipecat-demos.daily.co/${url}`,
         token,
       });
