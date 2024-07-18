@@ -1,16 +1,22 @@
 {
-  "name": "voice-sdk-react",
+  "name": "@realtime-ai/voice-sdk-react",
   "private": true,
   "version": "0.1.0",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
   "types": "dist/index.d.ts",
   "source": "src/index.ts",
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
   "scripts": {
     "build": "parcel build src/index.ts",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {
+    "@realtime-ai/voice-sdk": "*",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.16.0",
@@ -21,12 +27,11 @@
     "parcel": "^2.12.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "typescript": "^5.2.2",
-    "voice-sdk": "*"
+    "typescript": "^5.2.2"
   },
   "peerDependencies": {
+    "@realtime-ai/voice-sdk": "*",
     "react": ">=18",
-    "react-dom": ">=18",
-    "voice-sdk": "*"
+    "react-dom": ">=18"
   }
 }
