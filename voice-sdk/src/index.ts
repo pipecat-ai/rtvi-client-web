@@ -96,5 +96,5 @@ export class VoiceClient extends Client {
 }
 
 export * from "./core";
-export * from "./error";
+export * from "./errors";
 export * from "./events";
