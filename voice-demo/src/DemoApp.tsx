@@ -1,6 +1,9 @@
 import { useCallback, useRef, useState } from "react";
-import { useVoiceClient, useVoiceClientEvent } from "voice-sdk-react";
-import { VoiceEvent } from "voice-sdk";
+import {
+  useVoiceClient,
+  useVoiceClientEvent,
+} from "@realtime-ai/voice-sdk-react";
+import { VoiceEvent } from "@realtime-ai/voice-sdk";
 
 export const DemoApp = () => {
   const voiceClient = useVoiceClient();

@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import { VoiceClient } from "voice-sdk";
+import { VoiceClient } from "@realtime-ai/voice-sdk";
 
 interface Props {
   voiceClient: VoiceClient;

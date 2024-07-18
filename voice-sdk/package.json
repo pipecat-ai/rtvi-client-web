@@ -1,13 +1,19 @@
 {
-  "name": "voice-sdk",
+  "name": "@realtime-ai/voice-sdk",
   "private": true,
   "version": "0.1.0",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
   "types": "dist/index.d.ts",
   "source": "src/index.ts",
+  "files": [
+    "dist",
+    "package.json",
+    "README.md"
+  ],
   "scripts": {
-    "build": "parcel build",
+    "build": "parcel build --no-cache",
+    "dev": "parcel watch",
     "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {
