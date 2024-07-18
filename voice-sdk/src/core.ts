@@ -2,14 +2,19 @@ import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
 import { VoiceEvent, VoiceEvents } from "./events";
-import { DailyTransport, Participant, Transport } from "./transport";
+import {
+  DailyTransport,
+  Participant,
+  Transport,
+  TransportState,
+} from "./transport";
 import * as VoiceErrors from "./errors";
 import { VoiceClientOptions } from ".";
 
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
   onDisconnected: () => void;
-  onStateChange: (state: string) => void;
+  onStateChange: (state: TransportState) => void;
 
   onBotConnected: (participant: Participant) => void;
   onBotDisconnected: (participant: Participant) => void;
@@ -172,5 +177,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   public tracks() {
     return this._transport.tracks();
+  }
+
+  public getTransportState() {
+    return this._transport.state;
   }
 }

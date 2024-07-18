@@ -8,10 +8,11 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import { Participant, Tracks, Transport } from ".";
+import { Participant, Tracks, Transport, TransportState } from ".";
 import { VoiceClientOptions } from "..";
 
 export class DailyTransport extends Transport {
+  private _state: TransportState;
   private _daily: DailyCall;
   private _localAudioLevelObserver: (level: number) => void;
   private _botAudioLevelObserver: (level: number) => void;
@@ -19,6 +20,8 @@ export class DailyTransport extends Transport {
 
   constructor(options: VoiceClientOptions) {
     super(options);
+
+    this._state = TransportState.Idle;
 
     this._daily = Daily.createCallObject({
       videoSource: false,
@@ -28,6 +31,15 @@ export class DailyTransport extends Transport {
 
     this._localAudioLevelObserver = () => {};
     this._botAudioLevelObserver = () => {};
+  }
+
+  private updateState(state: TransportState) {
+    this._state = state;
+    this._callbacks?.onStateChange?.(state);
+  }
+
+  get state() {
+    return this._state;
   }
 
   enableMic(enable: boolean) {
@@ -60,6 +72,8 @@ export class DailyTransport extends Transport {
   }
 
   async connect({ url, token }: { url: string; token: string }) {
+    this.updateState(TransportState.Connecting);
+
     this.attachEventListeners();
 
     try {
@@ -71,10 +85,12 @@ export class DailyTransport extends Transport {
     } catch (e) {
       //@TODO: Error handling here
       console.error("Failed to join call", e);
+      this.updateState(TransportState.Error);
       return;
     }
 
     this._callbacks.onConnected?.();
+    this.updateState(TransportState.Connected);
 
     this._localAudioLevelObserver = this.createAudioLevelProcessor(
       dailyParticipantToParticipant(this._daily.participants().local)
@@ -126,6 +142,7 @@ export class DailyTransport extends Transport {
     await this._daily.leave();
 
     this._callbacks.onDisconnected?.();
+    this.updateState(TransportState.Disconnected);
   }
 
   private handleTrackStarted(ev: DailyEventObjectTrack) {
@@ -192,6 +209,7 @@ export class DailyTransport extends Transport {
   private handleLeftMeeting() {
     this._botId = "";
     this._callbacks.onDisconnected?.();
+    this.updateState(TransportState.Disconnected);
   }
 
   private createAudioLevelProcessor(

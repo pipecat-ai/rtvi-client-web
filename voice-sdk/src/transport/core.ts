@@ -52,4 +52,6 @@ export abstract class Transport {
   abstract get isMicEnabled(): boolean;
 
   abstract tracks(): Tracks;
+
+  abstract get state(): TransportState;
 }
