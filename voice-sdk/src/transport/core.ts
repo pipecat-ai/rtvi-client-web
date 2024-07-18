@@ -51,5 +51,9 @@ export abstract class Transport {
 
   abstract get isMicEnabled(): boolean;
 
+  abstract enableCam(enable: boolean): void;
+
+  abstract get isCamEnabled(): boolean;
+
   abstract tracks(): Tracks;
 }

@@ -16,6 +16,13 @@ export interface VoiceClientOptions {
   systemPrompt?: string;
 
   /**
+   * Enable user cam input
+   *
+   * Default to false
+   */
+  enableCam?: boolean;
+
+  /**
    * Enable user mic input
    *
    * Default to true
