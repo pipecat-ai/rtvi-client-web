@@ -1,5 +1,6 @@
 import Daily, {
   DailyCall,
+  DailyEventObjectAppMessage,
   DailyEventObjectLocalAudioLevel,
   DailyEventObjectParticipant,
   DailyEventObjectParticipantLeft,
@@ -8,17 +9,27 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import { Participant, Tracks, Transport } from ".";
-import { VoiceClientOptions } from "..";
+import {
+  VoiceClientConfigOptions,
+  VoiceClientOptions,
+  VoiceMessage,
+  VoiceMessageTranscript,
+} from "..";
+import { Participant, Tracks, Transport, TransportState } from ".";
 
 export class DailyTransport extends Transport {
+  protected _state: TransportState = TransportState.Idle;
+
   private _daily: DailyCall;
   private _localAudioLevelObserver: (level: number) => void;
   private _botAudioLevelObserver: (level: number) => void;
   private _botId: string = "";
 
-  constructor(options: VoiceClientOptions) {
-    super(options);
+  constructor(
+    options: VoiceClientOptions,
+    onMessage: (ev: VoiceMessage) => void
+  ) {
+    super(options, onMessage);
 
     this._daily = Daily.createCallObject({
       videoSource: false,
@@ -28,6 +39,15 @@ export class DailyTransport extends Transport {
 
     this._localAudioLevelObserver = () => {};
     this._botAudioLevelObserver = () => {};
+  }
+
+  get state(): TransportState {
+    return this._state;
+  }
+
+  private set state(state: TransportState) {
+    this._state = state;
+    this._callbacks.onStateChange?.(state);
   }
 
   enableMic(enable: boolean) {
@@ -65,7 +85,7 @@ export class DailyTransport extends Transport {
     try {
       await this._daily.join({
         // TODO: Remove hardcoded Daily domain
-        url: `https://pipecat-demos.daily.co/${url}`,
+        url: `https://rtvi.daily.co/${url}`,
         token,
       });
     } catch (e) {
@@ -73,6 +93,8 @@ export class DailyTransport extends Transport {
       console.error("Failed to join call", e);
       return;
     }
+
+    this.state = TransportState.Connected;
 
     this._callbacks.onConnected?.();
 
@@ -92,13 +114,12 @@ export class DailyTransport extends Transport {
       this.handleParticipantJoined.bind(this)
     );
     this._daily.on("participant-left", this.handleParticipantLeft.bind(this));
-
     this._daily.on("local-audio-level", this.handleLocalAudioLevel.bind(this));
     this._daily.on(
       "remote-participants-audio-level",
       this.handleRemoteAudioLevel.bind(this)
     );
-
+    this._daily.on("app-message", this.handleAppMessage.bind(this));
     this._daily.on("left-meeting", this.handleLeftMeeting.bind(this));
   }
 
@@ -113,7 +134,7 @@ export class DailyTransport extends Transport {
       "remote-participants-audio-level",
       this.handleRemoteAudioLevel
     );
-
+    this._daily.off("app-message", this.handleAppMessage);
     this._daily.off("left-meeting", this.handleLeftMeeting);
   }
 
@@ -125,7 +146,28 @@ export class DailyTransport extends Transport {
 
     await this._daily.leave();
 
-    this._callbacks.onDisconnected?.();
+    this.state = TransportState.Disconnected;
+  }
+
+  public sendMessage(message: VoiceMessage) {
+    console.log("Sending message: ", message);
+    this._daily.sendAppMessage(message, "*");
+
+    this._callbacks.onConfigUpdated?.(message.data as VoiceClientConfigOptions);
+  }
+
+  private handleAppMessage(ev: DailyEventObjectAppMessage) {
+    let msg;
+
+    if (ev.fromId) {
+      msg = new VoiceMessageTranscript({ text: "test", final: true });
+    } else {
+      msg = {
+        type: "unknown",
+        data: ev.data,
+      } as VoiceMessage;
+    }
+    this._onMessage(msg);
   }
 
   private handleTrackStarted(ev: DailyEventObjectTrack) {
@@ -190,6 +232,8 @@ export class DailyTransport extends Transport {
   }
 
   private handleLeftMeeting() {
+    this.state = TransportState.Disconnected;
+
     this._botId = "";
     this._callbacks.onDisconnected?.();
   }

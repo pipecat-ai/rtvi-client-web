@@ -1,19 +1,15 @@
 import { Client, VoiceEventCallbacks } from "./core";
+import { VoiceMessage } from "./messages";
 import { DailyTransport, Transport } from "./transport";
 
 export interface VoiceClientOptions {
-  // @TODO: NOT API KEY, SOME OTEHR TOKEN INSTEAD
+  // @TODO: Remove. This is just for the developer preview
   apiKey: string;
 
   /**
    * Base URL for the transport service
    */
   baseUrl?: string;
-
-  /**
-   * The starting system prompt passed to the LLM
-   */
-  systemPrompt?: string;
 
   /**
    * Enable user mic input
@@ -35,7 +31,7 @@ export interface VoiceClientOptions {
   callbacks?: VoiceEventCallbacks;
 
   /**
-   * Configuration options for services and further customization
+   * Service configuration options for services and further customization
    *
    */
   config?: VoiceClientConfigOptions;
@@ -47,27 +43,45 @@ export interface VoiceClientOptions {
   // startCameraMuted?: boolean;
 }
 
+export type VoiceClientConfigLLM = {
+  model?: string;
+  messages?: Array<{
+    role: string;
+    content: string;
+  }>;
+};
+
+export type ConfigTTSOptions = {
+  voice?: string;
+};
+
 export interface VoiceClientConfigOptions {
   /**
    * Override the default transport for media streaming.
    *
    * Defaults to DailyTransport
    */
-  transport?: new (options: VoiceClientOptions) => Transport;
+  transport?: new (
+    options: VoiceClientOptions,
+    onMessage: (ev: VoiceMessage) => void
+  ) => Transport;
+
+  /**
+   * LLM service configuration options
+   */
+  llm?: VoiceClientConfigLLM;
+  tts?: ConfigTTSOptions;
 
   // Not yet implemented
   idleTimeout?: number;
   idlePrompt?: string;
-  llm?: object;
-  tts?: object;
+  stt?: object;
 }
 
 /**
  * API Client for interfacing with the Groq API.
  */
 export class VoiceClient extends Client {
-  private _options: VoiceClientOptions;
-
   constructor({ ...opts }: VoiceClientOptions = { apiKey: "" }) {
     // Validate client options
     const options: VoiceClientOptions = {
@@ -79,20 +93,10 @@ export class VoiceClient extends Client {
     };
 
     super(options);
-
-    this._options = options;
   }
-
-  public getOptions = (): VoiceClientOptions => {
-    return this._options;
-  };
-
-  // @@ Not yet implemented @@
-  // public async sendMessage() {}
-  // public getServiceMetrics() {}
-  // public getLatencyMetrics() {}
 }
 
 export * from "./core";
 export * from "./errors";
 export * from "./events";
+export * from "./messages";

@@ -34,6 +34,20 @@ const voiceClient = new VoiceClient({
       console.log("[CALLBACK] Local stopped talking");
     },
   },
+  config: {
+    llm: {
+      model: "llama3-70b-8192",
+      messages: [
+        {
+          role: "system",
+          content: "You are a helpful assistant named Gary. Briefly say hello!",
+        },
+      ],
+    },
+    tts: {
+      voice: "79a125e8-cd45-4c13-8a67-188112f4dd22",
+    },
+  },
 });
 
 /**
