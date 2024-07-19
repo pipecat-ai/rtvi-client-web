@@ -234,6 +234,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       this.config = config;
     }
 
+    if (this._transport.state === "connected") {
+      this._transport.sendMessage(VoiceMessage.config(this.config));
+    }
+
     this._options.callbacks?.onConfigUpdated?.(this.config);
   }
 
@@ -259,9 +263,19 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     this._options.callbacks?.onConfigUpdated?.(this.config);
   }
 
+  public appendLLMContext(message: { role: string; content: string }): void {
+    if (this._transport.state !== "connected") {
+      return;
+    }
+
+    this._transport.sendMessage(VoiceMessage.appendLLMContext(message));
+  }
+
   // ------ Utility methods
   public say(text: string): void {
-    this._transport.sendMessage(VoiceMessage.speak(text));
+    if (this._transport.state === "connected") {
+      this._transport.sendMessage(VoiceMessage.speak(text));
+    }
   }
 
   // ------ Handlers

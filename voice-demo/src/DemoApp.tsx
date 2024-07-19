@@ -26,6 +26,9 @@ export const DemoApp = () => {
     { role: string; content: string }[] | undefined
   >(voiceClient.llmContext?.messages);
 
+  const [message, setMessage] = useState<string>("");
+  const [role, setRole] = useState<string>("user");
+
   async function start() {
     try {
       await voiceClient.start();
@@ -152,7 +155,7 @@ export const DemoApp = () => {
       <select
         defaultValue={voiceClient.llmContext?.model}
         onChange={(e) => {
-          voiceClient.llmContext = { model: e.target.value };
+          voiceClient.updateConfig({ llm: { model: e.target.value } }, true);
         }}
       >
         <option value="llama3-8b-8192">llama3-8b-8192</option>
@@ -167,17 +170,32 @@ export const DemoApp = () => {
           voiceClient.updateConfig({ tts: { voice: e.target.value } }, true);
         }}
       />
-      <br />
-      <button onClick={() => voiceClient.updateConfig(config)}>
-        Update config
-      </button>
       <hr />
       <button
+        disabled={!isBotConnected}
         onClick={() => voiceClient.say("Can you believe how great Pipecat is?")}
       >
         Say "Can you believe how great Pipecat is?"
       </button>
       <hr />
+      <input
+        type="text"
+        defaultValue={message}
+        onChange={(e) => setMessage(e.target.value)}
+      />
+      <select defaultValue={role} onChange={(e) => setRole(e.target.value)}>
+        <option value="user">User</option>
+        <option value="assistant">Assistant</option>
+      </select>
+      <button
+        onClick={() => {
+          voiceClient.appendLLMContext({ role, content: message });
+          setMessage("");
+          setRole("user");
+        }}
+      >
+        Send message
+      </button>
       <VoiceClientAudio />
     </div>
   );

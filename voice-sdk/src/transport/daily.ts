@@ -9,12 +9,7 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import {
-  VoiceClientConfigOptions,
-  VoiceClientOptions,
-  VoiceMessage,
-  VoiceMessageTranscript,
-} from "..";
+import { VoiceClientOptions, VoiceMessage, VoiceMessageTranscript } from "..";
 import type { TransportState } from ".";
 import { Participant, Tracks, Transport } from ".";
 
@@ -155,8 +150,6 @@ export class DailyTransport extends Transport {
   public sendMessage(message: VoiceMessage) {
     console.log("Sending message: ", message);
     this._daily.sendAppMessage(message, "*");
-
-    this._callbacks.onConfigUpdated?.(message.data as VoiceClientConfigOptions);
   }
 
   private handleAppMessage(ev: DailyEventObjectAppMessage) {

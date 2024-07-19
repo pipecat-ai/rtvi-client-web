@@ -2,9 +2,10 @@ import { VoiceClientConfigLLM, VoiceClientConfigOptions } from ".";
 
 enum VoiceMessageType {
   // Outbound
-  CONFIG = "config",
+  CONFIG = "config-update",
   LLM_GET_CONTEXT = "llm-get-context",
   LLM_UPDATE_CONTEXT = "llm-update-context",
+  LLM_APPEND_CONTEXT = "llm-append-context",
   SPEAK = "tts-speak",
 
   // Inbound
@@ -40,7 +41,12 @@ export class VoiceMessage {
   // Outbound message types
   static config(configuration: VoiceClientConfigOptions): VoiceMessage {
     // Sent when the configuration options of services has changed
-    return new VoiceMessage(VoiceMessageType.CONFIG, configuration);
+    return new VoiceMessage(VoiceMessageType.CONFIG, {
+      config: {
+        llm: configuration.llm,
+        tts: configuration.tts,
+      },
+    });
   }
 
   static speak(message: string): VoiceMessage {
@@ -54,11 +60,17 @@ export class VoiceMessage {
   }
 
   static updateLLMContext(llmConfig: VoiceClientConfigLLM): VoiceMessage {
-    // Sent when requesting the latest LLM context
     return new VoiceMessage(VoiceMessageType.LLM_UPDATE_CONTEXT, {
-      config: {
-        llm: llmConfig,
-      },
+      llm: llmConfig,
+    });
+  }
+
+  static appendLLMContext(message: {
+    role: string;
+    content: string;
+  }): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.LLM_APPEND_CONTEXT, {
+      llm: { messages: [message] },
     });
   }
 }
