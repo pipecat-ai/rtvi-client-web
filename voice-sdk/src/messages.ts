@@ -7,8 +7,6 @@ enum VoiceMessageType {
   LLM_GET_CONTEXT = "llm-get-context",
   LLM_UPDATE_CONTEXT = "llm-update-context",
 
-  GET_CONTEXT = "llm-context",
-  UPDATE_CONTEXT = "llm-update-context",
   TOOL_RESPONSE = "tool-response", // Result of a clientside tool method
 
   // Inbound
@@ -25,9 +23,9 @@ enum VoiceMessageType {
 export class VoiceMessage {
   tag: string = "realtime-ai";
   type: string;
-  data: {};
+  data: unknown;
 
-  constructor(type: string, data: {}) {
+  constructor(type: string, data: unknown) {
     this.type = type;
     this.data = data;
   }
@@ -49,11 +47,6 @@ export class VoiceMessage {
   static speak(message: string): VoiceMessage {
     // Sent when prompting the STT model to speak
     return new VoiceMessage(VoiceMessageType.SPEAK, { text: message });
-  }
-
-  static messages(): VoiceMessage {
-    // Sent when requesting the latest LLM context
-    return new VoiceMessage(VoiceMessageType.GET_CONTEXT, {});
   }
 
   static getLLMContext(): VoiceMessage {

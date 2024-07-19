@@ -70,11 +70,11 @@ export interface VoiceClientConfigOptions {
    * LLM service configuration options
    */
   llm?: VoiceClientConfigLLM;
+  tts?: ConfigTTSOptions;
 
   // Not yet implemented
   idleTimeout?: number;
   idlePrompt?: string;
-  tts?: object;
   stt?: object;
 }
 
@@ -94,24 +94,6 @@ export class VoiceClient extends Client {
 
     super(options);
   }
-
-  public updateConfig(
-    config: VoiceClientConfigOptions
-  ): VoiceClientConfigOptions {
-    super.handleConfigUpdate(config);
-
-    this._options = {
-      ...this._options,
-      config: { ...this._options.config, ...config },
-    };
-
-    return config;
-  }
-
-  // @@ Not yet implemented @@
-  // public async sendMessage() {}
-  // public getServiceMetrics() {}
-  // public getLatencyMetrics() {}
 }
 
 export * from "./core";

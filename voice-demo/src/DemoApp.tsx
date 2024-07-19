@@ -61,6 +61,7 @@ export const DemoApp = () => {
   useVoiceClientEvent(
     VoiceEvent.ConfigUpdated,
     useCallback((config: VoiceClientConfigOptions) => {
+      console.log(config);
       setConfig(config);
     }, [])
   );
@@ -110,7 +111,7 @@ export const DemoApp = () => {
       <strong>Config:</strong>
       <textarea
         style={{ width: "100%" }}
-        rows={10}
+        rows={15}
         readOnly
         value={JSON.stringify(config, null, 2)}
       />
@@ -133,7 +134,7 @@ export const DemoApp = () => {
       >
         Update LLM context
       </button>
-      <br />
+      <hr />
       Model:
       <select
         defaultValue={voiceClient?.llmContext?.model}
@@ -144,6 +145,19 @@ export const DemoApp = () => {
         <option value="llama3-8b-8192">llama3-8b-8192</option>
         <option value="llama3-70b-8192">llama3-70b-8192</option>
       </select>
+      <br />
+      Voice:{" "}
+      <input
+        type="text"
+        defaultValue={voiceClient?.config?.tts?.voice}
+        onChange={(e) => {
+          voiceClient?.updateConfig({ tts: { voice: e.target.value } }, true);
+        }}
+      />
+      <br />
+      <button onClick={() => voiceClient?.updateConfig(config!)}>
+        Update config
+      </button>
       <VoiceClientAudio />
     </div>
   );

@@ -1,14 +1,7 @@
+import { deepmerge } from "deepmerge-ts";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
-import { VoiceEvent, VoiceEvents } from "./events";
-import {
-  DailyTransport,
-  Participant,
-  Transport,
-  TransportState,
-} from "./transport";
-import * as VoiceErrors from "./errors";
 import {
   VoiceClientConfigLLM,
   VoiceClientConfigOptions,
@@ -16,6 +9,14 @@ import {
   VoiceMessage,
   VoiceMessageTranscript,
 } from ".";
+import * as VoiceErrors from "./errors";
+import { VoiceEvent, VoiceEvents } from "./events";
+import {
+  DailyTransport,
+  Participant,
+  Transport,
+  TransportState,
+} from "./transport";
 
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
@@ -142,7 +143,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     };
   }
 
-  // Public methods
+  // ------ Transport methods
   public async start() {
     if (!this._apiKey) {
       throw new Error("API Key is required");
@@ -204,6 +205,38 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return this._transport.isMicEnabled;
   }
 
+  public get state(): TransportState {
+    return this._transport.state;
+  }
+
+  // ------ Config methods
+
+  public get config(): VoiceClientConfigOptions {
+    return this._options.config!;
+  }
+
+  protected set config(config: VoiceClientConfigOptions) {
+    this._options.config = {
+      ...this._options.config,
+      ...config,
+    };
+  }
+
+  public updateConfig(
+    config: VoiceClientConfigOptions,
+    useDeepMerge: boolean = false
+  ) {
+    if (useDeepMerge) {
+      this.config = deepmerge(this.config, config);
+    } else {
+      this.config = config;
+    }
+
+    this._options.callbacks?.onConfigUpdated?.(this.config);
+  }
+
+  // ------ LLM context methods
+
   public get llmContext(): VoiceClientConfigLLM | undefined {
     return this._options.config?.llm;
   }
@@ -222,25 +255,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
 
     this._options.callbacks?.onConfigUpdated?.(this.config);
-  }
-
-  /*public getLLMContext() {
-    this._transport.sendMessage(VoiceMessage.getLLMContext());
-  }*/
-
-  public get state(): TransportState {
-    return this._transport.state;
-  }
-
-  public get config(): VoiceClientConfigOptions {
-    return this._options.config!;
-  }
-
-  protected set config(config: VoiceClientConfigOptions) {
-    this._options.config = {
-      ...this._options.config,
-      ...config,
-    };
   }
 
   // Handlers

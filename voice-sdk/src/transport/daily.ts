@@ -9,13 +9,13 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import { Participant, Tracks, Transport, TransportState } from ".";
 import {
   VoiceClientConfigOptions,
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageTranscript,
 } from "..";
+import { Participant, Tracks, Transport, TransportState } from ".";
 
 export class DailyTransport extends Transport {
   protected _state: TransportState = TransportState.Idle;
