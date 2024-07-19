@@ -1,6 +1,5 @@
 {
   "name": "@realtime-ai/voice-sdk-react",
-  "private": true,
   "version": "0.1.0",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
