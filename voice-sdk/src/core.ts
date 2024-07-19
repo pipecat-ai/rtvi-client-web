@@ -2,9 +2,20 @@ import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
 import { VoiceEvent, VoiceEvents } from "./events";
-import { DailyTransport, Participant, Transport } from "./transport";
+import {
+  DailyTransport,
+  Participant,
+  Transport,
+  TransportState,
+} from "./transport";
 import * as VoiceErrors from "./errors";
-import { VoiceClientConfigOptions, VoiceClientOptions, VoiceMessage } from ".";
+import {
+  VoiceClientConfigLLM,
+  VoiceClientConfigOptions,
+  VoiceClientOptions,
+  VoiceMessage,
+  VoiceMessageTranscript,
+} from ".";
 
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
@@ -30,11 +41,14 @@ export type VoiceEventCallbacks = Partial<{
   onLocalStartedTalking: () => void;
   onLocalStoppedTalking: () => void;
 
+  onTranscript: (text: VoiceMessageTranscript) => void;
+
   // @@ Not yet implemented @@
   // onTextFrame: (text: string) => void;
 }>;
 
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
+  protected _options: VoiceClientOptions;
   private _transport: Transport;
   private readonly _baseUrl: string;
   private readonly _apiKey: string;
@@ -107,20 +121,34 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     // Instantiate the transport
     this._transport = options?.config?.transport
-      ? new options.config.transport({
-          ...options,
-          callbacks: wrappedCallbacks,
-        })!
-      : new DailyTransport({
-          ...options,
-          callbacks: wrappedCallbacks,
-        });
+      ? new options.config.transport(
+          {
+            ...options,
+            callbacks: wrappedCallbacks,
+          },
+          this.handleMessage
+        )!
+      : new DailyTransport(
+          {
+            ...options,
+            callbacks: wrappedCallbacks,
+          },
+          this.handleMessage
+        );
+
+    this._options = {
+      ...options,
+      callbacks: wrappedCallbacks,
+    };
   }
 
-  public async start(config: VoiceClientConfigOptions) {
+  // Public methods
+  public async start() {
     if (!this._apiKey) {
       throw new Error("API Key is required");
     }
+
+    const config: VoiceClientConfigOptions = this._options.config!;
 
     /**
      * SOF: placeholder service-side logic
@@ -152,7 +180,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ room }),
+        body: JSON.stringify({ room, config: { ...config } }),
       });
     } catch {
       throw new VoiceErrors.BotStartError(`Failed to start bot at URL ${room}`);
@@ -162,9 +190,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       url: room,
       token,
     });
-
-    // Send app message with config to the transport
-    this._transport.sendMessage(VoiceMessage.config(config));
   }
 
   public async disconnect() {
@@ -179,7 +204,52 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return this._transport.isMicEnabled;
   }
 
+  public get llmContext(): VoiceClientConfigLLM | undefined {
+    return this._options.config?.llm;
+  }
+
+  public set llmContext(llmConfig: VoiceClientConfigLLM) {
+    this.config = {
+      ...this._options.config,
+      llm: {
+        ...this._options.config?.llm,
+        ...llmConfig,
+      },
+    } as VoiceClientConfigOptions;
+
+    if (this._transport.state === TransportState.Connected) {
+      this._transport.sendMessage(VoiceMessage.updateLLMContext(llmConfig));
+    }
+
+    this._options.callbacks?.onConfigUpdated?.(this.config);
+  }
+
+  /*public getLLMContext() {
+    this._transport.sendMessage(VoiceMessage.getLLMContext());
+  }*/
+
+  public get state(): TransportState {
+    return this._transport.state;
+  }
+
+  public get config(): VoiceClientConfigOptions {
+    return this._options.config!;
+  }
+
+  protected set config(config: VoiceClientConfigOptions) {
+    this._options.config = {
+      ...this._options.config,
+      ...config,
+    };
+  }
+
   // Handlers
+  protected handleMessage(ev: VoiceMessage): void {
+    if (ev instanceof VoiceMessageTranscript) {
+      return this._options.callbacks?.onTranscript?.(ev);
+    }
+  }
+
   protected handleConfigUpdate(config: VoiceClientConfigOptions) {
     // Send app message on the transport
     // If successfull, the transport will trigger the onConfigUpdate callback

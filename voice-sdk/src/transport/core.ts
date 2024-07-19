@@ -30,11 +30,17 @@ export abstract class Transport {
   protected _options: VoiceClientOptions;
   protected _callbacks: VoiceEventCallbacks;
   protected _config: VoiceClientConfigOptions;
+  protected _onMessage: (ev: VoiceMessage) => void;
+  protected _state: TransportState = TransportState.Idle;
 
-  constructor(options: VoiceClientOptions) {
+  constructor(
+    options: VoiceClientOptions,
+    onMessage: (ev: VoiceMessage) => void
+  ) {
     this._options = options;
     this._callbacks = options.callbacks ?? {};
     this._config = options.config ?? {};
+    this._onMessage = onMessage;
   }
 
   abstract connect({
@@ -52,6 +58,9 @@ export abstract class Transport {
   abstract sendMessage(message: VoiceMessage): void;
 
   abstract get isMicEnabled(): boolean;
+
+  abstract get state(): TransportState;
+  abstract set state(state: TransportState);
 
   abstract tracks(): Tracks;
 }

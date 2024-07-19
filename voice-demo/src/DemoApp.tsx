@@ -4,13 +4,23 @@ import {
   useVoiceClientEvent,
   VoiceClientAudio,
 } from "@realtime-ai/voice-sdk-react";
-import { RateLimitError, VoiceEvent } from "@realtime-ai/voice-sdk";
+import {
+  RateLimitError,
+  VoiceClientConfigOptions,
+  VoiceEvent,
+} from "@realtime-ai/voice-sdk";
 
 export const DemoApp = () => {
   const voiceClient = useVoiceClient();
   const [isConnected, setIsConnected] = useState(false);
   const [isBotConnected, setIsBotConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [config, setConfig] = useState<VoiceClientConfigOptions | undefined>(
+    voiceClient?.config
+  );
+  const [llmContext, setLlmContext] = useState<
+    { role: string; content: string }[] | undefined
+  >(voiceClient?.llmContext?.messages);
 
   async function start() {
     try {
@@ -48,6 +58,13 @@ export const DemoApp = () => {
     }, [])
   );
 
+  useVoiceClientEvent(
+    VoiceEvent.ConfigUpdated,
+    useCallback((config: VoiceClientConfigOptions) => {
+      setConfig(config);
+    }, [])
+  );
+
   return (
     <div>
       <style scoped>{`
@@ -66,7 +83,10 @@ export const DemoApp = () => {
       <h1>Hello Voice Client React Demo!</h1>
       {error}
       <p>
-        <strong>Bot is {isBotConnected ? "connected" : "not connected"}</strong>
+        <strong>
+          Bot is {isBotConnected ? "connected" : "not connected"} (
+          {voiceClient?.state})
+        </strong>
       </p>
       <div className="participants-wrapper">
         <div className="meter-wrapper">
@@ -87,22 +107,44 @@ export const DemoApp = () => {
         Disconnect
       </button>
       <hr />
-      <button onClick={() => console.log(voiceClient?.config)}>
-        Log config
-      </button>
+      <strong>Config:</strong>
+      <textarea
+        style={{ width: "100%" }}
+        rows={10}
+        readOnly
+        value={JSON.stringify(config, null, 2)}
+      />
+      <hr />
+      <strong>LLM Context:</strong>
+      <textarea
+        style={{ width: "100%" }}
+        rows={10}
+        defaultValue={JSON.stringify(llmContext, null, 2)}
+        onChange={(e) => {
+          setLlmContext(JSON.parse(e.target.value));
+        }}
+      />
       <button
-        disabled={!isConnected}
         onClick={() => {
-          voiceClient?.updateConfig({
-            llm: {
-              model: "pewpew",
-            },
-          });
+          voiceClient!.llmContext = {
+            messages: llmContext,
+          };
         }}
       >
-        Update config
+        Update LLM context
       </button>
-      <audio ref={botAudioRef} autoPlay />
+      <br />
+      Model:
+      <select
+        defaultValue={voiceClient?.llmContext?.model}
+        onChange={(e) => {
+          voiceClient!.llmContext = { model: e.target.value };
+        }}
+      >
+        <option value="llama3-8b-8192">llama3-8b-8192</option>
+        <option value="llama3-70b-8192">llama3-70b-8192</option>
+      </select>
+      <VoiceClientAudio />
     </div>
   );
 };

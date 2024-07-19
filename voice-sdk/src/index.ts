@@ -1,8 +1,9 @@
 import { Client, VoiceEventCallbacks } from "./core";
+import { VoiceMessage } from "./messages";
 import { DailyTransport, Transport } from "./transport";
 
 export interface VoiceClientOptions {
-  // @TODO: NOT API KEY, SOME OTEHR TOKEN INSTEAD
+  // @TODO: Remove. This is just for the developer preview
   apiKey: string;
 
   /**
@@ -42,7 +43,7 @@ export interface VoiceClientOptions {
   // startCameraMuted?: boolean;
 }
 
-export type ConfigLLMOptions = {
+export type VoiceClientConfigLLM = {
   model?: string;
   messages?: Array<{
     role: string;
@@ -60,12 +61,15 @@ export interface VoiceClientConfigOptions {
    *
    * Defaults to DailyTransport
    */
-  transport?: new (options: VoiceClientOptions) => Transport;
+  transport?: new (
+    options: VoiceClientOptions,
+    onMessage: (ev: VoiceMessage) => void
+  ) => Transport;
 
   /**
    * LLM service configuration options
    */
-  llm?: ConfigLLMOptions;
+  llm?: VoiceClientConfigLLM;
 
   // Not yet implemented
   idleTimeout?: number;
@@ -78,8 +82,6 @@ export interface VoiceClientConfigOptions {
  * API Client for interfacing with the Groq API.
  */
 export class VoiceClient extends Client {
-  private _options: VoiceClientOptions;
-
   constructor({ ...opts }: VoiceClientOptions = { apiKey: "" }) {
     // Validate client options
     const options: VoiceClientOptions = {
@@ -91,17 +93,6 @@ export class VoiceClient extends Client {
     };
 
     super(options);
-
-    this._options = options;
-  }
-
-  public async start() {
-    // Start session with initial config
-    super.start(this._options.config!);
-  }
-
-  public get config(): VoiceClientConfigOptions {
-    return this._options.config!;
   }
 
   public updateConfig(
