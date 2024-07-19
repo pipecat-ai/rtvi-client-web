@@ -259,7 +259,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     this._options.callbacks?.onConfigUpdated?.(this.config);
   }
 
-  // Handlers
+  // ------ Utility methods
+  public say(text: string): void {
+    this._transport.sendMessage(VoiceMessage.speak(text));
+  }
+
+  // ------ Handlers
   protected handleMessage(ev: VoiceMessage): void {
     if (ev instanceof VoiceMessageTranscript) {
       return this._options.callbacks?.onTranscript?.(ev);

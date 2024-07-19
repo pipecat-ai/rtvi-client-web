@@ -3,11 +3,9 @@ import { VoiceClientConfigLLM, VoiceClientConfigOptions } from ".";
 enum VoiceMessageType {
   // Outbound
   CONFIG = "config",
-  SPEAK = "speak",
   LLM_GET_CONTEXT = "llm-get-context",
   LLM_UPDATE_CONTEXT = "llm-update-context",
-
-  TOOL_RESPONSE = "tool-response", // Result of a clientside tool method
+  SPEAK = "tts-speak",
 
   // Inbound
   LLM_CONTEXT = "llm-context", // LLM context message
@@ -17,7 +15,8 @@ enum VoiceMessageType {
   TOOL_CALL = "tool-call", // Instruction to call a clientside tool method (expects a serialized method name and params)
 
   // Inbound (optional / not yet implemented)
-  INTERRUPT = "interrupt", // Local user interrupted the conversation
+  //INTERRUPT = "interrupt", // Local user interrupted the conversation
+  //TOOL_RESPONSE = "tool-response", // Result of a clientside tool method
 }
 
 export class VoiceMessage {
@@ -46,7 +45,7 @@ export class VoiceMessage {
 
   static speak(message: string): VoiceMessage {
     // Sent when prompting the STT model to speak
-    return new VoiceMessage(VoiceMessageType.SPEAK, { text: message });
+    return new VoiceMessage(VoiceMessageType.SPEAK, { tts: { text: message } });
   }
 
   static getLLMContext(): VoiceMessage {

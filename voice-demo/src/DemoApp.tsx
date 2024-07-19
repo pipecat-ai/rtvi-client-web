@@ -28,7 +28,7 @@ export const DemoApp = () => {
 
   async function start() {
     try {
-      await voiceClient?.start();
+      await voiceClient.start();
     } catch (e) {
       if (e instanceof RateLimitError) {
         setError("Demo is currently at capacity. Please try again later.");
@@ -171,6 +171,13 @@ export const DemoApp = () => {
       <button onClick={() => voiceClient.updateConfig(config)}>
         Update config
       </button>
+      <hr />
+      <button
+        onClick={() => voiceClient.say("Can you believe how great Pipecat is?")}
+      >
+        Say "Can you believe how great Pipecat is?"
+      </button>
+      <hr />
       <VoiceClientAudio />
     </div>
   );
