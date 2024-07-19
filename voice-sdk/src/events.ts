@@ -1,5 +1,5 @@
 import { VoiceClientConfigOptions } from ".";
-import { Participant } from "./transport";
+import { Participant, TransportState } from "./transport";
 
 export enum VoiceEvent {
   Connected = "connected",
@@ -25,7 +25,7 @@ export enum VoiceEvent {
 export type VoiceEvents = {
   connected: () => void;
   disconnected: () => void;
-  stateChanged: (state: string) => void;
+  stateChanged: (state: TransportState) => void;
 
   configUpdated: (config: VoiceClientConfigOptions) => void;
 

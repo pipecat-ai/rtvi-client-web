@@ -21,7 +21,7 @@ import {
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
   onDisconnected: () => void;
-  onStateChange: (state: string) => void;
+  onStateChange: (state: TransportState) => void;
 
   onConfigUpdated: (config: VoiceClientConfigOptions) => void;
 
@@ -70,7 +70,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onDisconnected?.();
         this.emit(VoiceEvent.Disconnected);
       },
-      onStateChange: (state) => {
+      onStateChange: (state: TransportState) => {
         options?.callbacks?.onStateChange?.(state);
         this.emit(VoiceEvent.TransportStateChanged, state);
       },
@@ -148,6 +148,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (!this._apiKey) {
       throw new Error("API Key is required");
     }
+
+    this._transport.state = "handshaking";
 
     const config: VoiceClientConfigOptions = this._options.config!;
 
@@ -250,7 +252,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       },
     } as VoiceClientConfigOptions;
 
-    if (this._transport.state === TransportState.Connected) {
+    if (this._transport.state === "connected") {
       this._transport.sendMessage(VoiceMessage.updateLLMContext(llmConfig));
     }
 

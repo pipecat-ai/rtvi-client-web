@@ -6,6 +6,7 @@ import {
 } from "@realtime-ai/voice-sdk-react";
 import {
   RateLimitError,
+  TransportState,
   VoiceClientConfigOptions,
   VoiceEvent,
 } from "@realtime-ai/voice-sdk";
@@ -14,6 +15,9 @@ export const DemoApp = () => {
   const voiceClient = useVoiceClient();
   const [isConnected, setIsConnected] = useState(false);
   const [isBotConnected, setIsBotConnected] = useState(false);
+  const [transportState, setTransportState] = useState<
+    TransportState | undefined
+  >(voiceClient?.state);
   const [error, setError] = useState<string | null>(null);
   const [config, setConfig] = useState<VoiceClientConfigOptions | undefined>(
     voiceClient?.config
@@ -38,6 +42,7 @@ export const DemoApp = () => {
       setIsConnected(true);
     }, [])
   );
+
   useVoiceClientEvent(
     VoiceEvent.Disconnected,
     useCallback(() => {
@@ -51,6 +56,14 @@ export const DemoApp = () => {
       if (!p.local) setIsBotConnected(true);
     }, [])
   );
+
+  useVoiceClientEvent(
+    VoiceEvent.TransportStateChanged,
+    useCallback((state: TransportState) => {
+      setTransportState(state);
+    }, [])
+  );
+
   useVoiceClientEvent(
     VoiceEvent.ParticipantLeft,
     useCallback((p) => {
@@ -86,7 +99,7 @@ export const DemoApp = () => {
       <p>
         <strong>
           Bot is {isBotConnected ? "connected" : "not connected"} (
-          {voiceClient?.state})
+          {transportState})
         </strong>
       </p>
       <div className="participants-wrapper">
@@ -101,7 +114,7 @@ export const DemoApp = () => {
           </div>
         )}
       </div>
-      <button disabled={isConnected} onClick={() => start()}>
+      <button disabled={transportState !== "idle"} onClick={() => start()}>
         Connect
       </button>
       <button disabled={!isConnected} onClick={() => voiceClient?.disconnect()}>

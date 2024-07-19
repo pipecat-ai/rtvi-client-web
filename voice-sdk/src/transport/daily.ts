@@ -15,10 +15,11 @@ import {
   VoiceMessage,
   VoiceMessageTranscript,
 } from "..";
-import { Participant, Tracks, Transport, TransportState } from ".";
+import type { TransportState } from ".";
+import { Participant, Tracks, Transport } from ".";
 
 export class DailyTransport extends Transport {
-  protected _state: TransportState = TransportState.Idle;
+  protected _state: TransportState = "idle";
 
   private _daily: DailyCall;
   private _localAudioLevelObserver: (level: number) => void;
@@ -80,6 +81,8 @@ export class DailyTransport extends Transport {
   }
 
   async connect({ url, token }: { url: string; token: string }) {
+    this.state = "connecting";
+
     this.attachEventListeners();
 
     try {
@@ -94,7 +97,7 @@ export class DailyTransport extends Transport {
       return;
     }
 
-    this.state = TransportState.Connected;
+    this.state = "connected";
 
     this._callbacks.onConnected?.();
 
@@ -146,7 +149,7 @@ export class DailyTransport extends Transport {
 
     await this._daily.leave();
 
-    this.state = TransportState.Disconnected;
+    this.state = "disconnected";
   }
 
   public sendMessage(message: VoiceMessage) {
@@ -232,7 +235,7 @@ export class DailyTransport extends Transport {
   }
 
   private handleLeftMeeting() {
-    this.state = TransportState.Disconnected;
+    this.state = "disconnected";
 
     this._botId = "";
     this._callbacks.onDisconnected?.();

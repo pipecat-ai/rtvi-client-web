@@ -1,13 +1,13 @@
 import { VoiceClientConfigOptions, VoiceClientOptions, VoiceMessage } from "..";
 import { VoiceEventCallbacks } from "../core";
 
-export enum TransportState {
-  Idle = "idle",
-  Connecting = "connecting",
-  Connected = "connected",
-  Disconnected = "disconnected",
-  Error = "error",
-}
+export type TransportState =
+  | "idle"
+  | "handshaking"
+  | "connecting"
+  | "connected"
+  | "disconnected"
+  | "error";
 
 export type Participant = {
   id: string;
@@ -31,7 +31,7 @@ export abstract class Transport {
   protected _callbacks: VoiceEventCallbacks;
   protected _config: VoiceClientConfigOptions;
   protected _onMessage: (ev: VoiceMessage) => void;
-  protected _state: TransportState = TransportState.Idle;
+  protected _state: TransportState = "idle";
 
   constructor(
     options: VoiceClientOptions,
