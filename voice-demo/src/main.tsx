@@ -15,7 +15,7 @@ const voiceClient = new VoiceClient({
     onDisconnected: () => {
       console.log("[CALLBACK] Disconnected");
     },
-    onStateChange: (state: string) => {
+    onTransportStateChanged: (state: string) => {
       console.log("[CALLBACK] State change:", state);
     },
     onBotConnected: () => {

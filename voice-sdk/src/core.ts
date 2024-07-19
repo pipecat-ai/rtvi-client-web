@@ -21,7 +21,7 @@ import {
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
   onDisconnected: () => void;
-  onStateChange: (state: TransportState) => void;
+  onTransportStateChanged: (state: TransportState) => void;
 
   onConfigUpdated: (config: VoiceClientConfigOptions) => void;
 
@@ -70,8 +70,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onDisconnected?.();
         this.emit(VoiceEvent.Disconnected);
       },
-      onStateChange: (state: TransportState) => {
-        options?.callbacks?.onStateChange?.(state);
+      onTransportStateChanged: (state: TransportState) => {
+        options?.callbacks?.onTransportStateChanged?.(state);
         this.emit(VoiceEvent.TransportStateChanged, state);
       },
       onConfigUpdated: (config: VoiceClientConfigOptions) => {

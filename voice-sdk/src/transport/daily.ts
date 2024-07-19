@@ -48,7 +48,7 @@ export class DailyTransport extends Transport {
 
   private set state(state: TransportState) {
     this._state = state;
-    this._callbacks.onStateChange?.(state);
+    this._callbacks.onTransportStateChanged?.(state);
   }
 
   enableMic(enable: boolean) {

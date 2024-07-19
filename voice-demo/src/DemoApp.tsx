@@ -12,19 +12,19 @@ import {
 } from "@realtime-ai/voice-sdk";
 
 export const DemoApp = () => {
-  const voiceClient = useVoiceClient();
+  const voiceClient = useVoiceClient()!;
   const [isConnected, setIsConnected] = useState(false);
   const [isBotConnected, setIsBotConnected] = useState(false);
-  const [transportState, setTransportState] = useState<
-    TransportState | undefined
-  >(voiceClient?.state);
+  const [transportState, setTransportState] = useState<TransportState>(
+    voiceClient.state
+  );
   const [error, setError] = useState<string | null>(null);
-  const [config, setConfig] = useState<VoiceClientConfigOptions | undefined>(
-    voiceClient?.config
+  const [config, setConfig] = useState<VoiceClientConfigOptions>(
+    voiceClient.config
   );
   const [llmContext, setLlmContext] = useState<
     { role: string; content: string }[] | undefined
-  >(voiceClient?.llmContext?.messages);
+  >(voiceClient.llmContext?.messages);
 
   async function start() {
     try {
@@ -117,7 +117,7 @@ export const DemoApp = () => {
       <button disabled={transportState !== "idle"} onClick={() => start()}>
         Connect
       </button>
-      <button disabled={!isConnected} onClick={() => voiceClient?.disconnect()}>
+      <button disabled={!isConnected} onClick={() => voiceClient.disconnect()}>
         Disconnect
       </button>
       <hr />
@@ -140,7 +140,7 @@ export const DemoApp = () => {
       />
       <button
         onClick={() => {
-          voiceClient!.llmContext = {
+          voiceClient.llmContext = {
             messages: llmContext,
           };
         }}
@@ -150,9 +150,9 @@ export const DemoApp = () => {
       <hr />
       Model:
       <select
-        defaultValue={voiceClient?.llmContext?.model}
+        defaultValue={voiceClient.llmContext?.model}
         onChange={(e) => {
-          voiceClient!.llmContext = { model: e.target.value };
+          voiceClient.llmContext = { model: e.target.value };
         }}
       >
         <option value="llama3-8b-8192">llama3-8b-8192</option>
@@ -162,13 +162,13 @@ export const DemoApp = () => {
       Voice:{" "}
       <input
         type="text"
-        defaultValue={voiceClient?.config?.tts?.voice}
+        defaultValue={voiceClient.config.tts?.voice}
         onChange={(e) => {
-          voiceClient?.updateConfig({ tts: { voice: e.target.value } }, true);
+          voiceClient.updateConfig({ tts: { voice: e.target.value } }, true);
         }}
       />
       <br />
-      <button onClick={() => voiceClient?.updateConfig(config!)}>
+      <button onClick={() => voiceClient.updateConfig(config)}>
         Update config
       </button>
       <VoiceClientAudio />
