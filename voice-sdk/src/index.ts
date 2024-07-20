@@ -6,7 +6,17 @@ export interface VoiceClientOptions {
   /**
    * Base URL for the transport service
    */
-  baseUrl?: string;
+  baseUrl: string;
+
+  /**
+   * Override the default transport for media streaming.
+   *
+   * Defaults to DailyTransport
+   */
+  transport?: new (
+    options: VoiceClientOptions,
+    onMessage: (ev: VoiceMessage) => void
+  ) => Transport;
 
   /**
    * Enable user mic input
@@ -54,16 +64,6 @@ export type ConfigTTSOptions = {
 
 export interface VoiceClientConfigOptions {
   /**
-   * Override the default transport for media streaming.
-   *
-   * Defaults to DailyTransport
-   */
-  transport?: new (
-    options: VoiceClientOptions,
-    onMessage: (ev: VoiceMessage) => void
-  ) => Transport;
-
-  /**
    * LLM service configuration options
    */
   llm?: VoiceClientConfigLLM;
@@ -79,15 +79,17 @@ export interface VoiceClientConfigOptions {
  * API Client for interfacing with the Groq API.
  */
 export class VoiceClient extends Client {
-  constructor({ ...opts }: VoiceClientOptions = {
-    // Defaults go here
-  }) {
+  constructor(
+    { ...opts }: VoiceClientOptions = {
+      baseUrl: "https://rtvi.pipecat.bot",
+    }
+  ) {
     // Validate client options
     const options: VoiceClientOptions = {
       ...opts,
+      transport: opts.transport || DailyTransport,
       config: {
         ...opts.config,
-        transport: opts.config?.transport || DailyTransport,
       },
     };
 

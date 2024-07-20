@@ -102,16 +102,16 @@ export class DailyTransport extends Transport {
       return;
     }
 
-    this.state = "connected";
-
-    this._callbacks.onConnected?.();
-
+    // Instantiate audio processors
     this._localAudioLevelObserver = this.createAudioLevelProcessor(
       dailyParticipantToParticipant(this._daily.participants().local)
     );
+    await this._daily.startLocalAudioLevelObserver(100);
+    await this._daily.startRemoteParticipantsAudioLevelObserver(100);
 
-    this._daily.startLocalAudioLevelObserver(100);
-    this._daily.startRemoteParticipantsAudioLevelObserver(100);
+    this.state = "connected";
+
+    this._callbacks.onConnected?.();
   }
 
   private attachEventListeners() {

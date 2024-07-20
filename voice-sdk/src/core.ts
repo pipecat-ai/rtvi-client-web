@@ -56,7 +56,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   constructor(options: VoiceClientOptions) {
     super();
 
-    this._baseUrl = options.baseUrl || "https://rtvi.pipecat.bot";
+    this._baseUrl = options.baseUrl;
 
     // Wrap transport callbacks with events for developer convenience
     const wrappedCallbacks: VoiceEventCallbacks = {
