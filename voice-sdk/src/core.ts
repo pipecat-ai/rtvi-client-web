@@ -52,12 +52,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   protected _options: VoiceClientOptions;
   private _transport: Transport;
   private readonly _baseUrl: string;
-  private readonly _apiKey: string;
 
   constructor(options: VoiceClientOptions) {
     super();
+
     this._baseUrl = options.baseUrl || "https://rtvi.pipecat.bot";
-    this._apiKey = options.apiKey;
 
     // Wrap transport callbacks with events for developer convenience
     const wrappedCallbacks: VoiceEventCallbacks = {
@@ -145,10 +144,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   // ------ Transport methods
   public async start() {
-    if (!this._apiKey) {
-      throw new Error("API Key is required");
-    }
-
     this._transport.state = "handshaking";
 
     const config: VoiceClientConfigOptions = this._options.config!;
@@ -161,10 +156,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     const { room, token } = await fetch(`${this._baseUrl}/authenticate`, {
       method: "POST",
       mode: "cors",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this._apiKey}`,
-      },
     }).then((res) => res.json());
 
     if (!room || !token) {

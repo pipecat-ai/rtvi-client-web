@@ -3,9 +3,6 @@ import { VoiceMessage } from "./messages";
 import { DailyTransport, Transport } from "./transport";
 
 export interface VoiceClientOptions {
-  // @TODO: Remove. This is just for the developer preview
-  apiKey: string;
-
   /**
    * Base URL for the transport service
    */
@@ -82,7 +79,9 @@ export interface VoiceClientConfigOptions {
  * API Client for interfacing with the Groq API.
  */
 export class VoiceClient extends Client {
-  constructor({ ...opts }: VoiceClientOptions = { apiKey: "" }) {
+  constructor({ ...opts }: VoiceClientOptions = {
+    // Defaults go here
+  }) {
     // Validate client options
     const options: VoiceClientOptions = {
       ...opts,
