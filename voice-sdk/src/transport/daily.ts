@@ -154,7 +154,7 @@ export class DailyTransport extends Transport {
 
     await this._daily.leave();
 
-    this.state = "disconnected";
+    // Note: this left-meeting event will trigger and update state / callback
   }
 
   public sendMessage(message: VoiceMessage) {
@@ -239,7 +239,6 @@ export class DailyTransport extends Transport {
 
   private handleLeftMeeting() {
     this.state = "disconnected";
-
     this._botId = "";
     this._callbacks.onDisconnected?.();
   }

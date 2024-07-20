@@ -20,6 +20,9 @@ const voiceClient = new VoiceClient({
     onBotConnected: () => {
       console.log("[CALLBACK] Bot connected");
     },
+    onBotDisconnected: () => {
+      console.log("[CALLBACK] Bot disconnected");
+    },
     onBotStartedTalking: () => {
       console.log("[CALLBACK] Bot started talking");
     },

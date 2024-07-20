@@ -22,6 +22,13 @@ export class RateLimitError extends VoiceError {
   }
 }
 
+export class AuthenticationError extends VoiceError {
+  override readonly status = 500;
+  constructor(message?: string | undefined) {
+    super(message ?? "Unable to authenticate");
+  }
+}
+
 export class ConfigUpdateError extends VoiceError {
   override readonly status = 400;
   constructor(message?: string | undefined) {

@@ -152,11 +152,23 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
      * SOF: placeholder service-side logic
      */
     // Handshake with the server to get the room and token
-    // Note: this should be done on the server side
-    const { room, token } = await fetch(`${this._baseUrl}/authenticate`, {
-      method: "POST",
-      mode: "cors",
-    }).then((res) => res.json());
+    // Note: this should be done by a developers own server side method
+    let room: string;
+    let token: string;
+
+    try {
+      const req = await fetch(`${this._baseUrl}/authenticate`, {
+        method: "POST",
+        mode: "cors",
+      });
+      const data = await req.json();
+      room = data.room;
+      token = data.token;
+    } catch (e) {
+      throw new VoiceErrors.AuthenticationError(
+        "Failed to authenticate with the server"
+      );
+    }
 
     if (!room || !token) {
       // In lieu of proper error codes, a failed authentication indicates
