@@ -1,6 +1,7 @@
 {
   "name": "@realtime-ai/voice-sdk",
-  "version": "0.3.0",
+  "version": "0.3.1",
+  "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
   "types": "dist/index.d.ts",
