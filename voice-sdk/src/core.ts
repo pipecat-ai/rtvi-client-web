@@ -226,7 +226,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   public updateConfig(
     config: VoiceClientConfigOptions,
-    useDeepMerge: boolean = false
+    useDeepMerge: boolean = false,
+    sendPartial: boolean = false
   ) {
     if (useDeepMerge) {
       this.config = deepmerge(this.config, config);
@@ -235,7 +236,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
 
     if (this._transport.state === "connected") {
-      this._transport.sendMessage(VoiceMessage.config(this.config));
+      this._transport.sendMessage(
+        VoiceMessage.config(sendPartial ? config : this.config)
+      );
     }
 
     this._options.callbacks?.onConfigUpdated?.(this.config);
@@ -263,18 +266,47 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     this._options.callbacks?.onConfigUpdated?.(this.config);
   }
 
+  /**
+   * Append a message to the live LLM context. Requires the bot to be connected.
+   * @param message - LLM message (role and content)
+   */
   public appendLLMContext(message: { role: string; content: string }): void {
-    if (this._transport.state !== "connected") {
-      return;
+    if (this._transport.state === "connected") {
+      this._transport.sendMessage(VoiceMessage.appendLLMContext(message));
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Attempt to update LLM context while transport not in connected state"
+      );
     }
-
-    this._transport.sendMessage(VoiceMessage.appendLLMContext(message));
   }
 
   // ------ Utility methods
-  public say(text: string): void {
+
+  /**
+   * Send a string to the STT model to be spoken. Requires the bot to be connected.
+   * @param text - The text to be spoken
+   * @param interrupt - Whether to interrupt the current speech (if the bot is talking)
+   */
+  public say(text: string, interrupt: boolean = false): void {
     if (this._transport.state === "connected") {
-      this._transport.sendMessage(VoiceMessage.speak(text));
+      this._transport.sendMessage(VoiceMessage.speak(text, interrupt));
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Attempted to speak while transport not in connected state"
+      );
+    }
+  }
+
+  /**
+   * Manually interrupt the bot's TTS. Requires the bot to be connected.
+   */
+  public interrupt(): void {
+    if (this._transport.state === "connected") {
+      this._transport.sendMessage(VoiceMessage.interrupt());
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Attempted to interrupt bot TTS wite transport not in connected state"
+      );
     }
   }
 

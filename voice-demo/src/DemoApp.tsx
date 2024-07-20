@@ -28,6 +28,9 @@ export const DemoApp = () => {
 
   const [message, setMessage] = useState<string>("");
   const [role, setRole] = useState<string>("user");
+  const [voice, setVoice] = useState<string | undefined>(
+    voiceClient.config.tts?.voice
+  );
 
   async function start() {
     try {
@@ -165,18 +168,27 @@ export const DemoApp = () => {
       Voice:{" "}
       <input
         type="text"
-        defaultValue={voiceClient.config.tts?.voice}
+        defaultValue={voice}
         onChange={(e) => {
-          voiceClient.updateConfig({ tts: { voice: e.target.value } }, true);
+          setVoice(e.target.value);
         }}
       />
+      <button
+        onClick={() =>
+          voiceClient.updateConfig({ tts: { voice: voice } }, false, true)
+        }
+      >
+        Update voice
+      </button>
       <hr />
       <button
-        disabled={!isBotConnected}
-        onClick={() => voiceClient.say("Can you believe how great Pipecat is?")}
+        onClick={() =>
+          voiceClient.say("Can you believe how great Pipecat is?", true)
+        }
       >
         Say "Can you believe how great Pipecat is?"
       </button>
+      <button onClick={() => voiceClient.interrupt()}>Interrupt</button>
       <hr />
       <input
         type="text"
@@ -189,9 +201,8 @@ export const DemoApp = () => {
       </select>
       <button
         onClick={() => {
-          voiceClient.appendLLMContext({ role, content: message });
+          voiceClient.appendLLMContext({ role: role, content: message });
           setMessage("");
-          setRole("user");
         }}
       >
         Send message

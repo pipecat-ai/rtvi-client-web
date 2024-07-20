@@ -7,6 +7,7 @@ enum VoiceMessageType {
   LLM_UPDATE_CONTEXT = "llm-update-context",
   LLM_APPEND_CONTEXT = "llm-append-context",
   SPEAK = "tts-speak",
+  INTERRUPT = "tts-interrupt",
 
   // Inbound
   LLM_CONTEXT = "llm-context", // LLM context message
@@ -41,6 +42,7 @@ export class VoiceMessage {
   // Outbound message types
   static config(configuration: VoiceClientConfigOptions): VoiceMessage {
     // Sent when the configuration options of services has changed
+    // We only send a partial configuration update to the bot related to the pipeline
     return new VoiceMessage(VoiceMessageType.CONFIG, {
       config: {
         llm: configuration.llm,
@@ -49,11 +51,19 @@ export class VoiceMessage {
     });
   }
 
-  static speak(message: string): VoiceMessage {
+  // TTS
+  static speak(message: string, interrupt: boolean): VoiceMessage {
     // Sent when prompting the STT model to speak
-    return new VoiceMessage(VoiceMessageType.SPEAK, { tts: { text: message } });
+    return new VoiceMessage(VoiceMessageType.SPEAK, {
+      tts: { text: message, interrupt },
+    });
   }
 
+  static interrupt(): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.INTERRUPT, {});
+  }
+
+  // LLM
   static getLLMContext(): VoiceMessage {
     // Sent when requesting the latest LLM context
     return new VoiceMessage(VoiceMessageType.LLM_GET_CONTEXT, {});
