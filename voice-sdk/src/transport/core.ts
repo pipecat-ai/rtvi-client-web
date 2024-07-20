@@ -62,5 +62,7 @@ export abstract class Transport {
   abstract get state(): TransportState;
   abstract set state(state: TransportState);
 
+  abstract get expiry(): number | undefined;
+
   abstract tracks(): Tracks;
 }
