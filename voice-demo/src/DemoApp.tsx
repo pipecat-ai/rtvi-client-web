@@ -45,6 +45,8 @@ export const DemoApp = () => {
   useVoiceClientEvent(
     VoiceEvent.Connected,
     useCallback(() => {
+      console.log(voiceClient.transportExpiry);
+
       setIsConnected(true);
     }, [])
   );

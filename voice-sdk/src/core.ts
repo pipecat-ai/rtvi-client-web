@@ -296,7 +296,20 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       this._transport.sendMessage(VoiceMessage.interrupt());
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempted to interrupt bot TTS wite transport not in connected state"
+        "Attempted to interrupt bot TTS write transport not in connected state"
+      );
+    }
+  }
+
+  /**
+   * Get the expiry time for the transport session (if applicable)
+   */
+  public get transportExpiry(): number | undefined {
+    if (this._transport.state === "connected") {
+      return this._transport.expiry;
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Attempted to get transport expiry time when transport not in connected state"
       );
     }
   }

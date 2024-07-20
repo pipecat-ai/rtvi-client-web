@@ -20,6 +20,7 @@ export class DailyTransport extends Transport {
   private _localAudioLevelObserver: (level: number) => void;
   private _botAudioLevelObserver: (level: number) => void;
   private _botId: string = "";
+  private _expiry: number | undefined = undefined;
 
   constructor(
     options: VoiceClientOptions,
@@ -48,6 +49,10 @@ export class DailyTransport extends Transport {
 
   enableMic(enable: boolean) {
     this._daily.setLocalAudio(enable);
+  }
+
+  get expiry(): number | undefined {
+    return this._expiry;
   }
 
   get isMicEnabled() {
@@ -86,6 +91,11 @@ export class DailyTransport extends Transport {
         url: `https://rtvi.daily.co/${url}`,
         token,
       });
+      // Get room expiry
+      const room = await this._daily.room();
+      if (room && "id" in room) {
+        this._expiry = room.config?.exp;
+      }
     } catch (e) {
       //@TODO: Error handling here
       console.error("Failed to join call", e);
