@@ -1,4 +1,4 @@
-import { deepmerge } from "deepmerge-ts";
+import { deepmergeCustom } from "deepmerge-ts";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
@@ -120,8 +120,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     };
 
     // Instantiate the transport
-    this._transport = options?.config?.transport
-      ? new options.config.transport(
+    this._transport = options?.transport
+      ? new options.transport(
           {
             ...options,
             callbacks: wrappedCallbacks,
@@ -229,11 +229,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   public updateConfig(
     config: VoiceClientConfigOptions,
-    useDeepMerge: boolean = false,
-    sendPartial: boolean = false
+    {
+      useDeepMerge = false,
+      sendPartial = false,
+    }: { useDeepMerge?: boolean; sendPartial?: boolean }
   ) {
     if (useDeepMerge) {
-      this.config = deepmerge(this.config, config);
+      const customMerge = deepmergeCustom({ mergeArrays: false });
+      this.config = customMerge(this.config, config);
     } else {
       this.config = config;
     }

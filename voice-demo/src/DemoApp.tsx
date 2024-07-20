@@ -160,7 +160,10 @@ export const DemoApp = () => {
       <select
         defaultValue={voiceClient.llmContext?.model}
         onChange={(e) => {
-          voiceClient.updateConfig({ llm: { model: e.target.value } }, true);
+          voiceClient.updateConfig(
+            { llm: { model: e.target.value } },
+            { useDeepMerge: true }
+          );
         }}
       >
         <option value="llama3-8b-8192">llama3-8b-8192</option>
@@ -177,7 +180,10 @@ export const DemoApp = () => {
       />
       <button
         onClick={() =>
-          voiceClient.updateConfig({ tts: { voice: voice } }, false, true)
+          voiceClient.updateConfig(
+            { tts: { voice: voice } },
+            { useDeepMerge: false, sendPartial: true }
+          )
         }
       >
         Update voice
