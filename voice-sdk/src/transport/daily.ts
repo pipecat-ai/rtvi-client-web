@@ -165,6 +165,21 @@ export class DailyTransport extends Transport {
   private handleAppMessage(ev: DailyEventObjectAppMessage) {
     let msg;
 
+    // Transport events
+
+    // LLM messages
+    if (ev.data.type === "json-completion") {
+      this._callbacks.onJsonCompletion?.(ev.data.data);
+    }
+
+    // TTS events
+
+    // Call response messages
+
+    // Metric events
+
+    // Transcription events
+
     if (ev.fromId) {
       msg = new VoiceMessageTranscript({ text: "test", final: true });
     } else {

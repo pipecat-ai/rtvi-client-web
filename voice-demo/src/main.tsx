@@ -35,6 +35,9 @@ const voiceClient = new VoiceClient({
     onLocalStoppedTalking: () => {
       console.log("[CALLBACK] Local stopped talking");
     },
+    onJsonCompletion: (jsonString: string) => {
+      console.log("[CALLBACK] JSON Completion: ", jsonString);
+    },
   },
   config: {
     llm: {
