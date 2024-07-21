@@ -85,6 +85,17 @@ export const DemoApp = () => {
     }, [])
   );
 
+  useVoiceClientEvent(
+    VoiceEvent.JSONCompletion,
+    useCallback((jsonString: string) => {
+      console.log("json string received:", jsonString);
+      voiceClient.appendLLMContext({
+        role: "user",
+        content: '{"baz": "quox"}',
+      });
+    }, [])
+  );
+
   return (
     <div>
       <style scoped>{`

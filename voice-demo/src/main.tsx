@@ -32,6 +32,9 @@ const voiceClient = new VoiceClient({
     onLocalStoppedTalking: () => {
       console.log("[CALLBACK] Local stopped talking");
     },
+    onJsonCompletion: (jsonString: string) => {
+      console.log("[CALLBACK] JSON Completion: ", jsonString);
+    },
   },
   config: {
     llm: {
@@ -39,7 +42,8 @@ const voiceClient = new VoiceClient({
       messages: [
         {
           role: "system",
-          content: "You are a helpful assistant named Gary. Briefly say hello!",
+          content:
+            'You are a helpful assistant named Gary. If I say "codeword", respond with {"foo": "bar"}. Do not include any other characters in your response.',
         },
       ],
     },

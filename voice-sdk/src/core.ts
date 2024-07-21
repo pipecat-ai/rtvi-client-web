@@ -44,6 +44,8 @@ export type VoiceEventCallbacks = Partial<{
 
   onTranscript: (text: VoiceMessageTranscript) => void;
 
+  onJsonCompletion: (jsonString: string) => any;
+
   // @@ Not yet implemented @@
   // onTextFrame: (text: string) => void;
 }>;
@@ -116,6 +118,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onLocalAudioLevel: (level) => {
         options?.callbacks?.onLocalAudioLevel?.(level);
         this.emit(VoiceEvent.LocalAudioLevel, level);
+      },
+      onJsonCompletion: (jsonString: string) => {
+        options?.callbacks?.onJsonCompletion?.(jsonString);
+        this.emit(VoiceEvent.JSONCompletion, jsonString);
       },
     };
 
