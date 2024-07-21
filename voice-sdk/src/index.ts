@@ -94,8 +94,6 @@ export class VoiceClient extends Client {
     };
 
     super(options);
-
-    console.log(this.config);
   }
 }
 

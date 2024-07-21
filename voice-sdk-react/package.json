@@ -1,6 +1,9 @@
 {
   "name": "@realtime-ai/voice-sdk-react",
   "version": "0.1.0",
+  "publishConfig": {
+    "access": "restricted"
+  },
   "main": "dist/index.js",
   "module": "dist/index.module.js",
   "types": "dist/index.d.ts",
