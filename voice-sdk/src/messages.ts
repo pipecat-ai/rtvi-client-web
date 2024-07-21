@@ -1,4 +1,5 @@
 import { VoiceClientConfigLLM, VoiceClientConfigOptions } from ".";
+import { LLMMessage } from "./core";
 
 enum VoiceMessageType {
   // Outbound
@@ -75,12 +76,9 @@ export class VoiceMessage {
     });
   }
 
-  static appendLLMContext(message: {
-    role: string;
-    content: string;
-  }): VoiceMessage {
+  static appendLLMContext(messages: LLMMessage[]): VoiceMessage {
     return new VoiceMessage(VoiceMessageType.LLM_APPEND_CONTEXT, {
-      llm: { messages: [message] },
+      llm: { messages },
     });
   }
 }

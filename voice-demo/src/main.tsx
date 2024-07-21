@@ -42,7 +42,8 @@ const voiceClient = new VoiceClient({
       messages: [
         {
           role: "system",
-          content: "You are a bot.",
+          content:
+            'You are a helpful assistant named Gary. If I say "codeword", respond with {"foo": "bar"}. Do not include any other characters in your response.',
         },
       ],
     },

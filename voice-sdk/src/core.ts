@@ -50,6 +50,11 @@ export type VoiceEventCallbacks = Partial<{
   // onTextFrame: (text: string) => void;
 }>;
 
+export type LLMMessage = {
+  role: string;
+  content: string;
+};
+
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
   protected _options: VoiceClientOptions;
   private _transport: Transport;
@@ -267,9 +272,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Append a message to the live LLM context. Requires the bot to be connected.
    * @param message - LLM message (role and content)
    */
-  public appendLLMContext(message: { role: string; content: string }): void {
+  public appendLLMContext(messages: LLMMessage | LLMMessage[]): void {
     if (this._transport.state === "connected") {
-      this._transport.sendMessage(VoiceMessage.appendLLMContext(message));
+      if (!Array.isArray(messages)) {
+        messages = [messages];
+      }
+      this._transport.sendMessage(VoiceMessage.appendLLMContext(messages));
     } else {
       throw new VoiceErrors.VoiceError(
         "Attempt to update LLM context while transport not in connected state"
