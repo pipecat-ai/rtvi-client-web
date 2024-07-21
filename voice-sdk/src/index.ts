@@ -28,6 +28,13 @@ export interface VoiceClientOptions {
   enableMic?: boolean;
 
   /**
+   * Enable user cam input
+   *
+   * Default to false
+   */
+  enableCam?: boolean;
+
+  /**
    * Join the session with the user's mic muted
    *
    * Default to false

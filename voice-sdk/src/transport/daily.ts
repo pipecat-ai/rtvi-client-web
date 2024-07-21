@@ -29,7 +29,7 @@ export class DailyTransport extends Transport {
     super(options, onMessage);
 
     this._daily = Daily.createCallObject({
-      videoSource: false,
+      videoSource: options.enableCam ?? false,
       audioSource: options.enableMic ?? false,
       dailyConfig: {},
     });
@@ -51,12 +51,20 @@ export class DailyTransport extends Transport {
     this._daily.setLocalAudio(enable);
   }
 
-  get expiry(): number | undefined {
-    return this._expiry;
-  }
-
   get isMicEnabled() {
     return this._daily.localAudio();
+  }
+
+  enableCam(enable: boolean) {
+    this._daily.setLocalVideo(enable);
+  }
+
+  get isCamEnabled() {
+    return this._daily.localVideo();
+  }
+
+  get expiry(): number | undefined {
+    return this._expiry;
   }
 
   tracks() {

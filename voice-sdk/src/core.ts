@@ -211,6 +211,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return this._transport.isMicEnabled;
   }
 
+  public enableCam(enable: boolean) {
+    this._transport.enableCam(enable);
+  }
+
+  public get isCamEnabled(): boolean {
+    return this._transport.isCamEnabled;
+  }
+
   public get state(): TransportState {
     return this._transport.state;
   }

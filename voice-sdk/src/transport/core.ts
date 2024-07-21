@@ -54,10 +54,12 @@ export abstract class Transport {
   abstract disconnect(): Promise<void>;
 
   abstract enableMic(enable: boolean): void;
+  abstract enableCam(enable: boolean): void;
+
+  abstract get isCamEnabled(): boolean;
+  abstract get isMicEnabled(): boolean;
 
   abstract sendMessage(message: VoiceMessage): void;
-
-  abstract get isMicEnabled(): boolean;
 
   abstract get state(): TransportState;
   abstract set state(state: TransportState);
