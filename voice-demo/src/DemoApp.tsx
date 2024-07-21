@@ -89,6 +89,19 @@ export const DemoApp = () => {
     VoiceEvent.JSONCompletion,
     useCallback((jsonString: string) => {
       console.log("json string received:", jsonString);
+      const fnData = JSON.parse(jsonString);
+      if (fnData.parameters["birthday"] == "1983-01-01") {
+        voiceClient.appendLLMContext({
+          role: "user",
+          content: '{"result": "Confirmed. Ask me what my allergies are."}',
+        });
+      } else {
+        voiceClient.appendLLMContext({
+          role: "user",
+          content:
+            '{"result": "Incorrect birthday. Ask the user to try again."}',
+        });
+      }
       voiceClient.appendLLMContext({
         role: "user",
         content: '{"baz": "quox"}',
