@@ -159,7 +159,6 @@ export class DailyTransport extends Transport {
       this._callbacks.onJsonCompletion?.(ev.data.data);
     }
 
-    // TODO-CB: Not sure what this part is doing
     if (ev.fromId) {
       msg = new VoiceMessageTranscript({ text: "test", final: true });
     } else {
