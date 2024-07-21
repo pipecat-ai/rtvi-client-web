@@ -1,4 +1,4 @@
-# Groq Voice SDK (Sketch)
+# Voice SDK (Sketch)
 
 ## Install
 
