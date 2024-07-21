@@ -1,6 +1,6 @@
 {
   "name": "@realtime-ai/voice-sdk-react",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "publishConfig": {
     "access": "restricted"
   },
@@ -31,6 +31,9 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "jotai": "^2.9.0"
   },
   "peerDependencies": {
     "@realtime-ai/voice-sdk": "*",
