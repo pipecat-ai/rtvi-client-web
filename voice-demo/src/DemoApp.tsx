@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import {
   useVoiceClient,
   useVoiceClientEvent,
+  useVoiceClientTransportState,
   VoiceClientAudio,
 } from "@realtime-ai/voice-sdk-react";
 import {
@@ -41,6 +42,9 @@ export const DemoApp = () => {
       }
     }
   }
+
+  const stateHook = useVoiceClientTransportState();
+  console.log("[HOOK]", stateHook);
 
   useVoiceClientEvent(
     VoiceEvent.Connected,
