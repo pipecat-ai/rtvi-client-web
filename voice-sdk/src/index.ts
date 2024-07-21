@@ -4,7 +4,9 @@ import { DailyTransport, Transport } from "./transport";
 
 export interface VoiceClientOptions {
   /**
-   * Base URL for the transport service
+   * Base URL for auth handlers and transport services
+   *
+   * Defaults to a POST request with a the config object as the body
    */
   baseUrl: string;
 
@@ -50,12 +52,14 @@ export interface VoiceClientOptions {
   // startCameraMuted?: boolean;
 }
 
+export type VoiceClientLLMMessage = {
+  role: string;
+  content: string;
+};
+
 export type VoiceClientConfigLLM = {
   model?: string;
-  messages?: Array<{
-    role: string;
-    content: string;
-  }>;
+  messages?: VoiceClientLLMMessage[];
 };
 
 export type ConfigTTSOptions = {

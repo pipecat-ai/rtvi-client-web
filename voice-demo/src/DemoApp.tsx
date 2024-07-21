@@ -52,6 +52,23 @@ export const DemoApp = () => {
   );
 
   useVoiceClientEvent(
+    VoiceEvent.JSONCompletion,
+    useCallback((jsonString: string) => {
+      console.log("json string received:", jsonString);
+      const fnData = JSON.parse(jsonString);
+      if (fnData) {
+        voiceClient.appendLLMContext([
+          { role: "user", content: '{"identity": "confirmed"}' },
+          {
+            role: "user",
+            content: "Tell me I'm a secret spy.",
+          },
+        ]);
+      }
+    }, [])
+  );
+
+  useVoiceClientEvent(
     VoiceEvent.Disconnected,
     useCallback(() => {
       setIsConnected(false);

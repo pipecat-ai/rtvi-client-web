@@ -20,6 +20,7 @@ export enum VoiceEvent {
   LocalStartedTalking = "localStartedTalking",
   LocalStoppedTalking = "localStoppedTalking",
   LocalAudioLevel = "localAudioLevel",
+  JSONCompletion = "jsonCompletion",
 }
 
 export type VoiceEvents = {
@@ -41,6 +42,8 @@ export type VoiceEvents = {
   localStartedTalking: () => void;
   localStoppedTalking: () => void;
   localAudioLevel: (level: number) => void;
+
+  jsonCompletion: (jsonString: string) => void;
 };
 
 export type VoiceEventHandler<E extends VoiceEvent> =
