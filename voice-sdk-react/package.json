@@ -1,9 +1,7 @@
 {
   "name": "@realtime-ai/voice-sdk-react",
-  "version": "0.3.0",
-  "publishConfig": {
-    "access": "restricted"
-  },
+  "private": true,
+  "version": "0.1.1",
   "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
@@ -33,12 +31,12 @@
     "react-dom": "^18.3.1",
     "typescript": "^5.2.2"
   },
-  "dependencies": {
-    "jotai": "^2.9.0"
-  },
   "peerDependencies": {
     "@realtime-ai/voice-sdk": "*",
     "react": ">=18",
     "react-dom": ">=18"
+  },
+  "dependencies": {
+    "jotai": "^2.9.0"
   }
 }
