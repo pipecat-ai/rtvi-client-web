@@ -4,6 +4,7 @@
   "publishConfig": {
     "access": "restricted"
   },
+  "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
   "types": "dist/index.d.ts",
