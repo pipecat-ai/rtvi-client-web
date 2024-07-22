@@ -1,5 +1,9 @@
 import { createRoot } from "react-dom/client";
-import { VoiceClient, VoiceEvent } from "@realtime-ai/voice-sdk";
+import {
+  PipecatMetrics,
+  VoiceClient,
+  VoiceEvent,
+} from "@realtime-ai/voice-sdk";
 import { VoiceClientProvider } from "@realtime-ai/voice-sdk-react";
 
 import { DemoApp } from "./DemoApp";
@@ -40,6 +44,9 @@ const voiceClient = new VoiceClient({
     },
     onJsonCompletion: (jsonString: string) => {
       console.log("[CALLBACK] JSON Completion: ", jsonString);
+    },
+    onMetrics: (data: PipecatMetrics) => {
+      console.log("[METRICS]:", data);
     },
   },
   config: {

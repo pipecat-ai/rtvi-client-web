@@ -23,20 +23,35 @@ export enum VoiceMessageType {
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   TOOL_CALL = "tool-call", // Instruction to call a clientside tool method (expects a serialized method name and params)
   JSON_COMPLETION = "json-completion", // JSON message is complete
-
+  METRICS = "metrics",
   // Inbound (optional / not yet implemented)
   //TOOL_RESPONSE = "tool-response", // Result of a clientside tool method
 }
 
+export type PipecatMetricsData = {
+  processor: string;
+  value: number;
+};
+
+export type PipecatMetrics = {
+  processing: PipecatMetricsData[];
+  ttfb: PipecatMetricsData[];
+};
+
 export class VoiceMessage {
-  id: string = nanoid(8);
+  id: string;
   label: string = "rtvi";
   type: string;
   data: unknown;
 
-  constructor(type: string, data: unknown) {
+  constructor(type: string, data: unknown, id?: string) {
     this.type = type;
     this.data = data;
+    if (id) {
+      this.id = id;
+    } else {
+      this.id = nanoid(8);
+    }
   }
 
   public serialize(): string {
@@ -93,5 +108,11 @@ export class VoiceMessage {
 export class VoiceMessageTranscript extends VoiceMessage {
   constructor(data: { text: string; final: boolean }) {
     super(VoiceMessageType.TRANSCRIPT, data);
+  }
+}
+
+export class VoiceMessageMetrics extends VoiceMessage {
+  constructor(data: PipecatMetrics) {
+    super(VoiceMessageType.METRICS, data, "0");
   }
 }

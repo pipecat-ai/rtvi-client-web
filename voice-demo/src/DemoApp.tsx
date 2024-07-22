@@ -7,6 +7,7 @@ import {
   VoiceClientAudio,
 } from "@realtime-ai/voice-sdk-react";
 import {
+  PipecatMetrics,
   RateLimitError,
   TransportState,
   VoiceClientConfigOptions,
@@ -59,7 +60,7 @@ export const DemoApp = () => {
   useVoiceClientEvent(
     VoiceEvent.JSONCompletion,
     useCallback((jsonString: string) => {
-      console.log("json string received:", jsonString);
+      console.log("UseVoiceClientEvent json string received:", jsonString);
       const fnData = JSON.parse(jsonString);
       if (fnData) {
         voiceClient.appendLLMContext([
@@ -106,6 +107,16 @@ export const DemoApp = () => {
     useCallback((config: VoiceClientConfigOptions) => {
       console.log(config);
       setConfig(config);
+    }, [])
+  );
+
+  useVoiceClientEvent(
+    VoiceEvent.Metrics,
+    useCallback((data: PipecatMetrics) => {
+      console.log(
+        "UseVoiceClientEvent voice client event with pipecat metrics:",
+        data
+      );
     }, [])
   );
 
