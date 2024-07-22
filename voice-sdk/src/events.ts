@@ -18,7 +18,9 @@ export enum VoiceEvent {
   CamUpdated = "camUpdated",
   MicUpdated = "micUpdated",
 
+  BotConnected = "botConnected",
   BotReady = "botReady",
+  BotDisconnected = "botDisconnected",
   BotStartedTalking = "botStartedTalking",
   BotStoppedTalking = "botStoppedTalking",
   RemoteAudioLevel = "remoteAudioLevel",
@@ -48,6 +50,8 @@ export type VoiceEvents = {
   micUpdated: (cam: MediaDeviceInfo) => void;
 
   botReady: () => void;
+  botConnected: (p: Participant) => void;
+  botDisconnected: (p: Participant) => void;
   botStartedTalking: (p: Participant) => void;
   botStoppedTalking: (p: Participant) => void;
   remoteAudioLevel: (level: number, p: Participant) => void;
