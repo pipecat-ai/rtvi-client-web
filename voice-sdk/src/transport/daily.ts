@@ -9,7 +9,7 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import { VoiceClientOptions, VoiceMessage, VoiceMessageTranscript } from "..";
+import { VoiceClientOptions, VoiceMessage } from "..";
 import type { TransportState } from ".";
 import { Participant, Tracks, Transport } from ".";
 
@@ -233,14 +233,12 @@ export class DailyTransport extends Transport {
   }
 
   async disconnect() {
-    this.detachEventListeners();
-
     this._daily.stopLocalAudioLevelObserver();
     this._daily.stopRemoteParticipantsAudioLevelObserver();
 
     await this._daily.leave();
 
-    // Note: this left-meeting event will trigger and update state / callback
+    this.detachEventListeners();
   }
 
   public sendMessage(message: VoiceMessage) {
@@ -249,32 +247,13 @@ export class DailyTransport extends Transport {
   }
 
   private handleAppMessage(ev: DailyEventObjectAppMessage) {
-    let msg;
-
-    // Transport events
-
-    // LLM messages
-    if (ev.data.type === "json-completion") {
-      this._callbacks.onJsonCompletion?.(ev.data.data);
-    }
-
-    // TTS events
-
-    // Call response messages
-
-    // Metric events
-
-    // Transcription events
-
-    if (ev.fromId) {
-      msg = new VoiceMessageTranscript({ text: "test", final: true });
-    } else {
-      msg = {
-        type: "unknown",
+    // Bubble any messages with realtime-ai label
+    if (ev.data.label === "rtvi") {
+      this._onMessage({
+        type: ev.data.type,
         data: ev.data,
-      } as VoiceMessage;
+      } as VoiceMessage);
     }
-    this._onMessage(msg);
   }
 
   private handleTrackStarted(ev: DailyEventObjectTrack) {

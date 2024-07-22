@@ -20,6 +20,9 @@ const voiceClient = new VoiceClient({
     onBotConnected: () => {
       console.log("[CALLBACK] Bot connected");
     },
+    onBotReady: () => {
+      console.log("[CALLBACK] Bot ready");
+    },
     onBotDisconnected: () => {
       console.log("[CALLBACK] Bot disconnected");
     },
@@ -70,6 +73,9 @@ const voiceClient = new VoiceClient({
 // These are not required, but can be useful for debugging
 voiceClient.on(VoiceEvent.TransportStateChanged, (state) => {
   console.log("[EVENT] Transport state change:", state);
+});
+voiceClient.on(VoiceEvent.BotReady, () => {
+  console.log("[EVENT] Bot is ready");
 });
 voiceClient.on(VoiceEvent.Connected, () => {
   console.log("[EVENT] Voice client session has started");

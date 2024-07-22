@@ -128,6 +128,7 @@ export const DemoApp = () => {
         }
       `}</style>
       <h1>Hello Voice Client React Demo!</h1>
+      Expiry: {isBotConnected && voiceClient.transportExpiry?.toString()}
       {error}
       <p>
         <strong>

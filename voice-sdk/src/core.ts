@@ -9,6 +9,7 @@ import {
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageTranscript,
+  VoiceMessageType,
 } from ".";
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
@@ -23,12 +24,10 @@ export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
   onDisconnected: () => void;
   onTransportStateChanged: (state: TransportState) => void;
-
   onConfigUpdated: (config: VoiceClientConfigOptions) => void;
-
   onBotConnected: (participant: Participant) => void;
+  onBotReady: () => void;
   onBotDisconnected: (participant: Participant) => void;
-
   onParticipantJoined: (participant: Participant) => void;
   onParticipantLeft: (participant: Participant) => void;
 
@@ -39,17 +38,13 @@ export type VoiceEventCallbacks = Partial<{
 
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
-
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
-
   onBotStartedTalking: (participant: Participant) => void;
   onBotStoppedTalking: (participant: Participant) => void;
   onLocalStartedTalking: () => void;
   onLocalStoppedTalking: () => void;
-
   onTranscript: (text: VoiceMessageTranscript) => void;
-
   onJsonCompletion: (jsonString: string) => void;
 }>;
 
@@ -65,6 +60,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
+    // @TODO tidy up with a loop
     const wrappedCallbacks: VoiceEventCallbacks = {
       ...options.callbacks,
       onConnected: () => {
@@ -99,22 +95,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(VoiceEvent.TrackedStopped, track, p);
       },
-      onAvailableCamsUpdated: (cams) => {
-        options?.callbacks?.onAvailableCamsUpdated?.(cams);
-        this.emit(VoiceEvent.AvailableCamsUpdated, cams);
-      },
-      onAvailableMicsUpdated: (mics) => {
-        options?.callbacks?.onAvailableMicsUpdated?.(mics);
-        this.emit(VoiceEvent.AvailableMicsUpdated, mics);
-      },
-      onCamUpdated: (cam) => {
-        options?.callbacks?.onCamUpdated?.(cam);
-        this.emit(VoiceEvent.CamUpdated, cam);
-      },
-      onMicUpdated: (mic) => {
-        options?.callbacks?.onMicUpdated?.(mic);
-        this.emit(VoiceEvent.MicUpdated, mic);
-      },
       onBotStartedTalking: (p) => {
         options?.callbacks?.onBotStartedTalking?.(p);
         this.emit(VoiceEvent.BotStartedTalking, p);
@@ -141,23 +121,24 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       },
     };
 
-    // Instantiate the transport
+    // Instantiate the transport class
     this._transport = options?.transport
       ? new options.transport(
           {
             ...options,
             callbacks: wrappedCallbacks,
           },
-          this.handleMessage
+          this.handleMessage.bind(this)
         )!
       : new DailyTransport(
           {
             ...options,
             callbacks: wrappedCallbacks,
           },
-          this.handleMessage
+          this.handleMessage.bind(this)
         );
 
+    // Update options to reference wrapped callbacks
     this._options = {
       ...options,
       callbacks: wrappedCallbacks,
@@ -172,9 +153,17 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     /**
      * SOF: placeholder service-side logic
+     *
+     * This should be replaced with a developer's own server-side logic
+     * We have baked this in for the developer preview, so they do not need
+     * to stand up a backend service to get started.
+     *
+     * If you are reading this, and want to build your own service, please
+     * refer to the documentation for the expected API endpoints and payloads.
      */
-    // Handshake with the server to get the room and token
-    // Note: this should be done by a developers own server side method
+
+    // Handshake with the server to get the room name and token
+    // Note: this is transport specific.
     let room: string;
     let token: string;
 
@@ -201,6 +190,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
      * EOF: placeholder service-side logic
      */
 
+    // Send a post request with the auth credentials and initial
+    // configuration to the server
     try {
       await fetch(`${this._baseUrl}/start_bot`, {
         method: "POST",
@@ -223,6 +214,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public async disconnect() {
     await this._transport.disconnect();
   }
+
+  public get state(): TransportState {
+    return this._transport.state;
+  }
+
+  // ------ Device methods
 
   public async getAllMics() {
     return await this._transport.getAllMics();
@@ -264,8 +261,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return this._transport.isCamEnabled;
   }
 
-  public get state(): TransportState {
-    return this._transport.state;
+  public tracks() {
+    return this._transport.tracks();
   }
 
   // ------ Config methods
@@ -274,6 +271,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return this._options.config!;
   }
 
+  /**
+   * Set new configuration parameters.
+   * Note: this does nothing if the transport is connectd. Use updateConfig method instead
+   * @param config - VoiceClientConfigOptions partial object with the new configuration
+   */
   protected set config(config: VoiceClientConfigOptions) {
     this._options.config = {
       ...this._options.config,
@@ -281,6 +283,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     };
   }
 
+  /**
+   * Update pipeline and seervices
+   * @param config - VoiceClientConfigOptions partial object with the new configuration
+   * @param options - Options for the update
+   * @param options.useDeepMerge - Whether to use deep merge or shallow merge
+   * @param options.sendPartial - Update single service config (e.g. llm or tts) or the whole config
+   */
   public updateConfig(
     config: VoiceClientConfigOptions,
     {
@@ -288,6 +297,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       sendPartial = false,
     }: { useDeepMerge?: boolean; sendPartial?: boolean }
   ) {
+    // @TODO refactor this method to use a reducer
     if (useDeepMerge) {
       const customMerge = deepmergeCustom({ mergeArrays: false });
       this.config = customMerge(this.config, config);
@@ -295,7 +305,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       this.config = config;
     }
 
-    if (this._transport.state === "connected") {
+    // Only send the partial config if the bot is ready to prevent
+    // potential racing conditions whilst pipeline is instantiating
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(
         VoiceMessage.config(sendPartial ? config : this.config)
       );
@@ -310,6 +322,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return this._options.config?.llm;
   }
 
+  /**
+   * Merge the current LLM context with a new provided context
+   * @param llmConfig - VoiceClientConfigLLM partial object with the new context
+   */
   public set llmContext(llmConfig: VoiceClientConfigLLM) {
     this.config = {
       ...this._options.config,
@@ -319,7 +335,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       },
     } as VoiceClientConfigOptions;
 
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.updateLLMContext(llmConfig));
     }
 
@@ -333,14 +349,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public appendLLMContext(
     messages: VoiceClientLLMMessage | VoiceClientLLMMessage[]
   ): void {
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       if (!Array.isArray(messages)) {
         messages = [messages];
       }
       this._transport.sendMessage(VoiceMessage.appendLLMContext(messages));
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempt to update LLM context while transport not in connected state"
+        "Attempt to update LLM context while transport not in ready state"
       );
     }
   }
@@ -353,11 +369,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param interrupt - Whether to interrupt the current speech (if the bot is talking)
    */
   public say(text: string, interrupt: boolean = false): void {
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.speak(text, interrupt));
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempted to speak while transport not in connected state"
+        "Attempted to speak while transport not in ready state"
       );
     }
   }
@@ -366,24 +382,27 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Manually interrupt the bot's TTS. Requires the bot to be connected.
    */
   public interrupt(): void {
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.interrupt());
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempted to interrupt bot TTS write transport not in connected state"
+        "Attempted to interrupt bot TTS write transport not in ready state"
       );
     }
   }
 
   /**
-   * Get the expiry time for the transport session (if applicable)
+   * Get the session expiry time for the transport session (if applicable)
    */
   public get transportExpiry(): number | undefined {
-    if (this._transport.state === "connected") {
+    if (
+      this._transport.state === "connected" ||
+      this._transport.state === "ready"
+    ) {
       return this._transport.expiry;
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempted to get transport expiry time when transport not in connected state"
+        "Attempted to get transport expiry time when transport not in connected or ready state"
       );
     }
   }
@@ -393,15 +412,25 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (ev instanceof VoiceMessageTranscript) {
       return this._options.callbacks?.onTranscript?.(ev);
     }
-  }
 
-  protected handleConfigUpdate(config: VoiceClientConfigOptions) {
-    // Send app message on the transport
-    // If successfull, the transport will trigger the onConfigUpdate callback
-    this._transport.sendMessage(VoiceMessage.config(config));
-  }
+    switch (ev.type) {
+      case VoiceMessageType.BOT_READY:
+        this._transport.state = "ready";
+        this._options.callbacks?.onBotReady?.();
+        break;
+      case VoiceMessageType.JSON_COMPLETION:
+        this._options.callbacks?.onJsonCompletion?.(ev.data as string);
+        break;
+    }
 
-  public tracks() {
-    return this._transport.tracks();
+    /* @TODO: transcription events
+    if (ev.fromId) {
+      msg = new VoiceMessageTranscript({ text: "test", final: true });
+    } else {
+      msg = {
+        type: "unknown",
+        data: ev.data,
+      } as VoiceMessage;
+    }*/
   }
 }

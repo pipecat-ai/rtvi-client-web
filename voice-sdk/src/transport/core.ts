@@ -6,6 +6,7 @@ export type TransportState =
   | "handshaking"
   | "connecting"
   | "connected"
+  | "ready"
   | "disconnected"
   | "error";
 
