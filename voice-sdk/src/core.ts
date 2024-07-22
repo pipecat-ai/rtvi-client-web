@@ -95,6 +95,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(VoiceEvent.TrackedStopped, track, p);
       },
+      onBotReady: () => {
+        options?.callbacks?.onBotReady?.();
+        this.emit(VoiceEvent.BotReady);
+      },
       onBotStartedTalking: (p) => {
         options?.callbacks?.onBotStartedTalking?.(p);
         this.emit(VoiceEvent.BotStartedTalking, p);
