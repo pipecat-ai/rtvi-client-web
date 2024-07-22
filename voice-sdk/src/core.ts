@@ -32,6 +32,11 @@ export type VoiceEventCallbacks = Partial<{
   onParticipantJoined: (participant: Participant) => void;
   onParticipantLeft: (participant: Participant) => void;
 
+  onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
+  onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
+  onCamUpdated: (cam: MediaDeviceInfo) => void;
+  onMicUpdated: (cam: MediaDeviceInfo) => void;
+
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
 
@@ -93,6 +98,22 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onTrackStopped: (track, p) => {
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(VoiceEvent.TrackedStopped, track, p);
+      },
+      onAvailableCamsUpdated: (cams) => {
+        options?.callbacks?.onAvailableCamsUpdated?.(cams);
+        this.emit(VoiceEvent.AvailableCamsUpdated, cams);
+      },
+      onAvailableMicsUpdated: (mics) => {
+        options?.callbacks?.onAvailableMicsUpdated?.(mics);
+        this.emit(VoiceEvent.AvailableMicsUpdated, mics);
+      },
+      onCamUpdated: (cam) => {
+        options?.callbacks?.onCamUpdated?.(cam);
+        this.emit(VoiceEvent.CamUpdated, cam);
+      },
+      onMicUpdated: (mic) => {
+        options?.callbacks?.onMicUpdated?.(mic);
+        this.emit(VoiceEvent.MicUpdated, mic);
       },
       onBotStartedTalking: (p) => {
         options?.callbacks?.onBotStartedTalking?.(p);
@@ -201,6 +222,30 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   public async disconnect() {
     await this._transport.disconnect();
+  }
+
+  public async getAllMics() {
+    return await this._transport.getAllMics();
+  }
+
+  public async getAllCams() {
+    return await this._transport.getAllCams();
+  }
+
+  public get selectedMic() {
+    return this._transport.selectedMic;
+  }
+
+  public get selectedCam() {
+    return this._transport.selectedCam;
+  }
+
+  public updateMic(micId: string) {
+    this._transport.updateMic(micId);
+  }
+
+  public updateCam(camId: string) {
+    this._transport.updateCam(camId);
   }
 
   public enableMic(enable: boolean) {

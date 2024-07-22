@@ -53,6 +53,15 @@ export abstract class Transport {
 
   abstract disconnect(): Promise<void>;
 
+  abstract getAllMics(): Promise<MediaDeviceInfo[]>;
+  abstract getAllCams(): Promise<MediaDeviceInfo[]>;
+
+  abstract updateMic(micId: string): void;
+  abstract updateCam(camId: string): void;
+
+  abstract get selectedMic(): MediaDeviceInfo | Record<string, never>;
+  abstract get selectedCam(): MediaDeviceInfo | Record<string, never>;
+
   abstract enableMic(enable: boolean): void;
   abstract enableCam(enable: boolean): void;
 
