@@ -455,7 +455,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._options.callbacks?.onBotReady?.();
         break;
       case VoiceMessageType.JSON_COMPLETION:
-        console.log("core.ts ev:", ev);
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);
         this.emit(VoiceEvent.JSONCompletion, ev.data as string);
         break;
