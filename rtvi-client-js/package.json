@@ -1,9 +1,6 @@
 {
-  "name": "@realtime-ai/voice-sdk",
-  "version": "0.5.2",
-  "publishConfig": {
-    "access": "restricted"
-  },
+  "name": "realtime-ai",
+  "version": "0.0.2",
   "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",

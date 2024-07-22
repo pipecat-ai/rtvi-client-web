@@ -1,6 +1,6 @@
 import { useCallback, useRef } from "react";
 import { useVoiceClientEvent } from "./useVoiceClientEvent";
-import { VoiceEvent } from "@realtime-ai/voice-sdk";
+import { VoiceEvent } from "realtime-ai";
 
 export const VoiceClientAudio = () => {
   const botAudioRef = useRef<HTMLAudioElement>(null);

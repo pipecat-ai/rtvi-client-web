@@ -1,7 +1,7 @@
 {
-  "name": "voice-demo",
+  "name": "rtvi-sandbox",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -26,8 +26,8 @@
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.67.0",
-    "@realtime-ai/voice-sdk": "*",
-    "@realtime-ai/voice-sdk-react": "*",
+    "realtime-ai": "*",
+    "realtime-ai-react": "*",
     "@vitejs/plugin-react": "^4.3.1",
     "events": "^3.3.0",
     "react": "^18.3.1",

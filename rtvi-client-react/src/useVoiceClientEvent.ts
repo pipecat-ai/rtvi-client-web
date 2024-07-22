@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { VoiceEvent, VoiceEventHandler } from "@realtime-ai/voice-sdk";
+import type { VoiceEvent, VoiceEventHandler } from "realtime-ai";
 import { useVoiceClient } from "./useVoiceClient";
 
 export const useVoiceClientEvent = <E extends VoiceEvent>(

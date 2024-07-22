@@ -5,13 +5,13 @@ import {
   useVoiceClientMediaDevices,
   useVoiceClientTransportState,
   VoiceClientAudio,
-} from "@realtime-ai/voice-sdk-react";
+} from "realtime-ai-react";
 import {
   RateLimitError,
   TransportState,
   VoiceClientConfigOptions,
   VoiceEvent,
-} from "@realtime-ai/voice-sdk";
+} from "realtime-ai";
 
 export const DemoApp = () => {
   const voiceClient = useVoiceClient()!;
@@ -127,7 +127,7 @@ export const DemoApp = () => {
           justify-content: center;
         }
       `}</style>
-      <h1>Hello Voice Client React Demo!</h1>
+      <h1>Hello RealtimeAI Sandbox</h1>
       Expiry: {isBotConnected && voiceClient.transportExpiry?.toString()}
       {error}
       <p>

@@ -86,7 +86,7 @@ export interface VoiceClientConfigOptions {
 }
 
 /**
- * API Client for interfacing with the Groq API.
+ * RTVI Voice Client
  */
 export class VoiceClient extends Client {
   constructor(

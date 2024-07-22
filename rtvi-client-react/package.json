@@ -1,9 +1,6 @@
 {
-  "name": "@realtime-ai/voice-sdk-react",
-  "publishConfig": {
-    "access": "restricted"
-  },
-  "version": "0.2.0",
+  "name": "realtime-ai-react",
+  "version": "0.0.2",
   "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
@@ -20,7 +17,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "devDependencies": {
-    "@realtime-ai/voice-sdk": "*",
+    "realtime-ai": "*",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.16.0",
@@ -34,7 +31,7 @@
     "typescript": "^5.2.2"
   },
   "peerDependencies": {
-    "@realtime-ai/voice-sdk": "*",
+    "realtime-ai": "*",
     "react": ">=18",
     "react-dom": ">=18"
   },

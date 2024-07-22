@@ -1,11 +1,11 @@
 {
   "private": true,
-  "name": "voice-monorepo",
+  "name": "rtvi-client-web",
   "version": "1.0.0",
   "workspaces": [
-    "voice-demo",
-    "voice-sdk",
-    "voice-sdk-react"
+    "rtvi-sandbox",
+    "rtvi-client-js",
+    "rtvi-client-react"
   ],
   "devDependencies": {
     "@parcel/packager-ts": "2.12.0",

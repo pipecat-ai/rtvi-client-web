@@ -1,6 +1,6 @@
 import { createContext } from "react";
 
-import { VoiceClient } from "@realtime-ai/voice-sdk";
+import { VoiceClient } from "realtime-ai";
 import { Provider as JotaiProvider } from "jotai/react";
 
 interface Props {

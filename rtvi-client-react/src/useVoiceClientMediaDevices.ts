@@ -2,7 +2,7 @@ import { atom, useAtomValue } from "jotai";
 import { useVoiceClient } from "./useVoiceClient";
 import { useCallback } from "react";
 import { useVoiceClientEvent } from "./useVoiceClientEvent";
-import { VoiceEvent } from "@realtime-ai/voice-sdk";
+import { VoiceEvent } from "realtime-ai";
 import { useAtomCallback } from "jotai/utils";
 
 type OptionalMediaDeviceInfo = MediaDeviceInfo | Record<string, never>;

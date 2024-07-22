@@ -1,6 +1,6 @@
 import { createRoot } from "react-dom/client";
-import { VoiceClient, VoiceEvent } from "@realtime-ai/voice-sdk";
-import { VoiceClientProvider } from "@realtime-ai/voice-sdk-react";
+import { VoiceClient, VoiceEvent } from "realtime-ai";
+import { VoiceClientProvider } from "realtime-ai-react";
 
 import { DemoApp } from "./DemoApp";
 

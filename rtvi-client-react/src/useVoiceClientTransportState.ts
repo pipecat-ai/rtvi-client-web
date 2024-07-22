@@ -1,4 +1,4 @@
-import { TransportState, VoiceEvent } from "@realtime-ai/voice-sdk";
+import { TransportState, VoiceEvent } from "realtime-ai";
 import { useVoiceClientEvent } from "./useVoiceClientEvent";
 import { atom, useAtom } from "jotai";
 
