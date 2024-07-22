@@ -178,29 +178,6 @@ export class DailyTransport extends Transport {
         data: ev.data,
       } as VoiceMessage);
     }
-
-    /*
-    // LLM messages
-    if (ev.data.type === "json-completion") {
-      this._callbacks.onJsonCompletion?.(ev.data.data);
-    }
-
-    // TTS events
-
-    // Call response messages
-
-    // Metric events
-
-    // Transcription events
-
-    if (ev.fromId) {
-      msg = new VoiceMessageTranscript({ text: "test", final: true });
-    } else {
-      msg = {
-        type: "unknown",
-        data: ev.data,
-      } as VoiceMessage;
-    }*/
   }
 
   private handleTrackStarted(ev: DailyEventObjectTrack) {

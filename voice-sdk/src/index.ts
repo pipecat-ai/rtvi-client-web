@@ -55,7 +55,6 @@ export interface VoiceClientOptions {
   // @@ Not yet implemented @@
   // pipeline?: Array<object>;
   // tools?: Array<object>;
-  // enableCamera?: boolean;
   // startCameraMuted?: boolean;
 }
 

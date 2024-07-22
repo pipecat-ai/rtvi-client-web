@@ -21,6 +21,7 @@ export enum VoiceEvent {
   LocalStartedTalking = "localStartedTalking",
   LocalStoppedTalking = "localStoppedTalking",
   LocalAudioLevel = "localAudioLevel",
+
   JSONCompletion = "jsonCompletion",
 }
 

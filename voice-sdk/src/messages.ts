@@ -22,9 +22,9 @@ export enum VoiceMessageType {
   CONFIG_UPDATED = "config-updated", // Configuration options have changed successfull
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   TOOL_CALL = "tool-call", // Instruction to call a clientside tool method (expects a serialized method name and params)
+  JSON_COMPLETION = "json-completion", // JSON message is complete
 
   // Inbound (optional / not yet implemented)
-  //INTERRUPT = "interrupt", // Local user interrupted the conversation
   //TOOL_RESPONSE = "tool-response", // Result of a clientside tool method
 }
 
