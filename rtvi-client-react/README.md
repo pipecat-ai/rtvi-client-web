@@ -5,22 +5,19 @@ tbd.
 ## Install
 
 ```bash
-yarn add voice-sdk voice-sdk-react
+yarn add realtime-ai realtime-ai-react
 # or
-npm install voice-sdk voice-sdk-react
+npm install realtime-ai realtime-ai-react
 ```
 
 ## Getting started
 
 ```tsx
-import { VoiceClient } from "@realtime-ai/voice-sdk";
-import {
-  useVoiceClient,
-  VoiceClientProvider,
-} from "@realtime-ai/voice-sdk-react";
+import { VoiceClient } from "realtime-ai";
+import { useVoiceClient, VoiceClientProvider } from "realtime-ai-react";
 
 const voiceClient = new VoiceClient({
-  apiKey: "…",
+  baseUrl: "…",
   enableMic: true,
 });
 
