@@ -240,8 +240,8 @@ export class DailyTransport extends Transport {
         type: ev.data.type,
         data: ev.data,
       } as VoiceMessage);
-    } else if (ev.data.type == "pipecat-metrics") {
-      // Bubble up pipecat metrics
+    } else if (ev.data.type === "pipecat-metrics") {
+      // Bubble up pipecat metrics, which don't have the "rtvi" label
       const vmm = new VoiceMessageMetrics(ev.data.metrics as PipecatMetrics);
       this._onMessage(vmm);
     }

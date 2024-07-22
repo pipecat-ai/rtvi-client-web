@@ -24,7 +24,7 @@ export enum VoiceMessageType {
   TOOL_CALL = "tool-call", // Instruction to call a clientside tool method (expects a serialized method name and params)
   JSON_COMPLETION = "json-completion", // JSON message is complete
   METRICS = "metrics", // RTVI reporting metrics
-
+  USER_TRANSCRIPTION = "user-transcription",
   // Inbound (optional / not yet implemented)
   //TOOL_RESPONSE = "tool-response", // Result of a clientside tool method
 }
@@ -37,6 +37,13 @@ export type PipecatMetricsData = {
 export type PipecatMetrics = {
   processing: PipecatMetricsData[];
   ttfb: PipecatMetricsData[];
+};
+
+export type Transcript = {
+  text: string;
+  final: boolean;
+  timestamp: string;
+  user_id: string;
 };
 
 export class VoiceMessage {
@@ -109,11 +116,5 @@ export class VoiceMessage {
 export class VoiceMessageMetrics extends VoiceMessage {
   constructor(data: PipecatMetrics) {
     super(VoiceMessageType.METRICS, data, "0");
-  }
-}
-
-export class VoiceMessageTranscript extends VoiceMessage {
-  constructor(data: { text: string; final: boolean }) {
-    super(VoiceMessageType.TRANSCRIPT, data);
   }
 }
