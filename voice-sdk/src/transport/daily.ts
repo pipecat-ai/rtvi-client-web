@@ -37,6 +37,8 @@ export class DailyTransport extends Transport {
       dailyConfig: {},
     });
 
+    this.attachEventListeners();
+
     this._daily
       .startCamera({
         videoSource: options.enableCam ?? false,
@@ -169,8 +171,6 @@ export class DailyTransport extends Transport {
   async connect({ url, token }: { url: string; token: string }) {
     this.state = "connecting";
 
-    this.attachEventListeners();
-
     try {
       await this._daily.join({
         // TODO: Remove hardcoded Daily domain
@@ -217,28 +217,11 @@ export class DailyTransport extends Transport {
     this._daily.on("left-meeting", this.handleLeftMeeting.bind(this));
   }
 
-  private detachEventListeners() {
-    this._daily.off("track-started", this.handleTrackStarted);
-    this._daily.off("track-stopped", this.handleTrackStopped);
-    this._daily.off("participant-joined", this.handleParticipantJoined);
-    this._daily.off("participant-left", this.handleParticipantLeft);
-
-    this._daily.off("local-audio-level", this.handleLocalAudioLevel);
-    this._daily.off(
-      "remote-participants-audio-level",
-      this.handleRemoteAudioLevel
-    );
-    this._daily.off("app-message", this.handleAppMessage);
-    this._daily.off("left-meeting", this.handleLeftMeeting);
-  }
-
   async disconnect() {
     this._daily.stopLocalAudioLevelObserver();
     this._daily.stopRemoteParticipantsAudioLevelObserver();
 
     await this._daily.leave();
-
-    this.detachEventListeners();
   }
 
   public sendMessage(message: VoiceMessage) {

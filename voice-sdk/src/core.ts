@@ -95,6 +95,22 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(VoiceEvent.TrackedStopped, track, p);
       },
+      onAvailableCamsUpdated: (cams) => {
+        options?.callbacks?.onAvailableCamsUpdated?.(cams);
+        this.emit(VoiceEvent.AvailableCamsUpdated, cams);
+      },
+      onAvailableMicsUpdated: (mics) => {
+        options?.callbacks?.onAvailableMicsUpdated?.(mics);
+        this.emit(VoiceEvent.AvailableMicsUpdated, mics);
+      },
+      onCamUpdated: (cam) => {
+        options?.callbacks?.onCamUpdated?.(cam);
+        this.emit(VoiceEvent.CamUpdated, cam);
+      },
+      onMicUpdated: (mic) => {
+        options?.callbacks?.onMicUpdated?.(mic);
+        this.emit(VoiceEvent.MicUpdated, mic);
+      },
       onBotConnected: (p) => {
         options?.callbacks?.onBotConnected?.(p);
         this.emit(VoiceEvent.BotConnected, p);
