@@ -215,6 +215,36 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     await this._transport.disconnect();
   }
 
+  public get state(): TransportState {
+    return this._transport.state;
+  }
+
+  // ------ Device methods
+
+  public async getAllMics() {
+    return await this._transport.getAllMics();
+  }
+
+  public async getAllCams() {
+    return await this._transport.getAllCams();
+  }
+
+  public get selectedMic() {
+    return this._transport.selectedMic;
+  }
+
+  public get selectedCam() {
+    return this._transport.selectedCam;
+  }
+
+  public updateMic(micId: string) {
+    this._transport.updateMic(micId);
+  }
+
+  public updateCam(camId: string) {
+    this._transport.updateCam(camId);
+  }
+
   public enableMic(enable: boolean) {
     this._transport.enableMic(enable);
   }
