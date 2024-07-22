@@ -22,6 +22,9 @@ export class DailyTransport extends Transport {
   private _botId: string = "";
   private _expiry: number | undefined = undefined;
 
+  private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
+  private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
+
   constructor(
     options: VoiceClientOptions,
     onMessage: (ev: VoiceMessage) => void
@@ -32,6 +35,43 @@ export class DailyTransport extends Transport {
       videoSource: options.enableCam ?? false,
       audioSource: options.enableMic ?? false,
       dailyConfig: {},
+    });
+
+    this._daily
+      .startCamera({
+        videoSource: options.enableCam ?? false,
+        audioSource: options.enableMic ?? false,
+      })
+      .then(async (infos) => {
+        const { devices } = await this._daily.enumerateDevices();
+        const cams = devices.filter((d) => d.kind === "videoinput");
+        const mics = devices.filter((d) => d.kind === "audioinput");
+        this._callbacks.onAvailableCamsUpdated?.(cams);
+        this._callbacks.onAvailableMicsUpdated?.(mics);
+        this._selectedCam = infos.camera;
+        this._callbacks.onCamUpdated?.(infos.camera as MediaDeviceInfo);
+        this._selectedMic = infos.mic;
+        this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
+      });
+
+    this._daily.on("available-devices-updated", (ev) => {
+      this._callbacks.onAvailableCamsUpdated?.(
+        ev.availableDevices.filter((d) => d.kind === "videoinput")
+      );
+      this._callbacks.onAvailableMicsUpdated?.(
+        ev.availableDevices.filter((d) => d.kind === "audioinput")
+      );
+    });
+
+    this._daily.on("selected-devices-updated", (ev) => {
+      if (this._selectedCam?.deviceId !== ev.devices.camera) {
+        this._selectedCam = ev.devices.camera;
+        this._callbacks.onCamUpdated?.(ev.devices.camera as MediaDeviceInfo);
+      }
+      if (this._selectedMic?.deviceId !== ev.devices.mic) {
+        this._selectedMic = ev.devices.mic;
+        this._callbacks.onMicUpdated?.(ev.devices.mic as MediaDeviceInfo);
+      }
     });
 
     this._localAudioLevelObserver = () => {};
@@ -45,6 +85,44 @@ export class DailyTransport extends Transport {
   private set state(state: TransportState) {
     this._state = state;
     this._callbacks.onTransportStateChanged?.(state);
+  }
+
+  async getAllCams() {
+    const { devices } = await this._daily.enumerateDevices();
+    return devices.filter((d) => d.kind === "videoinput");
+  }
+
+  updateCam(camId: string) {
+    this._daily
+      .setInputDevicesAsync({
+        videoDeviceId: camId,
+      })
+      .then((infos) => {
+        this._selectedCam = infos.camera;
+      });
+  }
+
+  get selectedCam() {
+    return this._selectedCam;
+  }
+
+  async getAllMics() {
+    const { devices } = await this._daily.enumerateDevices();
+    return devices.filter((d) => d.kind === "audioinput");
+  }
+
+  updateMic(micId: string) {
+    this._daily
+      .setInputDevicesAsync({
+        audioDeviceId: micId,
+      })
+      .then((infos) => {
+        this._selectedMic = infos.mic;
+      });
+  }
+
+  get selectedMic() {
+    return this._selectedMic;
   }
 
   enableMic(enable: boolean) {
@@ -155,14 +233,12 @@ export class DailyTransport extends Transport {
   }
 
   async disconnect() {
-    this.detachEventListeners();
-
     this._daily.stopLocalAudioLevelObserver();
     this._daily.stopRemoteParticipantsAudioLevelObserver();
 
     await this._daily.leave();
 
-    // Note: this left-meeting event will trigger and update state / callback
+    this.detachEventListeners();
   }
 
   public sendMessage(message: VoiceMessage) {

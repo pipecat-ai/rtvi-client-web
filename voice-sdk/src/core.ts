@@ -30,6 +30,12 @@ export type VoiceEventCallbacks = Partial<{
   onBotDisconnected: (participant: Participant) => void;
   onParticipantJoined: (participant: Participant) => void;
   onParticipantLeft: (participant: Participant) => void;
+
+  onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
+  onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
+  onCamUpdated: (cam: MediaDeviceInfo) => void;
+  onMicUpdated: (cam: MediaDeviceInfo) => void;
+
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
   onLocalAudioLevel: (level: number) => void;
@@ -88,10 +94,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onTrackStopped: (track, p) => {
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(VoiceEvent.TrackedStopped, track, p);
-      },
-      onBotReady: () => {
-        options?.callbacks?.onBotReady?.();
-        this.emit(VoiceEvent.BotReady);
       },
       onBotStartedTalking: (p) => {
         options?.callbacks?.onBotStartedTalking?.(p);
@@ -212,12 +214,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public async disconnect() {
     await this._transport.disconnect();
   }
-
-  public get state(): TransportState {
-    return this._transport.state;
-  }
-
-  // ------ Device management methods
 
   public enableMic(enable: boolean) {
     this._transport.enableMic(enable);

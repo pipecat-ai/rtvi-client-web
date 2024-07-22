@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import {
   useVoiceClient,
   useVoiceClientEvent,
+  useVoiceClientMediaDevices,
   useVoiceClientTransportState,
   VoiceClientAudio,
 } from "@realtime-ai/voice-sdk-react";
@@ -108,6 +109,9 @@ export const DemoApp = () => {
     }, [])
   );
 
+  const { availableMics, selectedMic, updateMic } =
+    useVoiceClientMediaDevices();
+
   return (
     <div>
       <style scoped>{`
@@ -144,6 +148,23 @@ export const DemoApp = () => {
           </div>
         )}
       </div>
+      <hr />
+      <label htmlFor="mic">
+        <strong>Microphone</strong>
+        <br />
+        <select
+          id="mic"
+          onChange={(ev) => updateMic(ev.currentTarget.value)}
+          value={selectedMic?.deviceId}
+        >
+          {availableMics.map((mic) => (
+            <option key={mic.deviceId} value={mic.deviceId}>
+              {mic.label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <hr />
       <button disabled={transportState !== "idle"} onClick={() => start()}>
         Connect
       </button>
