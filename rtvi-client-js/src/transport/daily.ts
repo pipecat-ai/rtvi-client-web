@@ -9,7 +9,12 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import { VoiceClientOptions, VoiceMessage } from "..";
+import {
+  PipecatMetrics,
+  VoiceClientOptions,
+  VoiceMessage,
+  VoiceMessageMetrics,
+} from "..";
 import type { TransportState } from ".";
 import { Participant, Tracks, Transport } from ".";
 
@@ -235,6 +240,10 @@ export class DailyTransport extends Transport {
         type: ev.data.type,
         data: ev.data,
       } as VoiceMessage);
+    } else if (ev.data.type == "pipecat-metrics") {
+      // Bubble up pipecat metrics
+      const vmm = new VoiceMessageMetrics(ev.data.metrics as PipecatMetrics);
+      this._onMessage(vmm);
     }
   }
 
