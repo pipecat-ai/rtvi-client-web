@@ -24,9 +24,11 @@ yarn workspace realtime-ai run dev
 Navigate to the sandbox directory and run the project
 
 ```bash
-cd rtvi-sandbox
-yarn run dev
+yarn workspace rtvi-sandbox run dev
 ```
+
+Navigate to the URL in your browser
+
 
 ## Bump and publish rtvi-client-js
 

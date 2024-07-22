@@ -40,6 +40,8 @@ export const DemoApp = () => {
     } catch (e) {
       if (e instanceof RateLimitError) {
         setError("Demo is currently at capacity. Please try again later.");
+      } else {
+        setError("Error connecting to backend service");
       }
     }
   }

@@ -204,6 +204,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       room = data.room;
       token = data.token;
     } catch (e) {
+      this._transport.state = "error";
       throw new VoiceErrors.AuthenticationError(
         "Failed to authenticate with the server"
       );
@@ -212,6 +213,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (!room || !token) {
       // In lieu of proper error codes, a failed authentication indicates
       // the server is busy.
+      this._transport.state = "error";
       throw new VoiceErrors.RateLimitError();
     }
     /**
