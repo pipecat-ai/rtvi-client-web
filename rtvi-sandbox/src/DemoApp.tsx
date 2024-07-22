@@ -8,6 +8,7 @@ import {
 } from "realtime-ai-react";
 import {
   PipecatMetrics,
+  Transcript,
   RateLimitError,
   TransportState,
   VoiceClientConfigOptions,
@@ -119,6 +120,13 @@ export const DemoApp = () => {
         "UseVoiceClientEvent voice client event with pipecat metrics:",
         data
       );
+    }, [])
+  );
+
+  useVoiceClientEvent(
+    VoiceEvent.UserTranscript,
+    useCallback((data: Transcript) => {
+      console.log("UseVoiceClientEvent transcript:", data);
     }, [])
   );
 
