@@ -453,8 +453,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._options.callbacks?.onBotReady?.();
         break;
       case VoiceMessageType.USER_TRANSCRIPTION:
-        this._options.callbacks?.onUserTranscript?.(ev.data.data as Transcript);
-        this.emit(VoiceEvent.UserTranscript, ev.data.data as Transcript);
+        // TODO-CB: typescript
+        const transcriptData: any = ev.data;
+        const transcript = transcriptData.data as Transcript;
+        this._options.callbacks?.onUserTranscript?.(transcript);
+        this.emit(VoiceEvent.UserTranscript, transcript);
         break;
       case VoiceMessageType.JSON_COMPLETION:
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);
