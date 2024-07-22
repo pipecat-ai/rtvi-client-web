@@ -13,6 +13,11 @@ export enum VoiceEvent {
   TrackStarted = "trackStarted",
   TrackedStopped = "trackStopped",
 
+  AvailableCamsUpdated = "availableCamsUpdated",
+  AvailableMicsUpdated = "availableMicsUpdated",
+  CamUpdated = "camUpdated",
+  MicUpdated = "micUpdated",
+
   BotStartedTalking = "botStartedTalking",
   BotStoppedTalking = "botStoppedTalking",
   RemoteAudioLevel = "remoteAudioLevel",
@@ -34,6 +39,11 @@ export type VoiceEvents = {
   participantLeft: (p: Participant) => void;
   trackStarted: (track: MediaStreamTrack, p?: Participant) => void;
   trackStopped: (track: MediaStreamTrack, p?: Participant) => void;
+
+  availableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
+  availableMicsUpdated: (cams: MediaDeviceInfo[]) => void;
+  camUpdated: (cam: MediaDeviceInfo) => void;
+  micUpdated: (cam: MediaDeviceInfo) => void;
 
   botStartedTalking: (p: Participant) => void;
   botStoppedTalking: (p: Participant) => void;
