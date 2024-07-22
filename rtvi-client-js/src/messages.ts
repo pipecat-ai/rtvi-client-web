@@ -25,6 +25,7 @@ export enum VoiceMessageType {
   JSON_COMPLETION = "json-completion", // JSON message is complete
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription",
+  BOT_TRANSCRIPTION = "tts-text",
   // Inbound (optional / not yet implemented)
   //TOOL_RESPONSE = "tool-response", // Result of a clientside tool method
 }

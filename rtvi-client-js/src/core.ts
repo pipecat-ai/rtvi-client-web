@@ -49,6 +49,7 @@ export type VoiceEventCallbacks = Partial<{
   onJsonCompletion: (jsonString: string) => void;
   onMetrics: (data: PipecatMetrics) => void;
   onUserTranscript: (data: Transcript) => void;
+  onBotTranscript: (data: string) => void;
 }>;
 
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
@@ -458,6 +459,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         const transcript = transcriptData.data as Transcript;
         this._options.callbacks?.onUserTranscript?.(transcript);
         this.emit(VoiceEvent.UserTranscript, transcript);
+        break;
+      case VoiceMessageType.BOT_TRANSCRIPTION:
+        const botData: any = ev.data;
+        const bot: any = botData.data;
+        this._options.callbacks?.onBotTranscript?.(bot.text as string);
+        this.emit(VoiceEvent.BotTranscript, bot.text as string);
         break;
       case VoiceMessageType.JSON_COMPLETION:
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);

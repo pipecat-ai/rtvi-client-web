@@ -50,7 +50,10 @@ const voiceClient = new VoiceClient({
       console.log("[METRICS]:", data);
     },
     onUserTranscript: (data: Transcript) => {
-      console.log("[TRANSCRIPT]:", data);
+      console.log("[USER TRANSCRIPT]:", data);
+    },
+    onBotTranscript: (text: string) => {
+      console.log("[BOT TRANSCRIPT]:", text);
     },
   },
   config: {
