@@ -1,10 +1,12 @@
+import { nanoid } from "nanoid";
+
 import {
   VoiceClientConfigLLM,
   VoiceClientConfigOptions,
   VoiceClientLLMMessage,
 } from ".";
 
-enum VoiceMessageType {
+export enum VoiceMessageType {
   // Outbound
   CONFIG = "config-update",
   LLM_GET_CONTEXT = "llm-get-context",
@@ -14,6 +16,7 @@ enum VoiceMessageType {
   INTERRUPT = "tts-interrupt",
 
   // Inbound
+  BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
   LLM_CONTEXT = "llm-context", // LLM context message
   TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
   CONFIG_UPDATED = "config-updated", // Configuration options have changed successfull
@@ -26,7 +29,8 @@ enum VoiceMessageType {
 }
 
 export class VoiceMessage {
-  tag: string = "realtime-ai";
+  id: string = nanoid(8);
+  label: string = "rtvi";
   type: string;
   data: unknown;
 
@@ -38,7 +42,7 @@ export class VoiceMessage {
   public serialize(): string {
     return JSON.stringify({
       type: this.type,
-      tag: this.tag,
+      label: this.label,
       data: this.data,
     });
   }

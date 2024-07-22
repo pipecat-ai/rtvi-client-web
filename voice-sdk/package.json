@@ -33,6 +33,7 @@
     "@types/events": "^3.0.3",
     "deepmerge-ts": "^7.0.3",
     "events": "^3.3.0",
+    "nanoid": "^5.0.7",
     "typed-emitter": "^2.1.0"
   },
   "peerDependencies": {

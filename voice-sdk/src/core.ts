@@ -9,6 +9,7 @@ import {
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageTranscript,
+  VoiceMessageType,
 } from ".";
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
@@ -27,6 +28,7 @@ export type VoiceEventCallbacks = Partial<{
   onConfigUpdated: (config: VoiceClientConfigOptions) => void;
 
   onBotConnected: (participant: Participant) => void;
+  onBotReady: () => void;
   onBotDisconnected: (participant: Participant) => void;
 
   onParticipantJoined: (participant: Participant) => void;
@@ -94,6 +96,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(VoiceEvent.TrackedStopped, track, p);
       },
+      onBotReady: () => {
+        options?.callbacks?.onBotReady?.();
+        this.emit(VoiceEvent.BotReady);
+      },
       onBotStartedTalking: (p) => {
         options?.callbacks?.onBotStartedTalking?.(p);
         this.emit(VoiceEvent.BotStartedTalking, p);
@@ -127,14 +133,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
             ...options,
             callbacks: wrappedCallbacks,
           },
-          this.handleMessage
+          this.handleMessage.bind(this)
         )!
       : new DailyTransport(
           {
             ...options,
             callbacks: wrappedCallbacks,
           },
-          this.handleMessage
+          this.handleMessage.bind(this)
         );
 
     this._options = {
@@ -250,7 +256,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       this.config = config;
     }
 
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(
         VoiceMessage.config(sendPartial ? config : this.config)
       );
@@ -274,7 +280,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       },
     } as VoiceClientConfigOptions;
 
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.updateLLMContext(llmConfig));
     }
 
@@ -288,14 +294,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public appendLLMContext(
     messages: VoiceClientLLMMessage | VoiceClientLLMMessage[]
   ): void {
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       if (!Array.isArray(messages)) {
         messages = [messages];
       }
       this._transport.sendMessage(VoiceMessage.appendLLMContext(messages));
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempt to update LLM context while transport not in connected state"
+        "Attempt to update LLM context while transport not in ready state"
       );
     }
   }
@@ -308,11 +314,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param interrupt - Whether to interrupt the current speech (if the bot is talking)
    */
   public say(text: string, interrupt: boolean = false): void {
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.speak(text, interrupt));
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempted to speak while transport not in connected state"
+        "Attempted to speak while transport not in ready state"
       );
     }
   }
@@ -321,11 +327,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Manually interrupt the bot's TTS. Requires the bot to be connected.
    */
   public interrupt(): void {
-    if (this._transport.state === "connected") {
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.interrupt());
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempted to interrupt bot TTS write transport not in connected state"
+        "Attempted to interrupt bot TTS write transport not in ready state"
       );
     }
   }
@@ -334,11 +340,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Get the expiry time for the transport session (if applicable)
    */
   public get transportExpiry(): number | undefined {
-    if (this._transport.state === "connected") {
+    if (
+      this._transport.state === "connected" ||
+      this._transport.state === "ready"
+    ) {
       return this._transport.expiry;
     } else {
       throw new VoiceErrors.VoiceError(
-        "Attempted to get transport expiry time when transport not in connected state"
+        "Attempted to get transport expiry time when transport not in connected or ready state"
       );
     }
   }
@@ -347,6 +356,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   protected handleMessage(ev: VoiceMessage): void {
     if (ev instanceof VoiceMessageTranscript) {
       return this._options.callbacks?.onTranscript?.(ev);
+    }
+
+    switch (ev.type) {
+      case VoiceMessageType.BOT_READY:
+        this._transport.state = "ready";
+        this._options.callbacks?.onBotReady?.();
+        break;
     }
   }
 

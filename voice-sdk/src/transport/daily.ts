@@ -9,7 +9,7 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 
-import { VoiceClientOptions, VoiceMessage, VoiceMessageTranscript } from "..";
+import { VoiceClientOptions, VoiceMessage } from "..";
 import type { TransportState } from ".";
 import { Participant, Tracks, Transport } from ".";
 
@@ -171,10 +171,15 @@ export class DailyTransport extends Transport {
   }
 
   private handleAppMessage(ev: DailyEventObjectAppMessage) {
-    let msg;
+    // Bubble any messages with realtime-ai label
+    if (ev.data.label === "rtvi") {
+      this._onMessage({
+        type: ev.data.type,
+        data: ev.data,
+      } as VoiceMessage);
+    }
 
-    // Transport events
-
+    /*
     // LLM messages
     if (ev.data.type === "json-completion") {
       this._callbacks.onJsonCompletion?.(ev.data.data);
@@ -195,8 +200,7 @@ export class DailyTransport extends Transport {
         type: "unknown",
         data: ev.data,
       } as VoiceMessage;
-    }
-    this._onMessage(msg);
+    }*/
   }
 
   private handleTrackStarted(ev: DailyEventObjectTrack) {
