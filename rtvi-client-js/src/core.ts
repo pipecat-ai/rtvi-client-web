@@ -4,13 +4,13 @@ import type TypedEmitter from "typed-emitter";
 
 import {
   PipecatMetrics,
+  Transcript,
   VoiceClientConfigLLM,
   VoiceClientConfigOptions,
   VoiceClientLLMMessage,
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageMetrics,
-  VoiceMessageTranscript,
   VoiceMessageType,
 } from ".";
 import * as VoiceErrors from "./errors";
@@ -46,9 +46,9 @@ export type VoiceEventCallbacks = Partial<{
   onBotStoppedTalking: (participant: Participant) => void;
   onLocalStartedTalking: () => void;
   onLocalStoppedTalking: () => void;
-  onTranscript: (text: VoiceMessageTranscript) => void;
   onJsonCompletion: (jsonString: string) => void;
   onMetrics: (data: PipecatMetrics) => void;
+  onUserTranscript: (data: Transcript) => void;
 }>;
 
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
@@ -442,10 +442,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   // ------ Handlers
   protected handleMessage(ev: VoiceMessage): void {
-    if (ev instanceof VoiceMessageTranscript) {
-      return this._options.callbacks?.onTranscript?.(ev);
-    }
-
     if (ev instanceof VoiceMessageMetrics) {
       this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
       return this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
@@ -456,20 +452,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._transport.state = "ready";
         this._options.callbacks?.onBotReady?.();
         break;
+      case VoiceMessageType.USER_TRANSCRIPTION:
+        this._options.callbacks?.onUserTranscript?.(ev.data.data as Transcript);
+        this.emit(VoiceEvent.UserTranscript, ev.data.data as Transcript);
+        break;
       case VoiceMessageType.JSON_COMPLETION:
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);
         this.emit(VoiceEvent.JSONCompletion, ev.data as string);
         break;
     }
-
-    /* @TODO: transcription events
-    if (ev.fromId) {
-      msg = new VoiceMessageTranscript({ text: "test", final: true });
-    } else {
-      msg = {
-        type: "unknown",
-        data: ev.data,
-      } as VoiceMessage;
-    }*/
   }
 }

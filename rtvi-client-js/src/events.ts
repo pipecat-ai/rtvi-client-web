@@ -1,4 +1,4 @@
-import { PipecatMetrics, VoiceClientConfigOptions } from ".";
+import { PipecatMetrics, Transcript, VoiceClientConfigOptions } from ".";
 import { Participant, TransportState } from "./transport";
 
 export enum VoiceEvent {
@@ -31,6 +31,7 @@ export enum VoiceEvent {
 
   JSONCompletion = "jsonCompletion",
   Metrics = "metrics",
+  UserTranscript = "userTranscript",
 }
 
 export type VoiceEvents = {
@@ -63,6 +64,7 @@ export type VoiceEvents = {
 
   jsonCompletion: (jsonString: string) => void;
   metrics: (data: PipecatMetrics) => void;
+  userTranscript: (data: Transcript) => void;
 };
 
 export type VoiceEventHandler<E extends VoiceEvent> =
