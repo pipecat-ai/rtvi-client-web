@@ -10,6 +10,7 @@ import {
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageTranscript,
+  VoiceMessageMetrics,
   VoiceMessageType,
 } from ".";
 import * as VoiceErrors from "./errors";
@@ -443,6 +444,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       return this._options.callbacks?.onTranscript?.(ev);
     }
 
+    if (ev instanceof VoiceMessageMetrics) {
+      this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
+      return this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
+    }
+
     switch (ev.type) {
       case VoiceMessageType.BOT_READY:
         this._transport.state = "ready";
@@ -452,11 +458,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         console.log("core.ts ev:", ev);
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);
         this.emit(VoiceEvent.JSONCompletion, ev.data as string);
-        break;
-      case VoiceMessageType.METRICS:
-        // TODO-CB: The instanceof check wasn't working
-        this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
-        this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
         break;
     }
 
