@@ -1,10 +1,12 @@
 import Daily, {
   DailyCall,
   DailyEventObjectAppMessage,
+  DailyEventObjectAvailableDevicesUpdated,
   DailyEventObjectLocalAudioLevel,
   DailyEventObjectParticipant,
   DailyEventObjectParticipantLeft,
   DailyEventObjectRemoteParticipantsAudioLevel,
+  DailyEventObjectSelectedDevicesUpdated,
   DailyEventObjectTrack,
   DailyParticipant,
 } from "@daily-co/daily-js";
@@ -43,43 +45,6 @@ export class DailyTransport extends Transport {
     });
 
     this.attachEventListeners();
-
-    this._daily
-      .startCamera({
-        videoSource: options.enableCam ?? false,
-        audioSource: options.enableMic ?? false,
-      })
-      .then(async (infos) => {
-        const { devices } = await this._daily.enumerateDevices();
-        const cams = devices.filter((d) => d.kind === "videoinput");
-        const mics = devices.filter((d) => d.kind === "audioinput");
-        this._callbacks.onAvailableCamsUpdated?.(cams);
-        this._callbacks.onAvailableMicsUpdated?.(mics);
-        this._selectedCam = infos.camera;
-        this._callbacks.onCamUpdated?.(infos.camera as MediaDeviceInfo);
-        this._selectedMic = infos.mic;
-        this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
-      });
-
-    this._daily.on("available-devices-updated", (ev) => {
-      this._callbacks.onAvailableCamsUpdated?.(
-        ev.availableDevices.filter((d) => d.kind === "videoinput")
-      );
-      this._callbacks.onAvailableMicsUpdated?.(
-        ev.availableDevices.filter((d) => d.kind === "audioinput")
-      );
-    });
-
-    this._daily.on("selected-devices-updated", (ev) => {
-      if (this._selectedCam?.deviceId !== ev.devices.camera) {
-        this._selectedCam = ev.devices.camera;
-        this._callbacks.onCamUpdated?.(ev.devices.camera as MediaDeviceInfo);
-      }
-      if (this._selectedMic?.deviceId !== ev.devices.mic) {
-        this._selectedMic = ev.devices.mic;
-        this._callbacks.onMicUpdated?.(ev.devices.mic as MediaDeviceInfo);
-      }
-    });
 
     this._localAudioLevelObserver = () => {};
     this._botAudioLevelObserver = () => {};
@@ -173,7 +138,28 @@ export class DailyTransport extends Transport {
     return tracks;
   }
 
+  async initDevices() {
+    if (this.state !== "idle") return;
+
+    this.state = "initializing";
+    const infos = await this._daily.startCamera();
+    const { devices } = await this._daily.enumerateDevices();
+    const cams = devices.filter((d) => d.kind === "videoinput");
+    const mics = devices.filter((d) => d.kind === "audioinput");
+    this._callbacks.onAvailableCamsUpdated?.(cams);
+    this._callbacks.onAvailableMicsUpdated?.(mics);
+    this._selectedCam = infos.camera;
+    this._callbacks.onCamUpdated?.(infos.camera as MediaDeviceInfo);
+    this._selectedMic = infos.mic;
+    this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
+    this.state = "initialized";
+  }
+
   async connect({ url, token }: { url: string; token: string }) {
+    if (this.state === "idle") {
+      await this.initDevices();
+    }
+
     this.state = "connecting";
 
     try {
@@ -206,6 +192,15 @@ export class DailyTransport extends Transport {
   }
 
   private attachEventListeners() {
+    this._daily.on(
+      "available-devices-updated",
+      this.handleAvailableDevicesUpdated.bind(this)
+    );
+    this._daily.on(
+      "selected-devices-updated",
+      this.handleSelectedDevicesUpdated.bind(this)
+    );
+
     this._daily.on("track-started", this.handleTrackStarted.bind(this));
     this._daily.on("track-stopped", this.handleTrackStopped.bind(this));
     this._daily.on(
@@ -244,6 +239,30 @@ export class DailyTransport extends Transport {
       // Bubble up pipecat metrics, which don't have the "rtvi" label
       const vmm = new VoiceMessageMetrics(ev.data.metrics as PipecatMetrics);
       this._onMessage(vmm);
+    }
+  }
+
+  private handleAvailableDevicesUpdated(
+    ev: DailyEventObjectAvailableDevicesUpdated
+  ) {
+    this._callbacks.onAvailableCamsUpdated?.(
+      ev.availableDevices.filter((d) => d.kind === "videoinput")
+    );
+    this._callbacks.onAvailableMicsUpdated?.(
+      ev.availableDevices.filter((d) => d.kind === "audioinput")
+    );
+  }
+
+  private handleSelectedDevicesUpdated(
+    ev: DailyEventObjectSelectedDevicesUpdated
+  ) {
+    if (this._selectedCam?.deviceId !== ev.devices.camera) {
+      this._selectedCam = ev.devices.camera;
+      this._callbacks.onCamUpdated?.(ev.devices.camera as MediaDeviceInfo);
+    }
+    if (this._selectedMic?.deviceId !== ev.devices.mic) {
+      this._selectedMic = ev.devices.mic;
+      this._callbacks.onMicUpdated?.(ev.devices.mic as MediaDeviceInfo);
     }
   }
 

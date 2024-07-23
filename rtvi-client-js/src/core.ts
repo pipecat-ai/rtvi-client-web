@@ -177,6 +177,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   // ------ Transport methods
+  public async initDevices() {
+    await this._transport.initDevices();
+  }
+
   public async start() {
     this._transport.state = "handshaking";
 
