@@ -32,6 +32,7 @@ export enum VoiceEvent {
   JSONCompletion = "jsonCompletion",
   Metrics = "metrics",
   UserTranscript = "userTranscript",
+  BotTranscript = "botTranscript",
 }
 
 export type VoiceEvents = {
@@ -65,6 +66,7 @@ export type VoiceEvents = {
   jsonCompletion: (jsonString: string) => void;
   metrics: (data: PipecatMetrics) => void;
   userTranscript: (data: Transcript) => void;
+  botTranscript: (text: string) => void;
 };
 
 export type VoiceEventHandler<E extends VoiceEvent> =

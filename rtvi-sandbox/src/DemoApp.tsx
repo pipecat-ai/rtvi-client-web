@@ -130,6 +130,13 @@ export const DemoApp = () => {
     }, [])
   );
 
+  useVoiceClientEvent(
+    VoiceEvent.BotTranscript,
+    useCallback((text: string) => {
+      console.log("useVoiceClientEvent bot text:", text);
+    }, [])
+  );
+
   const { availableMics, selectedMic, updateMic } =
     useVoiceClientMediaDevices();
 
