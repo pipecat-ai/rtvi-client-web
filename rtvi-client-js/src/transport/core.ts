@@ -3,6 +3,8 @@ import { VoiceEventCallbacks } from "../core";
 
 export type TransportState =
   | "idle"
+  | "initializing"
+  | "initialized"
   | "handshaking"
   | "connecting"
   | "connected"
@@ -43,6 +45,8 @@ export abstract class Transport {
     this._config = options.config ?? {};
     this._onMessage = onMessage;
   }
+
+  abstract initDevices(): Promise<void>;
 
   abstract connect({
     url,

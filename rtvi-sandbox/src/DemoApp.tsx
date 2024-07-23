@@ -186,7 +186,16 @@ export const DemoApp = () => {
         </select>
       </label>
       <hr />
-      <button disabled={transportState !== "idle"} onClick={() => start()}>
+      <button
+        disabled={transportState !== "idle"}
+        onClick={() => voiceClient.initDevices()}
+      >
+        Init devices
+      </button>
+      <button
+        disabled={transportState !== "idle" && transportState !== "initialized"}
+        onClick={() => start()}
+      >
         Connect
       </button>
       <button disabled={!isConnected} onClick={() => voiceClient.disconnect()}>
