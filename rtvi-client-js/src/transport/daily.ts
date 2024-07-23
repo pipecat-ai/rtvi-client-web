@@ -152,6 +152,14 @@ export class DailyTransport extends Transport {
     this._callbacks.onCamUpdated?.(infos.camera as MediaDeviceInfo);
     this._selectedMic = infos.mic;
     this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
+
+    // Instantiate audio processors
+    this._localAudioLevelObserver = this.createAudioLevelProcessor(
+      dailyParticipantToParticipant(this._daily.participants().local)
+    );
+    await this._daily.startLocalAudioLevelObserver(100);
+    await this._daily.startRemoteParticipantsAudioLevelObserver(100);
+
     this.state = "initialized";
   }
 
@@ -178,13 +186,6 @@ export class DailyTransport extends Transport {
       console.error("Failed to join call", e);
       return;
     }
-
-    // Instantiate audio processors
-    this._localAudioLevelObserver = this.createAudioLevelProcessor(
-      dailyParticipantToParticipant(this._daily.participants().local)
-    );
-    await this._daily.startLocalAudioLevelObserver(100);
-    await this._daily.startRemoteParticipantsAudioLevelObserver(100);
 
     this.state = "connected";
 
