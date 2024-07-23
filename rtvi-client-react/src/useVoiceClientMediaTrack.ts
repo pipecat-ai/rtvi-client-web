@@ -1,9 +1,10 @@
-import { Tracks, VoiceEvent } from "realtime-ai";
-import { useVoiceClientEvent } from "./useVoiceClientEvent";
-import { useCallback } from "react";
 import { atom, useAtomValue } from "jotai";
 import { atomFamily, useAtomCallback } from "jotai/utils";
-import { Atom } from "jotai/vanilla";
+import { PrimitiveAtom } from "jotai/vanilla";
+import { useCallback, useEffect } from "react";
+import { Tracks, VoiceEvent } from "realtime-ai";
+import { useVoiceClient } from "./useVoiceClient";
+import { useVoiceClientEvent } from "./useVoiceClientEvent";
 
 type ParticipantType = keyof Tracks;
 type TrackType = keyof Tracks["local"];
@@ -15,7 +16,7 @@ const botVideoTrackAtom = atom<MediaStreamTrack | null>(null);
 
 const trackAtom = atomFamily<
   { local: boolean; trackType: TrackType },
-  Atom<MediaStreamTrack | null>
+  PrimitiveAtom<MediaStreamTrack | null>
 >(({ local, trackType }) => {
   if (local)
     return trackType === "audio" ? localAudioTrackAtom : localVideoTrackAtom;
@@ -26,30 +27,46 @@ export const useVoiceClientMediaTrack = (
   trackType: TrackType,
   participantType: ParticipantType
 ) => {
+  const voiceClient = useVoiceClient();
   const track = useAtomValue(
     trackAtom({ local: participantType === "local", trackType })
   );
 
-  useVoiceClientEvent(
-    VoiceEvent.TrackStarted,
-    useAtomCallback(
-      useCallback(
-        (get, set, t, p) => {
-          const atom = p?.local
-            ? t.kind === "audio"
-              ? localAudioTrackAtom
-              : localVideoTrackAtom
-            : t.kind === "audio"
-            ? botAudioTrackAtom
-            : botVideoTrackAtom;
-          const oldTrack = get(atom);
-          if (oldTrack?.id === t.id) return;
-          set(atom, t);
-        },
-        [participantType, track, trackType]
-      )
+  const updateTrack = useAtomCallback(
+    useCallback(
+      (
+        get,
+        set,
+        track: MediaStreamTrack,
+        trackType: TrackType,
+        local: boolean
+      ) => {
+        const atom = trackAtom({
+          local,
+          trackType,
+        });
+        const oldTrack = get(atom);
+        if (oldTrack?.id === track.id) return;
+        set(atom, track);
+      },
+      [participantType, track, trackType]
     )
   );
+
+  useVoiceClientEvent(
+    VoiceEvent.TrackStarted,
+    useCallback((track, participant) => {
+      updateTrack(track, track.kind as TrackType, Boolean(participant?.local));
+    }, [])
+  );
+
+  useEffect(() => {
+    if (!voiceClient) return;
+    const tracks = voiceClient.tracks();
+    const track = tracks?.[participantType]?.[trackType];
+    if (!track) return;
+    updateTrack(track, trackType, participantType === "local");
+  }, [participantType, trackType, updateTrack, voiceClient]);
 
   return track;
 };
