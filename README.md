@@ -30,28 +30,3 @@ yarn workspace rtvi-sandbox run dev
 Navigate to the URL in your browser
 
 
-## Bump and publish rtvi-client-js
-
-```bash
-# Bump version
-yarn workspace realtime-ai version --patch/--minor/--major --message "Bump voice-sdk version"
-# Build
-yarn workspace realtime-ai build
-# Verify package content
-npm pack --dry-run --workspace=realtime-ai
-# Publish package
-npm publish --workspace=realtime-ai
-```
-
-## Bump and publish rtiv-client-react
-
-```bash
-# Bump version
-yarn workspace realtime-ai-react version --patch/--minor/--major --message "Bump voice-sdk version"
-# Build
-yarn workspace realtime-ai-react build
-# Verify package content
-npm pack --dry-run --workspace=realtime-ai-react
-# Publish package
-npm publish --workspace=realtime-ai-react
-```
