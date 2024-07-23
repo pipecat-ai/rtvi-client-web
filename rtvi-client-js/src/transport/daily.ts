@@ -170,10 +170,11 @@ export class DailyTransport extends Transport {
 
     this.state = "connecting";
 
+    const transportUrl = this._options.transportURL ?? "https://rtvi.daily.co";
+
     try {
       await this._daily.join({
-        // TODO: Remove hardcoded Daily domain
-        url: `https://rtvi.daily.co/${url}`,
+        url: `${transportUrl}/${url}`,
         token,
       });
       // Get room expiry
