@@ -157,8 +157,10 @@ export class DailyTransport extends Transport {
     this._localAudioLevelObserver = this.createAudioLevelProcessor(
       dailyParticipantToParticipant(this._daily.participants().local)
     );
-    await this._daily.startLocalAudioLevelObserver(100);
-    await this._daily.startRemoteParticipantsAudioLevelObserver(100);
+    if (!this._daily.isLocalAudioLevelObserverRunning())
+      await this._daily.startLocalAudioLevelObserver(100);
+    if (!this._daily.isRemoteParticipantsAudioLevelObserverRunning())
+      await this._daily.startRemoteParticipantsAudioLevelObserver(100);
 
     this.state = "initialized";
   }
