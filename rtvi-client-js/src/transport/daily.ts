@@ -55,6 +55,8 @@ export class DailyTransport extends Transport {
   }
 
   private set state(state: TransportState) {
+    if (this._state === state) return;
+
     this._state = state;
     this._callbacks.onTransportStateChanged?.(state);
   }
