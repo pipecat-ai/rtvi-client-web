@@ -1,6 +1,6 @@
 {
   "name": "realtime-ai",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
@@ -8,7 +8,7 @@
   "source": "src/index.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rtvi-ai/rtvi-client-web"
+    "url": "git+https://github.com/rtvi-ai/rtvi-client-web.git"
   },
   "files": [
     "dist",
