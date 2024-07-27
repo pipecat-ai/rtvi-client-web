@@ -40,13 +40,6 @@ export interface VoiceClientOptions {
   enableCam?: boolean;
 
   /**
-   * Join the session with the user's mic muted
-   *
-   * Default to false
-   */
-  startMicMuted?: boolean;
-
-  /**
    * Optional callback methods for voice events
    */
   callbacks?: VoiceEventCallbacks;
@@ -60,7 +53,6 @@ export interface VoiceClientOptions {
   // @@ Not yet implemented @@
   // pipeline?: Array<object>;
   // tools?: Array<object>;
-  // startCameraMuted?: boolean;
 }
 
 export type VoiceClientLLMMessage = {
