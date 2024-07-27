@@ -89,11 +89,7 @@ export interface VoiceClientConfigOptions {
  * RTVI Voice Client
  */
 export class VoiceClient extends Client {
-  constructor(
-    { ...opts }: VoiceClientOptions = {
-      baseUrl: "https://rtvi.pipecat.bot",
-    }
-  ) {
+  constructor({ ...opts }: VoiceClientOptions) {
     // Validate client options
     const options: VoiceClientOptions = {
       ...opts,
