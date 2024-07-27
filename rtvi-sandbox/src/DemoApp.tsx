@@ -13,6 +13,7 @@ import {
   TransportState,
   VoiceClientConfigOptions,
   VoiceEvent,
+  TransportAuthBundleError,
 } from "realtime-ai";
 
 export const DemoApp = () => {
@@ -42,8 +43,10 @@ export const DemoApp = () => {
     } catch (e) {
       if (e instanceof RateLimitError) {
         setError("Demo is currently at capacity. Please try again later.");
+      } else if (e instanceof TransportAuthBundleError) {
+        setError(e.message);
       } else {
-        setError("Error connecting to backend service");
+        setError("Unknown error occurred");
       }
     }
   }
@@ -54,8 +57,7 @@ export const DemoApp = () => {
   useVoiceClientEvent(
     VoiceEvent.Connected,
     useCallback(() => {
-      console.log(voiceClient.transportExpiry);
-
+      console.log(`[SESSION EXPIRY] ${voiceClient.transportExpiry}`);
       setIsConnected(true);
     }, [])
   );

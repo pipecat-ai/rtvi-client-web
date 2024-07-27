@@ -21,11 +21,6 @@ export interface VoiceClientOptions {
   ) => Transport;
 
   /**
-   * Use a custom domain with your transport service
-   */
-  transportURL?: string;
-
-  /**
    * Enable user mic input
    *
    * Default to true

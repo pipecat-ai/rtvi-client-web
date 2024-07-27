@@ -1,6 +1,8 @@
 import { VoiceClientConfigOptions, VoiceClientOptions, VoiceMessage } from "..";
 import { VoiceEventCallbacks } from "../core";
 
+export interface AuthBundle {}
+
 export type TransportState =
   | "idle"
   | "initializing"
@@ -48,13 +50,7 @@ export abstract class Transport {
 
   abstract initDevices(): Promise<void>;
 
-  abstract connect({
-    url,
-    token,
-  }: {
-    url: string;
-    token: string;
-  }): Promise<void>;
+  abstract connect(authBundle: AuthBundle): Promise<void>;
 
   abstract disconnect(): Promise<void>;
 
