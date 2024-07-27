@@ -21,6 +21,7 @@ import {
   Transport,
   TransportState,
 } from "./transport";
+import { AuthBundle } from "./transport/core";
 
 export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
@@ -187,66 +188,27 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     const config: VoiceClientConfigOptions = this._options.config!;
 
-    /**
-     * SOF: placeholder service-side logic
-     *
-     * This should be replaced with a developer's own server-side logic
-     * We have baked this in for the developer preview, so they do not need
-     * to stand up a backend service to get started.
-     *
-     * If you are reading this, and want to build your own service, please
-     * refer to the documentation for the expected API endpoints and payloads.
-     */
+    // Send POST request to the provided base_url to connect and start the bot
+    // @params config - VoiceClientConfigOptions object with the configuration
 
-    // Handshake with the server to get the room name and token
-    // Note: this is transport specific.
-    let room: string;
-    let token: string;
+    let authBundle: AuthBundle;
 
     try {
-      const req = await fetch(`${this._baseUrl}/authenticate`, {
-        method: "POST",
-        mode: "cors",
-      });
-      const data = await req.json();
-      room = data.room;
-      token = data.token;
-    } catch (e) {
-      this._transport.state = "error";
-      throw new VoiceErrors.AuthenticationError(
-        "Failed to authenticate with the server"
-      );
-    }
-
-    if (!room || !token) {
-      // In lieu of proper error codes, a failed authentication indicates
-      // the server is busy.
-      this._transport.state = "error";
-      throw new VoiceErrors.RateLimitError();
-    }
-    /**
-     * EOF: placeholder service-side logic
-     */
-
-    // Send a post request with the auth credentials and initial
-    // configuration to the server
-    try {
-      await fetch(`${this._baseUrl}/start_bot`, {
+      authBundle = await fetch(`${this._baseUrl}`, {
         method: "POST",
         mode: "cors",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ room, config: { ...config } }),
-      });
-    } catch {
-      throw new VoiceErrors.BotStartError(`Failed to start bot at URL ${room}`);
+        body: JSON.stringify({ config: { ...config } }),
+      }).then((res) => res.json());
+    } catch (e) {
+      throw new VoiceErrors.TransportAuthBundleError(
+        "Failed to fetch auth bundle from provided base url"
+      );
     }
 
-    await this._transport.connect({
-      url: room,
-      token,
-    });
+    await this._transport.connect(authBundle);
   }
 
   public async disconnect() {

@@ -13,12 +13,19 @@ import Daily, {
 
 import {
   PipecatMetrics,
+  TransportAuthBundleError,
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageMetrics,
 } from "..";
 import type { TransportState } from ".";
 import { Participant, Tracks, Transport } from ".";
+import { AuthBundle } from "./core";
+
+export interface DailyTransportAuthBundle extends AuthBundle {
+  room_url: string;
+  token: string;
+}
 
 export class DailyTransport extends Transport {
   protected _state: TransportState = "idle";
@@ -167,19 +174,17 @@ export class DailyTransport extends Transport {
     this.state = "initialized";
   }
 
-  async connect({ url, token }: { url: string; token: string }) {
+  async connect(authBundle: DailyTransportAuthBundle) {
     if (this.state === "idle") {
       await this.initDevices();
     }
 
     this.state = "connecting";
 
-    const transportUrl = this._options.transportURL ?? "https://rtvi.daily.co";
-
     try {
       await this._daily.join({
-        url: `${transportUrl}/${url}`,
-        token,
+        url: authBundle.room_url,
+        token: authBundle.token,
       });
       // Get room expiry
       const room = await this._daily.room();
@@ -187,9 +192,8 @@ export class DailyTransport extends Transport {
         this._expiry = room.config?.exp;
       }
     } catch (e) {
-      //@TODO: Error handling here
-      console.error("Failed to join call", e);
-      return;
+      this.state = "error";
+      throw new TransportAuthBundleError();
     }
 
     this.state = "connected";
