@@ -8,7 +8,7 @@
   "source": "src/index.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/rtvi-ai/rtvi-client-web"
+    "url": "git+https://github.com/rtvi-ai/rtvi-client-web.git"
   },
   "files": [
     "dist",
