@@ -65,7 +65,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
-    // @TODO tidy up with a loop
     const wrappedCallbacks: VoiceEventCallbacks = {
       ...options.callbacks,
       onConnected: () => {
@@ -188,6 +187,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     const config: VoiceClientConfigOptions = this._options.config!;
 
+    const handshakeTimeout = setTimeout(() => {
+      this._transport.abort();
+      throw new VoiceErrors.ConnectionTimeoutError();
+    }, this._options.timeout);
+
     // Send POST request to the provided base_url to connect and start the bot
     // @params config - VoiceClientConfigOptions object with the configuration
 
@@ -203,12 +207,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         body: JSON.stringify({ config: { ...config } }),
       }).then((res) => res.json());
     } catch (e) {
+      clearTimeout(handshakeTimeout);
       throw new VoiceErrors.TransportAuthBundleError(
         "Failed to fetch auth bundle from provided base url"
       );
     }
 
     await this._transport.connect(authBundle);
+    clearTimeout(handshakeTimeout);
   }
 
   public async disconnect() {

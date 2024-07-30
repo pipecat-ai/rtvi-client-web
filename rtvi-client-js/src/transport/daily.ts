@@ -201,6 +201,8 @@ export class DailyTransport extends Transport {
     this._callbacks.onConnected?.();
   }
 
+  abort() {}
+
   private attachEventListeners() {
     this._daily.on(
       "available-devices-updated",
