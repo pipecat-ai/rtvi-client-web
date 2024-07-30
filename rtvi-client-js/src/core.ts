@@ -58,6 +58,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   private _transport: Transport;
   private readonly _baseUrl: string;
   private _abortController: AbortController | undefined;
+  private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
 
   constructor(options: VoiceClientOptions) {
     super();
@@ -194,14 +195,17 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     const config: VoiceClientConfigOptions = this._options.config!;
 
-    const handshakeTimeout = setTimeout(() => {
-      this._abortController?.abort();
-      throw new VoiceErrors.ConnectionTimeoutError();
-    }, this._options.timeout);
+    // Set a timer for the bot to enter a ready state, otherwise abort the attempt
+    if (this._options.timeout) {
+      this._handshakeTimeout = setTimeout(() => {
+        this._abortController?.abort();
+        this._transport.disconnect();
+        throw new VoiceErrors.ConnectionTimeoutError();
+      }, this._options.timeout);
+    }
 
     // Send POST request to the provided base_url to connect and start the bot
     // @params config - VoiceClientConfigOptions object with the configuration
-
     let authBundle: AuthBundle;
 
     try {
@@ -215,14 +219,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         signal: this._abortController.signal,
       }).then((res) => res.json());
     } catch (e) {
-      clearTimeout(handshakeTimeout);
+      clearTimeout(this._handshakeTimeout);
+
       throw new VoiceErrors.TransportAuthBundleError(
         "Failed to fetch auth bundle from provided base url"
       );
     }
 
     await this._transport.connect(authBundle, this._abortController);
-    clearTimeout(handshakeTimeout);
   }
 
   public async disconnect() {
@@ -433,6 +437,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     switch (ev.type) {
       case VoiceMessageType.BOT_READY:
+        clearTimeout(this._handshakeTimeout);
         this._transport.state = "ready";
         this._options.callbacks?.onBotReady?.();
         break;
