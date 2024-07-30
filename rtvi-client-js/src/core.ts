@@ -57,6 +57,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   protected _options: VoiceClientOptions;
   private _transport: Transport;
   private readonly _baseUrl: string;
+  private _abortController: AbortController | undefined;
 
   constructor(options: VoiceClientOptions) {
     super();
@@ -183,12 +184,18 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   public async start() {
+    this._abortController = new AbortController();
+
+    if (this._transport.state === "idle") {
+      await this._transport.initDevices();
+    }
+
     this._transport.state = "handshaking";
 
     const config: VoiceClientConfigOptions = this._options.config!;
 
     const handshakeTimeout = setTimeout(() => {
-      this._transport.abort();
+      this._abortController?.abort();
       throw new VoiceErrors.ConnectionTimeoutError();
     }, this._options.timeout);
 
@@ -205,6 +212,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ config: { ...config } }),
+        signal: this._abortController.signal,
       }).then((res) => res.json());
     } catch (e) {
       clearTimeout(handshakeTimeout);
@@ -213,11 +221,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       );
     }
 
-    await this._transport.connect(authBundle);
+    await this._transport.connect(authBundle, this._abortController);
     clearTimeout(handshakeTimeout);
   }
 
   public async disconnect() {
+    if (this._abortController) {
+      this._abortController.abort();
+    }
     await this._transport.disconnect();
   }
 

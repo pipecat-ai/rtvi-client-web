@@ -174,10 +174,15 @@ export class DailyTransport extends Transport {
     this.state = "initialized";
   }
 
-  async connect(authBundle: DailyTransportAuthBundle) {
+  async connect(
+    authBundle: DailyTransportAuthBundle,
+    abortController: AbortController
+  ) {
     if (this.state === "idle") {
       await this.initDevices();
     }
+
+    if (abortController.signal.aborted) return;
 
     this.state = "connecting";
 
@@ -196,12 +201,12 @@ export class DailyTransport extends Transport {
       throw new TransportAuthBundleError();
     }
 
+    if (abortController.signal.aborted) return;
+
     this.state = "connected";
 
     this._callbacks.onConnected?.();
   }
-
-  abort() {}
 
   private attachEventListeners() {
     this._daily.on(
