@@ -187,46 +187,57 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public async start() {
     this._abortController = new AbortController();
 
-    if (this._transport.state === "idle") {
-      await this._transport.initDevices();
-    }
+    return new Promise((resolve, reject) => {
+      (async () => {
+        if (this._transport.state === "idle") {
+          await this._transport.initDevices();
+        }
 
-    this._transport.state = "handshaking";
+        this._transport.state = "handshaking";
 
-    const config: VoiceClientConfigOptions = this._options.config!;
+        const config: VoiceClientConfigOptions = this._options.config!;
 
-    // Set a timer for the bot to enter a ready state, otherwise abort the attempt
-    if (this._options.timeout) {
-      this._handshakeTimeout = setTimeout(() => {
-        this._abortController?.abort();
-        this._transport.disconnect();
-        throw new VoiceErrors.ConnectionTimeoutError();
-      }, this._options.timeout);
-    }
+        // Set a timer for the bot to enter a ready state, otherwise abort the attempt
+        if (this._options.timeout) {
+          this._handshakeTimeout = setTimeout(() => {
+            this._abortController?.abort();
+            this._transport.disconnect();
+            reject(new VoiceErrors.ConnectionTimeoutError());
+          }, this._options.timeout);
+        }
 
-    // Send POST request to the provided base_url to connect and start the bot
-    // @params config - VoiceClientConfigOptions object with the configuration
-    let authBundle: AuthBundle;
+        // Send POST request to the provided base_url to connect and start the bot
+        // @params config - VoiceClientConfigOptions object with the configuration
+        let authBundle: AuthBundle;
 
-    try {
-      authBundle = await fetch(`${this._baseUrl}`, {
-        method: "POST",
-        mode: "cors",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ config: { ...config } }),
-        signal: this._abortController.signal,
-      }).then((res) => res.json());
-    } catch (e) {
-      clearTimeout(this._handshakeTimeout);
+        try {
+          authBundle = await fetch(`${this._baseUrl}`, {
+            method: "POST",
+            mode: "cors",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ config: { ...config } }),
+            signal: this._abortController?.signal,
+          }).then((res) => res.json());
+        } catch (e) {
+          clearTimeout(this._handshakeTimeout);
+          reject(
+            new VoiceErrors.TransportAuthBundleError(
+              "Failed to fetch auth bundle from provided base url"
+            )
+          );
+          return;
+        }
 
-      throw new VoiceErrors.TransportAuthBundleError(
-        "Failed to fetch auth bundle from provided base url"
-      );
-    }
+        await this._transport.connect(
+          authBundle,
+          this._abortController as AbortController
+        );
 
-    await this._transport.connect(authBundle, this._abortController);
+        resolve(undefined);
+      })();
+    });
   }
 
   public async disconnect() {
