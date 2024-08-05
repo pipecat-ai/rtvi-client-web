@@ -295,7 +295,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     {
       useDeepMerge = false,
       sendPartial = false,
-    }: { useDeepMerge?: boolean; sendPartial?: boolean }
+    }: { useDeepMerge?: boolean; sendPartial?: boolean } = {}
   ) {
     // @TODO refactor this method to use a reducer
     if (useDeepMerge) {
