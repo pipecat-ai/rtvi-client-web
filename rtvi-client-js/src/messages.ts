@@ -2,7 +2,7 @@ import { nanoid } from "nanoid";
 
 import {
   VoiceClientConfigLLM,
-  VoiceClientConfigOptions,
+  VoiceClientConfigOption,
   VoiceClientLLMMessage,
 } from ".";
 
@@ -47,6 +47,11 @@ export type Transcript = {
   user_id: string;
 };
 
+export type BotReadyData = {
+  config: VoiceClientConfigOption[];
+  version: string;
+};
+
 export class VoiceMessage {
   id: string;
   label: string = "rtvi-ai";
@@ -72,23 +77,17 @@ export class VoiceMessage {
   }
 
   // Outbound message types
-  static config(configuration: VoiceClientConfigOptions): VoiceMessage {
-    // Sent when the configuration options of services has changed
-    // We only send a partial configuration update to the bot related to the pipeline
-    return new VoiceMessage(VoiceMessageType.CONFIG, {
-      config: {
-        llm: configuration.llm,
-        tts: configuration.tts,
-      },
-    });
+  static config(config: VoiceClientConfigOption[]): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.CONFIG, { config });
   }
 
   // TTS
   static speak(message: string, interrupt: boolean): VoiceMessage {
     // Sent when prompting the STT model to speak
-    return new VoiceMessage(VoiceMessageType.SPEAK,
-      { text: message, interrupt },
-    );
+    return new VoiceMessage(VoiceMessageType.SPEAK, {
+      text: message,
+      interrupt,
+    });
   }
 
   static interrupt(): VoiceMessage {

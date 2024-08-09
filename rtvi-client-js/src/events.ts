@@ -1,4 +1,9 @@
-import { PipecatMetrics, Transcript, VoiceClientConfigOptions } from ".";
+import {
+  BotReadyData,
+  PipecatMetrics,
+  Transcript,
+  VoiceClientConfigOption,
+} from ".";
 import { Participant, TransportState } from "./transport";
 
 export enum VoiceEvent {
@@ -40,7 +45,7 @@ export type VoiceEvents = {
   disconnected: () => void;
   transportStateChanged: (state: TransportState) => void;
 
-  configUpdated: (config: VoiceClientConfigOptions) => void;
+  configUpdated: (config: VoiceClientConfigOption[]) => void;
 
   participantConnected: (p: Participant) => void;
   participantLeft: (p: Participant) => void;
@@ -52,7 +57,7 @@ export type VoiceEvents = {
   camUpdated: (cam: MediaDeviceInfo) => void;
   micUpdated: (cam: MediaDeviceInfo) => void;
 
-  botReady: () => void;
+  botReady: (botData: BotReadyData) => void;
   botConnected: (p: Participant) => void;
   botDisconnected: (p: Participant) => void;
   botStartedTalking: (p: Participant) => void;

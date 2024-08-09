@@ -26,12 +26,13 @@
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.68.0",
-    "realtime-ai": "*",
-    "realtime-ai-react": "*",
+    "@microlink/react-json-view": "^1.23.1",
     "@vitejs/plugin-react": "^4.3.1",
     "events": "^3.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "realtime-ai": "*",
+    "realtime-ai-react": "*",
     "typed-emitter": "^2.1.0"
   }
 }

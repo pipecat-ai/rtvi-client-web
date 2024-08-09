@@ -20,7 +20,7 @@ export class ConnectionTimeoutError extends VoiceError {
 export class TransportAuthBundleError extends VoiceError {
   override readonly status = 500;
   constructor(message?: string | undefined) {
-    super(message ?? "Invalid or malformed auth bundle provided to Transport");
+    super(message ?? "Invalid or malformed auth bundle provided to transport");
   }
 }
 

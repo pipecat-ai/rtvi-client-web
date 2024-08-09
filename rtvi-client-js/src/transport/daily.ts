@@ -191,7 +191,7 @@ export class DailyTransport extends Transport {
         url: authBundle.room_url,
         token: authBundle.token,
       });
-      // Get room expiry
+
       const room = await this._daily.room();
       if (room && "id" in room) {
         this._expiry = room.config?.exp;

@@ -1,0 +1,236 @@
+import { useCallback, useRef, useState } from "react";
+import {
+  useVoiceClient,
+  useVoiceClientEvent,
+  useVoiceClientMediaDevices,
+  useVoiceClientTransportState,
+  VoiceClientAudio,
+} from "realtime-ai-react";
+import ReactJson from "@microlink/react-json-view";
+import {
+  BotReadyData,
+  BotReadyMessage,
+  ConnectionTimeoutError,
+  RateLimitError,
+  TransportAuthBundleError,
+  VoiceClientConfigOption,
+  VoiceEvent,
+} from "realtime-ai";
+
+import styles from "./styles.module.css";
+
+export const Sandbox = () => {
+  const voiceClient = useVoiceClient()!;
+  const state = useVoiceClientTransportState();
+  const [isBotConnected, setIsBotConnected] = useState(false);
+  const [botVersion, setBotVersion] = useState<string>("---");
+  const { availableMics, selectedMic, updateMic } =
+    useVoiceClientMediaDevices();
+  const [config, setConfig] = useState<VoiceClientConfigOption[]>(
+    voiceClient.config
+  );
+  const [editedConfig, setEditedConfig] = useState<unknown | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useVoiceClientEvent(VoiceEvent.ConfigUpdated, (e) => {
+    console.log("Config was updated locally: ", e);
+    setConfig(e);
+  });
+
+  useVoiceClientEvent(
+    VoiceEvent.BotReady,
+    useCallback((botData: BotReadyData) => {
+      setConfig(botData.data.config);
+      setBotVersion(botData.data.version);
+    }, [])
+  );
+
+  useVoiceClientEvent(
+    VoiceEvent.Disconnected,
+    useCallback(() => {
+      setIsBotConnected(false);
+    }, [])
+  );
+  useVoiceClientEvent(
+    VoiceEvent.ParticipantConnected,
+    useCallback((p) => {
+      if (!p.local) setIsBotConnected(true);
+    }, [])
+  );
+
+  useVoiceClientEvent(
+    VoiceEvent.ParticipantLeft,
+    useCallback((p) => {
+      if (!p.local) setIsBotConnected(false);
+    }, [])
+  );
+
+  async function start() {
+    try {
+      await voiceClient.start();
+    } catch (e) {
+      if (e instanceof RateLimitError) {
+        setError("Demo is currently at capacity. Please try again later.");
+      } else if (e instanceof TransportAuthBundleError) {
+        setError(e.message);
+      } else if (e instanceof ConnectionTimeoutError) {
+        setError(e.message);
+      } else {
+        setError("Unknown error occurred");
+      }
+    }
+  }
+
+  return (
+    <div>
+      <header className={styles.header}>
+        <div>
+          Client state: <strong className={styles.mono}>{state}</strong>
+        </div>
+        <div>
+          Session expiry:{" "}
+          {state === "ready" ? voiceClient.transportExpiry?.toString() : "---"}
+        </div>
+        <div>Bot RTVI version: {botVersion}</div>
+        <div>
+          {state === "connected" || state === "ready" ? (
+            <button onClick={() => voiceClient.disconnect()}>Disconnect</button>
+          ) : (
+            <button onClick={() => start()}>Connect</button>
+          )}
+        </div>
+      </header>
+
+      <main className={styles.main}>
+        {error && <div className={styles.error}>{error}</div>}
+
+        <div className={styles.card}>
+          <h3>Device config</h3>
+          {state === "idle" ? (
+            <>
+              <p>Initialize to get local media devices</p>
+              <button onClick={() => voiceClient.initDevices()}>
+                Initialize devices
+              </button>
+            </>
+          ) : (
+            <label htmlFor="mic">
+              Microphone:
+              <select
+                id="mic"
+                onChange={(ev) => updateMic(ev.currentTarget.value)}
+                value={selectedMic?.deviceId}
+              >
+                {availableMics.map((mic) => (
+                  <option key={mic.deviceId} value={mic.deviceId}>
+                    {mic.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+        <div className={styles.card}>
+          <div>
+            Local audio gain: <MicMeter type={VoiceEvent.LocalAudioLevel} />
+          </div>
+          {isBotConnected && (
+            <div className="meter-wrapper">
+              <strong>Bot</strong>
+              <MicMeter type={VoiceEvent.RemoteAudioLevel} />
+            </div>
+          )}
+        </div>
+
+        <div className={styles.card}>
+          <h3>Configuration</h3>
+          <strong>Services</strong>
+          <ul>
+            {Object.entries(voiceClient.services).map(([k, v]) => (
+              <li key={k.toString()}>
+                {k.toString()}: {v}
+              </li>
+            ))}
+          </ul>
+
+          <strong>Config</strong>
+          <ReactJson
+            enableClipboard={false}
+            onEdit={(e) => setEditedConfig(e.updated_src)}
+            onAdd={(e) => setEditedConfig(e.updated_src)}
+            style={{ width: "100%" }}
+            src={config}
+          />
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              disabled={!editedConfig}
+              onClick={() => {
+                voiceClient.updateConfig(
+                  editedConfig as VoiceClientConfigOption[]
+                );
+                setEditedConfig(null);
+              }}
+            >
+              Save (update voice client)
+            </button>
+            <button disabled={state !== "ready"}>
+              Retrieve config from bot {state !== "ready" && "(bot not ready)"}
+            </button>
+          </div>
+        </div>
+      </main>
+      <VoiceClientAudio />
+    </div>
+  );
+};
+
+type MeterType = VoiceEvent.LocalAudioLevel | VoiceEvent.RemoteAudioLevel;
+
+interface MeterProps {
+  type: MeterType;
+}
+
+const MicMeter: React.FC<MeterProps> = ({ type }) => {
+  const meterRef = useRef<HTMLInputElement>(null);
+
+  useVoiceClientEvent(
+    type,
+    useCallback((level: number) => {
+      if (!meterRef.current) return;
+      meterRef.current.style.width = 100 * Math.min(1, 3 * level) + "%";
+    }, [])
+  );
+
+  useVoiceClientEvent(
+    VoiceEvent.Disconnected,
+    useCallback(() => {
+      if (!meterRef.current) return;
+      meterRef.current.style.width = "";
+    }, [type])
+  );
+
+  return (
+    <div
+      style={{
+        background: "#fafafa",
+        height: "4px",
+        margin: "20px 0",
+        position: "relative",
+        width: "150px",
+      }}
+    >
+      <div
+        ref={meterRef}
+        style={{
+          background: "blue",
+          borderRadius: "4px",
+          position: "absolute",
+          top: 0,
+          left: 0,
+          height: "100%",
+          transition: "width 100ms ease",
+        }}
+      />
+    </div>
+  );
+};
