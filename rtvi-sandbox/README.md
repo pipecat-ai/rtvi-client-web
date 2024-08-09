@@ -1,4 +1,4 @@
-# Real-Time Voice Inference SDK Demo
+# Real-Time Voice Inference SDK Demo (Daily)
 
 
 ## Link local package
@@ -14,6 +14,7 @@ yarn link
 ```bash
 yarn
 yarn link realtime-ai
+yarn link realtime-ai-daily
 yarn link realtime-ai-react
 yarn run dev
 # or from project root

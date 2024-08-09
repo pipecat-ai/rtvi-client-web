@@ -17,12 +17,7 @@ import {
 } from ".";
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
-import {
-  DailyTransport,
-  Participant,
-  Transport,
-  TransportState,
-} from "./transport";
+import { Participant, Transport, TransportState } from "./transport";
 import { AuthBundle } from "./transport/core";
 
 export type VoiceEventCallbacks = Partial<{
@@ -164,21 +159,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     };
 
     // Instantiate the transport class
-    this._transport = options?.transport
-      ? new options.transport(
-          {
-            ...options,
-            callbacks: wrappedCallbacks,
-          },
-          this.handleMessage.bind(this)
-        )!
-      : new DailyTransport(
-          {
-            ...options,
-            callbacks: wrappedCallbacks,
-          },
-          this.handleMessage.bind(this)
-        );
+    this._transport = new options.transport!(
+      {
+        ...options,
+        callbacks: wrappedCallbacks,
+      },
+      this.handleMessage.bind(this)
+    )!;
 
     // Update options to reference wrapped callbacks
     this._options = {

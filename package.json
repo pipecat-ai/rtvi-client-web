@@ -5,6 +5,7 @@
   "workspaces": [
     "rtvi-sandbox",
     "rtvi-client-js",
+    "rtvi-client-js-daily",
     "rtvi-client-react"
   ],
   "devDependencies": {

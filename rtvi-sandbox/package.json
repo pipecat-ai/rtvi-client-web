@@ -33,6 +33,7 @@
     "react-dom": "^18.3.1",
     "realtime-ai": "*",
     "realtime-ai-react": "*",
+    "realtime-ai-daily": "*",
     "typed-emitter": "^2.1.0"
   }
 }

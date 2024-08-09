@@ -1,6 +1,6 @@
 import { Client, VoiceEventCallbacks } from "./core";
 import { VoiceMessage } from "./messages";
-import { DailyTransport, Transport } from "./transport";
+import { Transport } from "./transport";
 
 export interface VoiceClientOptions {
   /**
@@ -85,7 +85,7 @@ export class VoiceClient extends Client {
   constructor({ ...opts }: VoiceClientOptions) {
     const options: VoiceClientOptions = {
       ...opts,
-      transport: opts.transport || DailyTransport,
+      transport: opts.transport,
       services: opts.services,
       config: opts.config || [],
     };
@@ -98,4 +98,4 @@ export * from "./core";
 export * from "./errors";
 export * from "./events";
 export * from "./messages";
-export type { TransportState } from "./transport";
+export * from "./transport";

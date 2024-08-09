@@ -1,0 +1,38 @@
+{
+    "name": "realtime-ai-daily",
+    "version": "0.1.0",
+    "license": "BSD-2-Clause",
+    "main": "dist/index.js",
+    "module": "dist/index.module.js",
+    "types": "dist/index.d.ts",
+    "source": "src/index.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/rtvi-ai/rtvi-client-web.git"
+    },
+    "files": [
+        "dist",
+        "package.json",
+        "README.md"
+    ],
+    "scripts": {
+        "build": "parcel build --no-cache",
+        "dev": "parcel watch",
+        "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0"
+    },
+    "devDependencies": {
+        "@typescript-eslint/eslint-plugin": "^7.16.0",
+        "@typescript-eslint/parser": "^7.16.0",
+        "eslint": "9.x",
+        "eslint-config-prettier": "^9.1.0",
+        "eslint-plugin-simple-import-sort": "^12.1.1",
+        "parcel": "^2.12.0",
+        "typescript": "^5.2.2"
+    },
+    "dependencies": {
+        "@daily-co/daily-js": ">=0.68.0"
+    },
+    "peerDependencies": {
+        "realtime-ai": "*"
+    }
+}

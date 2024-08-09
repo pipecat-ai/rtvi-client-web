@@ -1,9 +1,10 @@
 import { createRoot } from "react-dom/client";
-import { PipecatMetrics, VoiceClient, VoiceEvent } from "realtime-ai";
+import { PipecatMetrics, VoiceEvent } from "realtime-ai";
+import { DailyVoiceClient } from "realtime-ai-daily";
 import { VoiceClientProvider } from "realtime-ai-react";
 import { Sandbox } from "./SandboxApp";
 
-const voiceClient = new VoiceClient({
+const voiceClient = new DailyVoiceClient({
   baseUrl: import.meta.env.VITE_BASE_URL,
   services: {
     llm: "groq",
@@ -12,7 +13,19 @@ const voiceClient = new VoiceClient({
   config: [
     {
       service: "llm",
-      options: [{ name: "model", value: "llama3-70b-8192" }],
+      options: [
+        { name: "model", value: "llama3-70b-8192" },
+        {
+          name: "messages",
+          value: [
+            {
+              role: "system",
+              content:
+                "You are a assistant called Chatbot. You can ask me anything. Keep response brief and legible. Introduce yourself first.",
+            },
+          ],
+        },
+      ],
     },
   ],
   timeout: 15 * 1000,

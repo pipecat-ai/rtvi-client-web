@@ -190,7 +190,7 @@ export const Sandbox = () => {
               disabled={state !== "ready"}
               onClick={() => voiceClient.getBotConfig()}
             >
-              Log bot config
+              Log bot config description
             </button>
             <button
               disabled={state !== "ready"}
