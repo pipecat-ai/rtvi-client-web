@@ -8,7 +8,8 @@ import {
 
 export enum VoiceMessageType {
   // Outbound
-  CONFIG = "config-update",
+  UPDATE_CONFIG = "update-config",
+  GET_CONFIG = "get-config",
   DESCRIBE_CONFIG = "describe-config",
   LLM_GET_CONTEXT = "llm-get-context",
   LLM_UPDATE_CONTEXT = "llm-update-context",
@@ -19,6 +20,7 @@ export enum VoiceMessageType {
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
   LLM_CONTEXT = "llm-context", // LLM context message
   TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
+  CONFIG = "config",
   CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
   CONFIG_UPDATED = "config-updated", // Configuration options have changed successfull
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
@@ -82,12 +84,16 @@ export class VoiceMessage {
   }
 
   // Outbound message types
-  static config(config: VoiceClientConfigOption[]): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.CONFIG, { config });
+  static updateConfig(config: VoiceClientConfigOption[]): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.UPDATE_CONFIG, { config });
   }
 
   static describeConfig(): VoiceMessage {
     return new VoiceMessage(VoiceMessageType.DESCRIBE_CONFIG, {});
+  }
+
+  static getBotConfig(): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.GET_CONFIG, {});
   }
 
   // LLM

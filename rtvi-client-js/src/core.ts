@@ -26,6 +26,7 @@ import {
 import { AuthBundle } from "./transport/core";
 
 export type VoiceEventCallbacks = Partial<{
+  onGenericMessage: (data: unknown) => void;
   onConnected: () => void;
   onDisconnected: () => void;
   onTransportStateChanged: (state: TransportState) => void;
@@ -344,6 +345,19 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   /**
+   * Request the bot to send its current configuration
+   */
+  public getBotConfig() {
+    if (this._transport.state === "ready") {
+      this._transport.sendMessage(VoiceMessage.getBotConfig());
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Attempted to get config from bot while transport not in ready state"
+      );
+    }
+  }
+
+  /**
    * Update pipeline and seervices
    * @param config - VoiceClientConfigOption[] partial object with the new configuration
    * @param options - Options for the update
@@ -368,7 +382,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     // potential racing conditions whilst pipeline is instantiating
     if (this._transport.state === "ready") {
       this._transport.sendMessage(
-        VoiceMessage.config(sendPartial ? config : this.config)
+        VoiceMessage.updateConfig(sendPartial ? config : this.config)
       );
     }
   }
@@ -379,6 +393,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public describeConfig() {
     if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.describeConfig());
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Attempted to get config description while transport not in ready state"
+      );
     }
   }
 
@@ -388,7 +406,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Dispatch an action message to the bot
    */
   public action(action: ActionData) {
-    this._transport.sendMessage(VoiceMessage.action(action));
+    if (this._transport.state !== "ready") {
+      this._transport.sendMessage(VoiceMessage.action(action));
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Attempted to send action while transport not in ready state"
+      );
+    }
   }
 
   // ------ LLM context methods
@@ -491,6 +515,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);
         this.emit(VoiceEvent.JSONCompletion, ev.data as string);
         break;
+      default:
+        this._options.callbacks?.onGenericMessage?.(ev.data);
     }
   }
 }

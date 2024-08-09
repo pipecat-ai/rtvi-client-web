@@ -19,6 +19,9 @@ const voiceClient = new VoiceClient({
   enableMic: true,
   enableCam: false,
   callbacks: {
+    onGenericMessage: (data: unknown) => {
+      console.log("[CALLBACK] Generic message:", data);
+    },
     onConnected: () => {
       console.log("[CALLBACK] Connected");
     },

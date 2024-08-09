@@ -184,7 +184,13 @@ export const Sandbox = () => {
                 setEditedConfig(null);
               }}
             >
-              Save (update voice client)
+              Save (and update if transport ready)
+            </button>
+            <button
+              disabled={state !== "ready"}
+              onClick={() => voiceClient.getBotConfig()}
+            >
+              Log bot config
             </button>
             <button
               disabled={state !== "ready"}
