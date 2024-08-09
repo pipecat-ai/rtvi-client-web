@@ -250,7 +250,7 @@ export class DailyTransport extends Transport {
     if (ev.data.label === "rtvi-ai") {
       this._onMessage({
         type: ev.data.type,
-        data: ev.data,
+        data: ev.data.data,
       } as VoiceMessage);
     } else if (ev.data.type === "pipecat-metrics") {
       // Bubble up pipecat metrics, which don't have the "rtvi-ai" label

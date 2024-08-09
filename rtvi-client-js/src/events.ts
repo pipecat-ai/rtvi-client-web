@@ -12,6 +12,7 @@ export enum VoiceEvent {
   TransportStateChanged = "transportStateChanged",
 
   ConfigUpdated = "configUpdated",
+  ConfigDescribe = "configDescribe",
 
   ParticipantConnected = "participantConnected",
   ParticipantLeft = "participantLeft",
@@ -46,6 +47,7 @@ export type VoiceEvents = {
   transportStateChanged: (state: TransportState) => void;
 
   configUpdated: (config: VoiceClientConfigOption[]) => void;
+  configDescribe: (configDescription: unknown) => void;
 
   participantConnected: (p: Participant) => void;
   participantLeft: (p: Participant) => void;

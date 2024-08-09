@@ -29,8 +29,9 @@ export type VoiceEventCallbacks = Partial<{
   onDisconnected: () => void;
   onTransportStateChanged: (state: TransportState) => void;
   onConfigUpdated: (config: VoiceClientConfigOption[]) => void;
+  onConfigDescribe: (configDescription: unknown) => void;
   onBotConnected: (participant: Participant) => void;
-  onBotReady: (config: VoiceClientConfigOption[], version: string) => void;
+  onBotReady: (botReadyData: BotReadyData) => void;
   onBotDisconnected: (participant: Participant) => void;
   onParticipantJoined: (participant: Participant) => void;
   onParticipantLeft: (participant: Participant) => void;
@@ -86,6 +87,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onConfigUpdated?.(config);
         this.emit(VoiceEvent.ConfigUpdated, config);
       },
+      onConfigDescribe: (configDescription: unknown) => {
+        options?.callbacks?.onConfigDescribe?.(configDescription);
+        this.emit(VoiceEvent.ConfigDescribe, configDescription);
+      },
       onParticipantJoined: (p) => {
         options?.callbacks?.onParticipantJoined?.(p);
         this.emit(VoiceEvent.ParticipantConnected, p);
@@ -122,9 +127,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onBotConnected?.(p);
         this.emit(VoiceEvent.BotConnected, p);
       },
-      onBotReady: (config: VoiceClientConfigOption[], version: string) => {
-        options?.callbacks?.onBotReady?.(config, version);
-        this.emit(VoiceEvent.BotReady, { config, version });
+      onBotReady: (botReadyData: BotReadyData) => {
+        options?.callbacks?.onBotReady?.(botReadyData);
+        this.emit(VoiceEvent.BotReady, botReadyData);
       },
       onBotDisconnected: (p) => {
         options?.callbacks?.onBotDisconnected?.(p);
@@ -333,10 +338,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param config - VoiceClientConfigOption[] partial object with the new configuration
    */
   protected set config(config: VoiceClientConfigOption[]) {
-    this._options.config = {
-      ...this._options.config,
-      ...config,
-    };
+    this._options.config = config;
+    this._options.callbacks?.onConfigUpdated?.(config);
   }
 
   /**
@@ -367,8 +370,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         VoiceMessage.config(sendPartial ? config : this.config)
       );
     }
+  }
 
-    this._options.callbacks?.onConfigUpdated?.(this.config);
+  /**
+   * Request the bot to describe its current configuration
+   */
+  public describeConfig() {
+    if (this._transport.state === "ready") {
+      this._transport.sendMessage(VoiceMessage.describeConfig());
+    }
   }
 
   // ------ LLM context methods
@@ -418,36 +428,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
-  // ------ Actions
-
-  /**
-   * Send a string to the STT model to be spoken. Requires the bot to be connected.
-   * @param text - The text to be spoken
-   * @param interrupt - Whether to interrupt the current speech (if the bot is talking)
-   */
-  public say(text: string, interrupt: boolean = false): void {
-    if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.speak(text, interrupt));
-    } else {
-      throw new VoiceErrors.VoiceError(
-        "Attempted to speak while transport not in ready state"
-      );
-    }
-  }
-
-  /**
-   * Manually interrupt the bot's TTS. Requires the bot to be connected.
-   */
-  public interrupt(): void {
-    if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.interrupt());
-    } else {
-      throw new VoiceErrors.VoiceError(
-        "Attempted to interrupt bot TTS write transport not in ready state"
-      );
-    }
-  }
-
   /**
    * Get the session expiry time for the transport session (if applicable)
    */
@@ -474,26 +454,27 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     switch (ev.type) {
       case VoiceMessageType.BOT_READY:
         clearTimeout(this._handshakeTimeout);
+        // Hydrate config with the bot's config
+        this.config = (ev.data as BotReadyData).config;
         this._transport.state = "ready";
-        console.log(ev);
         this._startResolve?.(ev.data as BotReadyData);
-        this._options.callbacks?.onBotReady?.(
-          (ev.data as BotReadyData).config,
-          (ev.data as BotReadyData).version
-        );
+        this._options.callbacks?.onBotReady?.(ev.data as BotReadyData);
         break;
+      case VoiceMessageType.CONFIG_AVAILABLE: {
+        this._options.callbacks?.onConfigDescribe?.(ev.data);
+        break;
+      }
       case VoiceMessageType.USER_TRANSCRIPTION: {
-        const transcriptData = ev.data as { data: Transcript };
-        const transcript = transcriptData.data as Transcript;
+        const transcriptData = ev.data as Transcript;
+        const transcript = transcriptData as Transcript;
         this._options.callbacks?.onUserTranscript?.(transcript);
         this.emit(VoiceEvent.UserTranscript, transcript);
         break;
       }
       case VoiceMessageType.BOT_TRANSCRIPTION: {
-        const botData = ev.data as { data: Transcript };
-        const bot = botData.data;
-        this._options.callbacks?.onBotTranscript?.(bot.text as string);
-        this.emit(VoiceEvent.BotTranscript, bot.text as string);
+        const botData = ev.data as Transcript;
+        this._options.callbacks?.onBotTranscript?.(botData.text as string);
+        this.emit(VoiceEvent.BotTranscript, botData.text as string);
         break;
       }
       case VoiceMessageType.JSON_COMPLETION:

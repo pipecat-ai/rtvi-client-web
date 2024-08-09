@@ -9,25 +9,23 @@ import {
 export enum VoiceMessageType {
   // Outbound
   CONFIG = "config-update",
+  DESCRIBE_CONFIG = "describe-config",
   LLM_GET_CONTEXT = "llm-get-context",
   LLM_UPDATE_CONTEXT = "llm-update-context",
   LLM_APPEND_CONTEXT = "llm-append-context",
-  SPEAK = "tts-speak",
-  INTERRUPT = "tts-interrupt",
 
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
   LLM_CONTEXT = "llm-context", // LLM context message
   TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
+  CONFIG_AVAILABLE = "config-available", // Configuration options are available
   CONFIG_UPDATED = "config-updated", // Configuration options have changed successfull
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   TOOL_CALL = "tool-call", // Instruction to call a clientside tool method (expects a serialized method name and params)
   JSON_COMPLETION = "json-completion", // JSON message is complete
   METRICS = "metrics", // RTVI reporting metrics
-  USER_TRANSCRIPTION = "user-transcription",
-  BOT_TRANSCRIPTION = "tts-text",
-  // Inbound (optional / not yet implemented)
-  //TOOL_RESPONSE = "tool-response", // Result of a clientside tool method
+  USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
+  BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
 }
 
 export type PipecatMetricsData = {
@@ -81,17 +79,8 @@ export class VoiceMessage {
     return new VoiceMessage(VoiceMessageType.CONFIG, { config });
   }
 
-  // TTS
-  static speak(message: string, interrupt: boolean): VoiceMessage {
-    // Sent when prompting the STT model to speak
-    return new VoiceMessage(VoiceMessageType.SPEAK, {
-      text: message,
-      interrupt,
-    });
-  }
-
-  static interrupt(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.INTERRUPT, {});
+  static describeConfig(): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.DESCRIBE_CONFIG, {});
   }
 
   // LLM

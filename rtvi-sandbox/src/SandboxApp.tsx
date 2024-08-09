@@ -9,7 +9,6 @@ import {
 import ReactJson from "@microlink/react-json-view";
 import {
   BotReadyData,
-  BotReadyMessage,
   ConnectionTimeoutError,
   RateLimitError,
   TransportAuthBundleError,
@@ -33,17 +32,20 @@ export const Sandbox = () => {
   const [error, setError] = useState<string | null>(null);
 
   useVoiceClientEvent(VoiceEvent.ConfigUpdated, (e) => {
-    console.log("Config was updated locally: ", e);
+    console.log("[EVENT] Config was updated: ", e);
     setConfig(e);
   });
 
   useVoiceClientEvent(
     VoiceEvent.BotReady,
-    useCallback((botData: BotReadyData) => {
-      setConfig(botData.data.config);
-      setBotVersion(botData.data.version);
+    useCallback(({ version }: BotReadyData) => {
+      setBotVersion(version);
     }, [])
   );
+
+  useVoiceClientEvent(VoiceEvent.ConfigDescribe, (e) => {
+    console.log("[EVENT] Config description: ", e);
+  });
 
   useVoiceClientEvent(
     VoiceEvent.Disconnected,
@@ -132,11 +134,12 @@ export const Sandbox = () => {
         </div>
         <div className={styles.card}>
           <div>
-            Local audio gain: <MicMeter type={VoiceEvent.LocalAudioLevel} />
+            <strong>Local audio gain: </strong>
+            <MicMeter type={VoiceEvent.LocalAudioLevel} />
           </div>
           {isBotConnected && (
             <div className="meter-wrapper">
-              <strong>Bot</strong>
+              <strong>Bot audio gain</strong>
               <MicMeter type={VoiceEvent.RemoteAudioLevel} />
             </div>
           )}
@@ -173,8 +176,11 @@ export const Sandbox = () => {
             >
               Save (update voice client)
             </button>
-            <button disabled={state !== "ready"}>
-              Retrieve config from bot {state !== "ready" && "(bot not ready)"}
+            <button
+              disabled={state !== "ready"}
+              onClick={() => voiceClient.describeConfig()}
+            >
+              Log available config {state !== "ready" && "(bot not ready)"}
             </button>
           </div>
         </div>
