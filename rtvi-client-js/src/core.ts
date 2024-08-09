@@ -3,6 +3,7 @@ import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
 import {
+  ActionData,
   BotReadyData,
   PipecatMetrics,
   Transcript,
@@ -379,6 +380,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.describeConfig());
     }
+  }
+
+  // ------ Actions
+
+  /**
+   * Dispatch an action message to the bot
+   */
+  public action(action: ActionData) {
+    this._transport.sendMessage(VoiceMessage.action(action));
   }
 
   // ------ LLM context methods

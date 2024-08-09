@@ -13,12 +13,13 @@ export enum VoiceMessageType {
   LLM_GET_CONTEXT = "llm-get-context",
   LLM_UPDATE_CONTEXT = "llm-update-context",
   LLM_APPEND_CONTEXT = "llm-append-context",
+  ACTION = " action",
 
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
   LLM_CONTEXT = "llm-context", // LLM context message
   TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
-  CONFIG_AVAILABLE = "config-available", // Configuration options are available
+  CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
   CONFIG_UPDATED = "config-updated", // Configuration options have changed successfull
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   TOOL_CALL = "tool-call", // Instruction to call a clientside tool method (expects a serialized method name and params)
@@ -48,6 +49,12 @@ export type Transcript = {
 export type BotReadyData = {
   config: VoiceClientConfigOption[];
   version: string;
+};
+
+export type ActionData = {
+  service: string;
+  action: string;
+  arguments: { name: string; value: string }[];
 };
 
 export class VoiceMessage {
@@ -99,6 +106,11 @@ export class VoiceMessage {
     return new VoiceMessage(VoiceMessageType.LLM_APPEND_CONTEXT, {
       llm: { messages },
     });
+  }
+
+  // Actions (generic)
+  static action(data: ActionData): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.ACTION, data);
   }
 }
 

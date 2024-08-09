@@ -8,6 +8,7 @@ import {
 } from "realtime-ai-react";
 import ReactJson from "@microlink/react-json-view";
 import {
+  ActionData,
   BotReadyData,
   ConnectionTimeoutError,
   RateLimitError,
@@ -17,6 +18,12 @@ import {
 } from "realtime-ai";
 
 import styles from "./styles.module.css";
+
+const templateAction: ActionData = {
+  service: "tts",
+  action: "say",
+  arguments: [{ name: "text", value: "Hello, how are you?" }],
+};
 
 export const Sandbox = () => {
   const voiceClient = useVoiceClient()!;
@@ -29,6 +36,9 @@ export const Sandbox = () => {
     voiceClient.config
   );
   const [editedConfig, setEditedConfig] = useState<unknown | null>(null);
+  const [editedAction, setEditedAction] = useState<unknown | null>(
+    templateAction
+  );
   const [error, setError] = useState<string | null>(null);
 
   useVoiceClientEvent(VoiceEvent.ConfigUpdated, (e) => {
@@ -183,6 +193,22 @@ export const Sandbox = () => {
               Log available config {state !== "ready" && "(bot not ready)"}
             </button>
           </div>
+        </div>
+
+        <div className={styles.card}>
+          <h3>Action</h3>
+          <ReactJson
+            enableClipboard={false}
+            onEdit={(e) => setEditedAction(e.updated_src)}
+            style={{ width: "100%" }}
+            src={templateAction}
+          />
+          <button
+            disabled={state !== "ready"}
+            onClick={() => voiceClient.action(editedAction as ActionData)}
+          >
+            Send action
+          </button>
         </div>
       </main>
       <VoiceClientAudio />
