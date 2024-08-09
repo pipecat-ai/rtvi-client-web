@@ -247,13 +247,13 @@ export class DailyTransport extends Transport {
 
   private handleAppMessage(ev: DailyEventObjectAppMessage) {
     // Bubble any messages with realtime-ai label
-    if (ev.data.label === "rtvi") {
+    if (ev.data.label === "rtvi-ai") {
       this._onMessage({
         type: ev.data.type,
         data: ev.data,
       } as VoiceMessage);
     } else if (ev.data.type === "pipecat-metrics") {
-      // Bubble up pipecat metrics, which don't have the "rtvi" label
+      // Bubble up pipecat metrics, which don't have the "rtvi-ai" label
       const vmm = new VoiceMessageMetrics(ev.data.metrics as PipecatMetrics);
       this._onMessage(vmm);
     }
