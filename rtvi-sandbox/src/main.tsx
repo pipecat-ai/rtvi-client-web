@@ -7,14 +7,14 @@ import { Sandbox } from "./SandboxApp";
 const voiceClient = new DailyVoiceClient({
   baseUrl: import.meta.env.VITE_BASE_URL,
   services: {
-    llm: "groq",
+    llm: "together",
     tts: "cartesia",
   },
   config: [
     {
       service: "llm",
       options: [
-        { name: "model", value: "llama3-70b-8192" },
+        { name: "model", value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" },
         {
           name: "messages",
           value: [

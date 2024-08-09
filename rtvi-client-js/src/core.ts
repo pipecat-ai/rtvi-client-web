@@ -220,21 +220,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
               config,
             }),
             signal: this._abortController?.signal,
-          })
-            .then((res) => res.json())
-            .catch((res) => {
-              if (res.detail) {
-                throw new VoiceErrors.TransportAuthBundleError(res.detail);
-              }
-            });
+          }).then((res) => res.json());
         } catch (e) {
           clearTimeout(this._handshakeTimeout);
           this._transport.state = "error";
           reject(
-            e ||
-              new VoiceErrors.TransportAuthBundleError(
-                `Failed to connect / invalid auth bundled from provided base url ${this._baseUrl}`
-              )
+            new VoiceErrors.TransportAuthBundleError(
+              `Failed to connect / invalid auth bundle from provided base url ${this._baseUrl}`
+            )
           );
           return;
         }
