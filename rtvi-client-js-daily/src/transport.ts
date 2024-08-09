@@ -11,7 +11,6 @@ import Daily, {
   DailyParticipant,
 } from "@daily-co/daily-js";
 import {
-  AuthBundle,
   Participant,
   PipecatMetrics,
   Tracks,
@@ -23,7 +22,7 @@ import {
   VoiceMessageMetrics,
 } from "realtime-ai";
 
-export interface DailyTransportAuthBundle extends AuthBundle {
+export interface DailyTransportAuthBundle {
   room_url: string;
   token: string;
 }

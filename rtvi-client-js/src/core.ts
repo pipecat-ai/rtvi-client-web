@@ -18,7 +18,6 @@ import {
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { Participant, Transport, TransportState } from "./transport";
-import { AuthBundle } from "./transport/core";
 
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
@@ -207,7 +206,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
         // Send POST request to the provided base_url to connect and start the bot
         // @params config - VoiceClientConfigOption[] object with the configuration
-        let authBundle: AuthBundle;
+        let authBundle: unknown;
 
         try {
           authBundle = await fetch(`${this._baseUrl}`, {

@@ -11,9 +11,7 @@ export interface VoiceClientOptions {
   baseUrl: string;
 
   /**
-   * Override the default transport for media streaming.
-   *
-   * Defaults to DailyTransport
+   * Set transport class for media streaming
    */
   transport?: new (
     options: VoiceClientOptions,
