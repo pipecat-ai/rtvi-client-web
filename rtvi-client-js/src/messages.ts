@@ -49,7 +49,7 @@ export type Transcript = {
 
 export class VoiceMessage {
   id: string;
-  label: string = "rtvi";
+  label: string = "rtvi-ai";
   type: string;
   data: unknown;
 
@@ -86,9 +86,9 @@ export class VoiceMessage {
   // TTS
   static speak(message: string, interrupt: boolean): VoiceMessage {
     // Sent when prompting the STT model to speak
-    return new VoiceMessage(VoiceMessageType.SPEAK, {
-      tts: { text: message, interrupt },
-    });
+    return new VoiceMessage(VoiceMessageType.SPEAK,
+      { text: message, interrupt },
+    );
   }
 
   static interrupt(): VoiceMessage {
