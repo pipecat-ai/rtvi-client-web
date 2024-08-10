@@ -46,6 +46,12 @@ export type VoiceEventCallbacks = Partial<{
   onLocalStartedTalking: () => void;
   onLocalStoppedTalking: () => void;
   onJsonCompletion: (jsonString: string) => void;
+  // TODO-CB this return isn't void
+  onLLMFunctionCall: (
+    functionName: string,
+    toolCallId: string,
+    args: any
+  ) => void;
   onMetrics: (data: PipecatMetrics) => void;
   onUserTranscript: (data: Transcript) => void;
   onBotTranscript: (data: string) => void;
@@ -493,6 +499,19 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       case VoiceMessageType.JSON_COMPLETION:
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);
         this.emit(VoiceEvent.JSONCompletion, ev.data as string);
+        break;
+      case VoiceMessageType.LLM_FUNCTION_CALL:
+        this._options.callbacks?.onLLMFunctionCall?.(
+          ev.data.function_name as string,
+          ev.data.tool_call_id as string,
+          ev.data.args as any
+        );
+        this.emit(
+          VoiceEvent.LLMFunctionCall,
+          ev.data.function_name,
+          ev.data.tool_call_id,
+          ev.data.args
+        );
         break;
       default:
         this._options.callbacks?.onGenericMessage?.(ev.data);

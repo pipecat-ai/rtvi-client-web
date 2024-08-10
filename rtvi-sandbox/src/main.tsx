@@ -7,21 +7,50 @@ import { Sandbox } from "./SandboxApp";
 const voiceClient = new DailyVoiceClient({
   baseUrl: import.meta.env.VITE_BASE_URL,
   services: {
-    llm: "together",
+    llm: "openai",
     tts: "cartesia",
   },
   config: [
     {
       service: "llm",
       options: [
-        { name: "model", value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" },
+        { name: "model", value: "gpt-4o" },
         {
           name: "messages",
           value: [
             {
               role: "system",
               content:
-                "You are a assistant called Chatbot. You can ask me anything. Keep response brief and legible. Introduce yourself first.",
+                "You are a assistant called Curtis. You can ask me anything. Keep response brief and legible. Start by telling me to ask for the weather in San Francisco.",
+            },
+          ],
+        },
+        {
+          name: "tools",
+          value: [
+            {
+              type: "function",
+              function: {
+                name: "get_current_weather",
+                description:
+                  "Get the current weather for a location. This includes the conditions as well as the temperature.",
+                parameters: {
+                  type: "object",
+                  properties: {
+                    location: {
+                      type: "string",
+                      description: "The city and state, e.g. San Francisco, CA",
+                    },
+                    format: {
+                      type: "string",
+                      enum: ["celsius", "fahrenheit"],
+                      description:
+                        "The temperature unit to use. Infer this from the users location.",
+                    },
+                  },
+                  required: ["location", "format"],
+                },
+              },
             },
           ],
         },
@@ -63,7 +92,10 @@ const voiceClient = new DailyVoiceClient({
       console.log("[CALLBACK] Local stopped talking");
     },
     onJsonCompletion: (jsonString: string) => {
-      console.log("[CALLBACK] JSON Completion: ", jsonString);
+      console.log("[CALLBACK] JSON Completion:", jsonString);
+    },
+    onLLMFunctionCall: (functionName: string, args: any) => {
+      console.log("[CALLBACK] LLM Function Call:", { functionName, args });
     },
     onMetrics: (data: PipecatMetrics) => {
       console.log("[CALLBACK] Metrics:", data);

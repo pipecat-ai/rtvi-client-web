@@ -77,6 +77,28 @@ export const Sandbox = () => {
     }, [])
   );
 
+  useVoiceClientEvent(
+    VoiceEvent.LLMFunctionCall,
+    useCallback((functionName: string, toolCallId: string, args: any) => {
+      // TODO-CB: Should something in RTVI/daily handle this return?
+      console.log("!!! function call received in the app!", {
+        functionName,
+        toolCallId,
+        args,
+      });
+      const functionResponse = {
+        role: "tool",
+        tool_call_id: toolCallId,
+        content: { conditions: "nice", temperature: 72 },
+      };
+      voiceClient.action({
+        service: "llm",
+        action: "append-context",
+        arguments: { name: "messages", value: functionResponse },
+      });
+    }, [])
+  );
+
   async function start() {
     try {
       await voiceClient.start();

@@ -69,6 +69,7 @@ export type VoiceClientConfigOption = {
 export type VoiceClientLLMMessage = {
   role: string;
   content: string;
+  tool_call_id?: string;
 };
 
 export type VoiceClientConfigLLM = {

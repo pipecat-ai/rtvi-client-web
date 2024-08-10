@@ -29,6 +29,7 @@ export enum VoiceMessageType {
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
+  LLM_FUNCTION_CALL = "llm-function-call", // LLM requesting a function call
 }
 
 export type PipecatMetricsData = {
@@ -57,6 +58,11 @@ export type ActionData = {
   service: string;
   action: string;
   arguments: { name: string; value: string }[];
+};
+
+export type LLMFunctionCallData = {
+  function_name: string;
+  args: any;
 };
 
 export class VoiceMessage {
