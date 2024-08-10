@@ -1,4 +1,4 @@
-import { deepmergeCustom } from "deepmerge-ts";
+//import { deepmergeCustom } from "deepmerge-ts";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
@@ -56,6 +56,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   private _transport: Transport;
   private readonly _baseUrl: string;
   private _startResolve: ((value: unknown) => void) | undefined;
+  private _updateConfigResolve:
+    | ((value: void | PromiseLike<void>) => void)
+    | undefined;
+  private _updateConfigReject: ((value: unknown) => void) | undefined;
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
 
@@ -343,26 +347,32 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param options.useDeepMerge - Whether to use deep merge or shallow merge
    * @param options.sendPartial - Update single service config (e.g. llm or tts) or the whole config
    */
-  public updateConfig(
+  public async updateConfig(
     config: VoiceClientConfigOption[],
     {
-      useDeepMerge = false,
+      //useDeepMerge = false,
       sendPartial = false,
     }: { useDeepMerge?: boolean; sendPartial?: boolean } = {}
   ) {
-    if (useDeepMerge) {
+    /*if (useDeepMerge) {
       const customMerge = deepmergeCustom({ mergeArrays: false });
       this.config = customMerge(this.config, config);
     } else {
       this.config = config;
-    }
+    }*/
 
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
     if (this._transport.state === "ready") {
-      this._transport.sendMessage(
-        VoiceMessage.updateConfig(sendPartial ? config : this.config)
-      );
+      return new Promise<void>((resolve, reject) => {
+        this._updateConfigResolve = resolve;
+        this._updateConfigReject = reject;
+        this._transport.sendMessage(
+          VoiceMessage.updateConfig(sendPartial ? config : this.config)
+        );
+      });
+    } else {
+      this.config = config;
     }
   }
 
@@ -385,7 +395,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Dispatch an action message to the bot
    */
   public action(action: ActionData) {
-    if (this._transport.state !== "ready") {
+    if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.action(action));
     } else {
       throw new VoiceErrors.VoiceError(
@@ -475,6 +485,17 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         break;
       case VoiceMessageType.CONFIG_AVAILABLE: {
         this._options.callbacks?.onConfigDescribe?.(ev.data);
+        break;
+      }
+      case VoiceMessageType.CONFIG: {
+        // Update local config and resolve promise
+        this.config = ev.data as VoiceClientConfigOption[];
+        this._updateConfigResolve?.();
+        break;
+      }
+      case VoiceMessageType.ERROR_RESPONSE: {
+        // Reject update config promise
+        this._updateConfigReject?.(ev.data);
         break;
       }
       case VoiceMessageType.USER_TRANSCRIPTION: {

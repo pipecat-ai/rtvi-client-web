@@ -29,6 +29,7 @@ export enum VoiceMessageType {
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
+  ERROR_RESPONSE = "error-response", // Error response from the bot
 }
 
 export type PipecatMetricsData = {
