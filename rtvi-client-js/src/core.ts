@@ -394,12 +394,22 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   /**
    * Dispatch an action message to the bot
    */
-  public action(action: ActionData) {
+  public async action(action: ActionData) {
     if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.action(action));
     } else {
       throw new VoiceErrors.VoiceError(
         "Attempted to send action while transport not in ready state"
+      );
+    }
+  }
+
+  public async describeActions() {
+    if (this._transport.state === "ready") {
+      this._transport.sendMessage(VoiceMessage.describeActions());
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Attempted to describe actions while transport not in ready state"
       );
     }
   }

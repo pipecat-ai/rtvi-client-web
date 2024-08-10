@@ -14,7 +14,8 @@ export enum VoiceMessageType {
   LLM_GET_CONTEXT = "llm-get-context",
   LLM_UPDATE_CONTEXT = "llm-update-context",
   LLM_APPEND_CONTEXT = "llm-append-context",
-  ACTION = " action",
+  ACTION = "action",
+  DESCRIBE_ACTIONS = "describe-actions",
 
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
@@ -24,6 +25,7 @@ export enum VoiceMessageType {
   CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
   CONFIG_UPDATED = "config-updated", // Configuration options have changed successfull
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
+  ACTIONS_AVAILABLE = "actions-available", // Actions available on the bot
   TOOL_CALL = "tool-call", // Instruction to call a clientside tool method (expects a serialized method name and params)
   JSON_COMPLETION = "json-completion", // JSON message is complete
   METRICS = "metrics", // RTVI reporting metrics
@@ -97,6 +99,9 @@ export class VoiceMessage {
     return new VoiceMessage(VoiceMessageType.GET_CONFIG, {});
   }
 
+  static describeActions(): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.DESCRIBE_ACTIONS, {});
+  }
   // LLM
   static getLLMContext(): VoiceMessage {
     // Sent when requesting the latest LLM context

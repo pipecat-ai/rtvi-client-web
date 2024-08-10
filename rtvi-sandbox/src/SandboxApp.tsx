@@ -207,7 +207,17 @@ export const Sandbox = () => {
         </div>
 
         <div className={styles.card}>
-          <h3>Action</h3>
+          <h3>Actions</h3>
+          <button
+            disabled={state !== "ready"}
+            onClick={() => voiceClient.describeActions()}
+          >
+            Log available actions
+          </button>
+        </div>
+
+        <div className={styles.card}>
+          <h3>Action dispatch</h3>
           <ReactJson
             enableClipboard={false}
             onEdit={(e) => setEditedAction(e.updated_src)}
