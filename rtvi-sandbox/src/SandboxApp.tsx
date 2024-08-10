@@ -87,15 +87,28 @@ export const Sandbox = () => {
         toolCallId,
         args,
       });
+      // TODO-CB: Should the LLM processor do this by pushing a frame upstream?
+      const functionCall = {
+        role: "assistant",
+        tool_calls: [
+          {
+            id: toolCallId,
+            function: { name: functionName, arguments: JSON.stringify(args) },
+            type: "function",
+          },
+        ],
+      };
       const functionResponse = {
         role: "tool",
         tool_call_id: toolCallId,
-        content: { conditions: "nice", temperature: 72 },
+        content: JSON.stringify({ conditions: "nice", temperature: 72 }),
       };
       voiceClient.action({
         service: "llm",
         action: "append-context",
-        arguments: { name: "messages", value: functionResponse },
+        arguments: [
+          { name: "messages", value: [functionCall, functionResponse] },
+        ],
       });
     }, [])
   );
