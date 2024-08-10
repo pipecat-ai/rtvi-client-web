@@ -242,6 +242,7 @@ export class DailyTransport extends Transport {
   }
 
   public sendMessage(message: VoiceMessage) {
+    console.log(message);
     this._daily.sendAppMessage(message, "*");
   }
 
@@ -249,6 +250,7 @@ export class DailyTransport extends Transport {
     // Bubble any messages with realtime-ai label
     if (ev.data.label === "rtvi-ai") {
       this._onMessage({
+        id: ev.data.id,
         type: ev.data.type,
         data: ev.data.data,
       } as VoiceMessage);

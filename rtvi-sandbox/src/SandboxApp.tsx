@@ -32,6 +32,7 @@ export const Sandbox = () => {
   const [botVersion, setBotVersion] = useState<string>("---");
   const { availableMics, selectedMic, updateMic } =
     useVoiceClientMediaDevices();
+  const [configUpdating, setConfigUpdating] = useState(false);
   const [config, setConfig] = useState<VoiceClientConfigOption[]>(
     voiceClient.config
   );
@@ -198,33 +199,47 @@ export const Sandbox = () => {
           />
           <div style={{ display: "flex", gap: "10px" }}>
             <button
-              disabled={!editedConfig}
-              onClick={() => {
-                voiceClient.updateConfig(
+              disabled={!editedConfig || configUpdating}
+              onClick={async () => {
+                setConfigUpdating(true);
+                await voiceClient.updateConfig(
                   editedConfig as VoiceClientConfigOption[]
                 );
+                setConfigUpdating(false);
                 setEditedConfig(null);
               }}
             >
-              Save (and update if transport ready)
+              {configUpdating
+                ? "Updating..."
+                : "Save (and update if transport ready)"}
             </button>
             <button
               disabled={state !== "ready"}
               onClick={() => voiceClient.getBotConfig()}
             >
-              Log bot config description
+              Fetch current bot config
             </button>
             <button
               disabled={state !== "ready"}
               onClick={() => voiceClient.describeConfig()}
             >
-              Log available config {state !== "ready" && "(bot not ready)"}
+              Log bot config description
             </button>
           </div>
         </div>
 
         <div className={styles.card}>
-          <h3>Action</h3>
+          <h3>Actions</h3>
+          <button
+            disabled={state !== "ready"}
+            onClick={() => voiceClient.describeActions()}
+          >
+            Log available actions
+          </button>
+        </div>
+
+        <div className={styles.card}>
+          <h3>Action dispatch</h3>
           <ReactJson
             enableClipboard={false}
             onEdit={(e) => setEditedAction(e.updated_src)}
