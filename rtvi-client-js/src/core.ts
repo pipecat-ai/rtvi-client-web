@@ -46,7 +46,6 @@ export type VoiceEventCallbacks = Partial<{
   onLocalStartedTalking: () => void;
   onLocalStoppedTalking: () => void;
   onJsonCompletion: (jsonString: string) => void;
-  // TODO-CB this return isn't void
   onLLMFunctionCall: (
     functionName: string,
     toolCallId: string,
