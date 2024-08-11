@@ -21,10 +21,16 @@ const voiceClient = new DailyVoiceClient({
             {
               role: "system",
               content:
-                "You are a assistant called Chatbot. You can ask me anything. Keep response brief and legible. Introduce yourself first.",
+                "You are a assistant called ExampleBot. You can ask me anything. Keep responses brief and legible. Introduce yourself first.",
             },
           ],
         },
+      ],
+    },
+    {
+      service: "tts",
+      options: [
+        { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" },
       ],
     },
   ],

@@ -1,4 +1,4 @@
-//import { deepmergeCustom } from "deepmerge-ts";
+import { deepmergeCustom } from "deepmerge-ts";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
@@ -7,9 +7,7 @@ import {
   BotReadyData,
   PipecatMetrics,
   Transcript,
-  VoiceClientConfigLLM,
   VoiceClientConfigOption,
-  VoiceClientLLMMessage,
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageMetrics,
@@ -18,6 +16,8 @@ import {
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { Participant, Transport, TransportState } from "./transport";
+
+const customMerge = deepmergeCustom({ mergeArrays: false });
 
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
@@ -350,16 +350,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public async updateConfig(
     config: VoiceClientConfigOption[],
     {
-      //useDeepMerge = false,
+      useDeepMerge = false,
       sendPartial = false,
     }: { useDeepMerge?: boolean; sendPartial?: boolean } = {}
   ) {
-    /*if (useDeepMerge) {
-      const customMerge = deepmergeCustom({ mergeArrays: false });
-      this.config = customMerge(this.config, config);
-    } else {
-      this.config = config;
-    }*/
+    const newConfig = useDeepMerge ? customMerge(this.config, config) : config;
 
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
@@ -368,11 +363,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._updateConfigResolve = resolve;
         this._updateConfigReject = reject;
         this._transport.sendMessage(
-          VoiceMessage.updateConfig(sendPartial ? config : this.config)
+          VoiceMessage.updateConfig(sendPartial ? config : newConfig)
         );
       });
     } else {
-      this.config = config;
+      this.config = newConfig;
     }
   }
 
@@ -404,6 +399,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
+  /**
+   * Describe available / registered actions the bot has
+   */
   public async describeActions() {
     if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.describeActions());
@@ -414,52 +412,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
-  // ------ LLM context methods
-
-  public get llmContext(): VoiceClientConfigLLM | undefined {
-    //@TODO: Implement
-    return undefined;
-  }
-
-  /**
-   * Merge the current LLM context with a new provided context
-   * @param llmConfig - VoiceClientConfigLLM partial object with the new context
-   */
-  public set llmContext(llmConfig: VoiceClientConfigLLM) {
-    console.log(llmConfig);
-    /*this.config = {
-      ...this._options.config,
-      llm: {
-        ...this._options.config?.llm,
-        ...llmConfig,
-      },
-    } as VoiceClientConfigOption[];
-
-    if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.updateLLMContext(llmConfig));
-    }
-
-    this._options.callbacks?.onConfigUpdated?.(this.config);*/
-  }
-
-  /**
-   * Append a message to the live LLM context. Requires the bot to be connected.
-   * @param message - LLM message (role and content)
-   */
-  public appendLLMContext(
-    messages: VoiceClientLLMMessage | VoiceClientLLMMessage[]
-  ): void {
-    if (this._transport.state === "ready") {
-      if (!Array.isArray(messages)) {
-        messages = [messages];
-      }
-      this._transport.sendMessage(VoiceMessage.appendLLMContext(messages));
-    } else {
-      throw new VoiceErrors.VoiceError(
-        "Attempt to update LLM context while transport not in ready state"
-      );
-    }
-  }
+  // ------ Transport methods
 
   /**
    * Get the session expiry time for the transport session (if applicable)
@@ -477,7 +430,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
-  // ------ Handlers
+  // ------ Message handler
+
   protected handleMessage(ev: VoiceMessage): void {
     if (ev instanceof VoiceMessageMetrics) {
       this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
