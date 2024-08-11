@@ -6,6 +6,7 @@ import { Sandbox } from "./SandboxApp";
 
 const voiceClient = new DailyVoiceClient({
   baseUrl: import.meta.env.VITE_BASE_URL,
+  enableMic: false,
   services: {
     llm: "together",
     tts: "cartesia",
@@ -35,7 +36,6 @@ const voiceClient = new DailyVoiceClient({
     },
   ],
   timeout: 15 * 1000,
-  enableMic: true,
   enableCam: false,
   callbacks: {
     onGenericMessage: (data: unknown) => {
@@ -56,16 +56,16 @@ const voiceClient = new DailyVoiceClient({
     onBotDisconnected: () => {
       console.log("[CALLBACK] Bot disconnected");
     },
-    onBotStartedTalking: () => {
+    onBotStartedSpeaking: () => {
       console.log("[CALLBACK] Bot started talking");
     },
-    onBotStoppedTalking: () => {
+    onBotStoppedSpeaking: () => {
       console.log("[CALLBACK] Bot stopped talking");
     },
-    onLocalStartedTalking: () => {
+    onUserStartedSpeaking: () => {
       console.log("[CALLBACK] Local started talking");
     },
-    onLocalStoppedTalking: () => {
+    onUserStoppedSpeaking: () => {
       console.log("[CALLBACK] Local stopped talking");
     },
     onJsonCompletion: (jsonString: string) => {

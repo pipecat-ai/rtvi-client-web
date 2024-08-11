@@ -31,8 +31,6 @@ export class DailyTransport extends Transport {
   protected _state: TransportState = "idle";
 
   private _daily: DailyCall;
-  private _localAudioLevelObserver: (level: number) => void;
-  private _botAudioLevelObserver: (level: number) => void;
   private _botId: string = "";
   private _expiry: number | undefined = undefined;
 
@@ -52,9 +50,6 @@ export class DailyTransport extends Transport {
     });
 
     this.attachEventListeners();
-
-    this._localAudioLevelObserver = () => {};
-    this._botAudioLevelObserver = () => {};
   }
 
   get state(): TransportState {
@@ -162,10 +157,7 @@ export class DailyTransport extends Transport {
     this._selectedMic = infos.mic;
     this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
 
-    // Instantiate audio processors
-    this._localAudioLevelObserver = this.createAudioLevelProcessor(
-      dailyParticipantToParticipant(this._daily.participants().local)
-    );
+    // Instantiate audio observers
     if (!this._daily.isLocalAudioLevelObserverRunning())
       await this._daily.startLocalAudioLevelObserver(100);
     if (!this._daily.isRemoteParticipantsAudioLevelObserverRunning())
@@ -306,8 +298,6 @@ export class DailyTransport extends Transport {
 
     if (p.local) return;
 
-    this._botAudioLevelObserver = this.createAudioLevelProcessor(p);
-
     this._botId = ev.participant.session_id;
 
     this._callbacks.onBotConnected?.(p);
@@ -326,7 +316,6 @@ export class DailyTransport extends Transport {
   }
 
   private handleLocalAudioLevel(ev: DailyEventObjectLocalAudioLevel) {
-    this._localAudioLevelObserver(ev.audioLevel);
     this._callbacks.onLocalAudioLevel?.(ev.audioLevel);
   }
 
@@ -338,7 +327,6 @@ export class DailyTransport extends Transport {
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
       const level = ev.participantsAudioLevel[id];
-      this._botAudioLevelObserver(level);
       this._callbacks.onRemoteAudioLevel?.(
         level,
         dailyParticipantToParticipant(participants[id])
@@ -350,42 +338,6 @@ export class DailyTransport extends Transport {
     this.state = "disconnected";
     this._botId = "";
     this._callbacks.onDisconnected?.();
-  }
-
-  private createAudioLevelProcessor(
-    participant: Participant,
-    threshold: number = 0.05,
-    silenceDelay: number = 750 // in milliseconds
-  ) {
-    let speaking = false;
-    let silenceTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    return (level: number): void => {
-      if (level > threshold) {
-        if (silenceTimeout) {
-          clearTimeout(silenceTimeout);
-          silenceTimeout = null;
-        }
-        if (!speaking) {
-          speaking = true;
-          if (participant.local) {
-            this._callbacks.onLocalStartedTalking?.();
-          } else {
-            this._callbacks.onBotStartedTalking?.(participant);
-          }
-        }
-      } else if (speaking && !silenceTimeout) {
-        silenceTimeout = setTimeout(() => {
-          speaking = false;
-          if (participant.local) {
-            this._callbacks.onLocalStoppedTalking?.();
-          } else {
-            this._callbacks.onBotStoppedTalking?.(participant);
-          }
-          silenceTimeout = null; // Ensure to reset the timeout to null
-        }, silenceDelay);
-      }
-    };
   }
 }
 

@@ -1,25 +1,18 @@
 import { nanoid } from "nanoid";
 
-import {
-  VoiceClientConfigLLM,
-  VoiceClientConfigOption,
-  VoiceClientLLMMessage,
-} from ".";
+import { VoiceClientConfigOption } from ".";
 
 export enum VoiceMessageType {
   // Outbound
   UPDATE_CONFIG = "update-config",
   GET_CONFIG = "get-config",
   DESCRIBE_CONFIG = "describe-config",
-  LLM_GET_CONTEXT = "llm-get-context",
-  LLM_UPDATE_CONTEXT = "llm-update-context",
-  LLM_APPEND_CONTEXT = "llm-append-context",
   ACTION = "action",
   DESCRIBE_ACTIONS = "describe-actions",
 
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
-  LLM_CONTEXT = "llm-context", // LLM context message
+  ERROR_RESPONSE = "error-response", // Error response from the bot
   TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
   CONFIG = "config",
   CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
@@ -31,8 +24,26 @@ export enum VoiceMessageType {
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
-  ERROR_RESPONSE = "error-response", // Error response from the bot
+  USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
+  USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
+  BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
+  BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
 }
+
+export type ConfigData = {
+  config: VoiceClientConfigOption[];
+};
+
+export type BotReadyData = {
+  config: VoiceClientConfigOption[];
+  version: string;
+};
+
+export type ActionData = {
+  service: string;
+  action: string;
+  arguments: { name: string; value: string }[];
+};
 
 export type PipecatMetricsData = {
   processor: string;
@@ -49,17 +60,6 @@ export type Transcript = {
   final: boolean;
   timestamp: string;
   user_id: string;
-};
-
-export type BotReadyData = {
-  config: VoiceClientConfigOption[];
-  version: string;
-};
-
-export type ActionData = {
-  service: string;
-  action: string;
-  arguments: { name: string; value: string }[];
 };
 
 export class VoiceMessage {
@@ -101,23 +101,6 @@ export class VoiceMessage {
 
   static describeActions(): VoiceMessage {
     return new VoiceMessage(VoiceMessageType.DESCRIBE_ACTIONS, {});
-  }
-  // LLM
-  static getLLMContext(): VoiceMessage {
-    // Sent when requesting the latest LLM context
-    return new VoiceMessage(VoiceMessageType.LLM_GET_CONTEXT, {});
-  }
-
-  static updateLLMContext(llmConfig: VoiceClientConfigLLM): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.LLM_UPDATE_CONTEXT, {
-      llm: llmConfig,
-    });
-  }
-
-  static appendLLMContext(messages: VoiceClientLLMMessage[]): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.LLM_APPEND_CONTEXT, {
-      llm: { messages },
-    });
   }
 
   // Actions (generic)

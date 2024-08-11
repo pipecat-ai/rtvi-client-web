@@ -27,12 +27,12 @@ export enum VoiceEvent {
   BotConnected = "botConnected",
   BotReady = "botReady",
   BotDisconnected = "botDisconnected",
-  BotStartedTalking = "botStartedTalking",
-  BotStoppedTalking = "botStoppedTalking",
+  BotStartedSpeaking = "botStartedSpeaking",
+  BotStoppedSpeaking = "botStoppedSpeaking",
   RemoteAudioLevel = "remoteAudioLevel",
 
-  LocalStartedTalking = "localStartedTalking",
-  LocalStoppedTalking = "localStoppedTalking",
+  UserStartedSpeaking = "userStartedSpeaking",
+  UserStoppedSpeaking = "userStoppedSpeaking",
   LocalAudioLevel = "localAudioLevel",
 
   JSONCompletion = "jsonCompletion",
@@ -62,12 +62,12 @@ export type VoiceEvents = {
   botReady: (botData: BotReadyData) => void;
   botConnected: (p: Participant) => void;
   botDisconnected: (p: Participant) => void;
-  botStartedTalking: (p: Participant) => void;
-  botStoppedTalking: (p: Participant) => void;
+  botStartedSpeaking: (p: Participant) => void;
+  botStoppedSpeaking: (p: Participant) => void;
   remoteAudioLevel: (level: number, p: Participant) => void;
 
-  localStartedTalking: () => void;
-  localStoppedTalking: () => void;
+  userStartedSpeaking: () => void;
+  userStoppedSpeaking: () => void;
   localAudioLevel: (level: number) => void;
 
   jsonCompletion: (jsonString: string) => void;

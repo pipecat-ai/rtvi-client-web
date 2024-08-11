@@ -5,6 +5,7 @@ import type TypedEmitter from "typed-emitter";
 import {
   ActionData,
   BotReadyData,
+  ConfigData,
   PipecatMetrics,
   Transcript,
   VoiceClientConfigOption,
@@ -41,10 +42,10 @@ export type VoiceEventCallbacks = Partial<{
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
-  onBotStartedTalking: (participant: Participant) => void;
-  onBotStoppedTalking: (participant: Participant) => void;
-  onLocalStartedTalking: () => void;
-  onLocalStoppedTalking: () => void;
+  onBotStartedSpeaking: (participant: Participant) => void;
+  onBotStoppedSpeaking: (participant: Participant) => void;
+  onUserStartedSpeaking: () => void;
+  onUserStoppedSpeaking: () => void;
   onJsonCompletion: (jsonString: string) => void;
   onMetrics: (data: PipecatMetrics) => void;
   onUserTranscript: (data: Transcript) => void;
@@ -135,25 +136,25 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onBotDisconnected?.(p);
         this.emit(VoiceEvent.BotDisconnected, p);
       },
-      onBotStartedTalking: (p) => {
-        options?.callbacks?.onBotStartedTalking?.(p);
-        this.emit(VoiceEvent.BotStartedTalking, p);
+      onBotStartedSpeaking: (p) => {
+        options?.callbacks?.onBotStartedSpeaking?.(p);
+        this.emit(VoiceEvent.BotStartedSpeaking, p);
       },
-      onBotStoppedTalking: (p) => {
-        options?.callbacks?.onBotStoppedTalking?.(p);
-        this.emit(VoiceEvent.BotStoppedTalking, p);
+      onBotStoppedSpeaking: (p) => {
+        options?.callbacks?.onBotStoppedSpeaking?.(p);
+        this.emit(VoiceEvent.BotStoppedSpeaking, p);
       },
       onRemoteAudioLevel: (level, p) => {
         options?.callbacks?.onRemoteAudioLevel?.(level, p);
         this.emit(VoiceEvent.RemoteAudioLevel, level, p);
       },
-      onLocalStartedTalking: () => {
-        options?.callbacks?.onLocalStartedTalking?.();
-        this.emit(VoiceEvent.LocalStartedTalking);
+      onUserStartedSpeaking: () => {
+        options?.callbacks?.onUserStartedSpeaking?.();
+        this.emit(VoiceEvent.UserStartedSpeaking);
       },
-      onLocalStoppedTalking: () => {
-        options?.callbacks?.onLocalStoppedTalking?.();
-        this.emit(VoiceEvent.LocalStoppedTalking);
+      onUserStoppedSpeaking: () => {
+        options?.callbacks?.onUserStoppedSpeaking?.();
+        this.emit(VoiceEvent.UserStoppedSpeaking);
       },
       onLocalAudioLevel: (level) => {
         options?.callbacks?.onLocalAudioLevel?.(level);
@@ -355,6 +356,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }: { useDeepMerge?: boolean; sendPartial?: boolean } = {}
   ) {
     const newConfig = useDeepMerge ? customMerge(this.config, config) : config;
+    console.log(newConfig);
 
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
@@ -434,10 +436,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   protected handleMessage(ev: VoiceMessage): void {
     if (ev instanceof VoiceMessageMetrics) {
+      //@TODO: add to wrapped metrics
       this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
       return this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
     }
-
     switch (ev.type) {
       case VoiceMessageType.BOT_READY:
         clearTimeout(this._handshakeTimeout);
@@ -453,16 +455,29 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       }
       case VoiceMessageType.CONFIG: {
         // Update local config and resolve promise
-        this.config = ev.data as VoiceClientConfigOption[];
+        this.config = (ev.data as ConfigData).config;
         this._updateConfigResolve?.();
         break;
       }
       case VoiceMessageType.ERROR_RESPONSE: {
-        // Reject update config promise
+        //@TODO: this needs to be generic
         this._updateConfigReject?.(ev.data);
         break;
       }
+      case VoiceMessageType.USER_STARTED_SPEAKING:
+        this._options.callbacks?.onUserStartedSpeaking?.();
+        break;
+      case VoiceMessageType.USER_STOPPED_SPEAKING:
+        this._options.callbacks?.onUserStoppedSpeaking?.();
+        break;
+      case VoiceMessageType.BOT_STARTED_SPEAKING:
+        this._options.callbacks?.onBotStartedSpeaking?.(ev.data as Participant);
+        break;
+      case VoiceMessageType.BOT_STOPPED_SPEAKING:
+        this._options.callbacks?.onBotStoppedSpeaking?.(ev.data as Participant);
+        break;
       case VoiceMessageType.USER_TRANSCRIPTION: {
+        //@TODO add to wrapped callbacks
         const transcriptData = ev.data as Transcript;
         const transcript = transcriptData as Transcript;
         this._options.callbacks?.onUserTranscript?.(transcript);
@@ -470,12 +485,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         break;
       }
       case VoiceMessageType.BOT_TRANSCRIPTION: {
+        //@TODO add to wrapped callbacks
         const botData = ev.data as Transcript;
         this._options.callbacks?.onBotTranscript?.(botData.text as string);
         this.emit(VoiceEvent.BotTranscript, botData.text as string);
         break;
       }
       case VoiceMessageType.JSON_COMPLETION:
+        //@TODO add to wrapped callbacks
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);
         this.emit(VoiceEvent.JSONCompletion, ev.data as string);
         break;

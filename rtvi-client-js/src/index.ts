@@ -66,16 +66,6 @@ export type VoiceClientConfigOption = {
   options: ConfigOption[];
 };
 
-export type VoiceClientLLMMessage = {
-  role: string;
-  content: string;
-};
-
-export type VoiceClientConfigLLM = {
-  model?: string;
-  messages?: VoiceClientLLMMessage[];
-};
-
 /**
  * RTVI Voice Client
  */
