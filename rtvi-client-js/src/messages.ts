@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { VoiceClientConfigOption } from ".";
+import { Transport, VoiceClientConfigOption } from ".";
 
 export enum VoiceMessageType {
   // Outbound
@@ -19,8 +19,7 @@ export enum VoiceMessageType {
   CONFIG_UPDATED = "config-updated", // Configuration options have changed successfull
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   ACTIONS_AVAILABLE = "actions-available", // Actions available on the bot
-  TOOL_CALL = "tool-call", // Instruction to call a clientside tool method (expects a serialized method name and params)
-  JSON_COMPLETION = "json-completion", // JSON message is complete
+  ACTION_RESPONSE = "action-response",
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
@@ -112,5 +111,85 @@ export class VoiceMessage {
 export class VoiceMessageMetrics extends VoiceMessage {
   constructor(data: PipecatMetrics) {
     super(VoiceMessageType.METRICS, data, "0");
+  }
+}
+
+interface QueuedVoiceMessage {
+  message: VoiceMessage;
+  timestamp: number;
+  resolve: (value: unknown) => void;
+  reject: (reason?: unknown) => void;
+  shouldReject: boolean;
+}
+
+export class MessageDispatcher {
+  private _transport: Transport;
+  private _gcTime: number;
+  private _queue = new Array<QueuedVoiceMessage>();
+
+  constructor(transport: Transport) {
+    this._gcTime = 10000; // How long to wait before resolving the message
+    this._queue = [];
+    this._transport = transport;
+  }
+
+  public dispatch(
+    message: VoiceMessage,
+    shouldReject: boolean = false
+  ): Promise<unknown> {
+    const promise = new Promise((resolve, reject) => {
+      this._queue.push({
+        message,
+        timestamp: Date.now(),
+        resolve,
+        reject,
+        shouldReject,
+      });
+    });
+
+    this._transport.sendMessage(message);
+
+    this._gc();
+
+    return promise;
+  }
+
+  private _resolveReject(
+    message: VoiceMessage,
+    resolve: boolean = true
+  ): VoiceMessage {
+    const queuedMessage = this._queue.find(
+      (msg) => msg.message.id === message.id
+    );
+
+    if (queuedMessage) {
+      if (resolve) {
+        queuedMessage.resolve(message as VoiceMessage);
+      } else {
+        if (queuedMessage.shouldReject) {
+          queuedMessage.reject(message as VoiceMessage);
+        }
+      }
+      // Remove message from queue
+      this._queue = this._queue.filter((msg) => msg.message.id !== message.id);
+    } else {
+      //@TODO handle unknown message here
+    }
+
+    return message;
+  }
+
+  public resolve(message: VoiceMessage): VoiceMessage {
+    return this._resolveReject(message, true);
+  }
+
+  public reject(message: VoiceMessage): VoiceMessage {
+    return this._resolveReject(message, false);
+  }
+
+  private _gc() {
+    this._queue = this._queue.filter((msg) => {
+      return Date.now() - msg.timestamp < this._gcTime;
+    });
   }
 }

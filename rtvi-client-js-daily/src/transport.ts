@@ -234,7 +234,6 @@ export class DailyTransport extends Transport {
   }
 
   public sendMessage(message: VoiceMessage) {
-    console.log(message);
     this._daily.sendAppMessage(message, "*");
   }
 

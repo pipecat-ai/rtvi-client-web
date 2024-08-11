@@ -6,6 +6,7 @@ import {
   ActionData,
   BotReadyData,
   ConfigData,
+  MessageDispatcher,
   PipecatMetrics,
   Transcript,
   VoiceClientConfigOption,
@@ -22,6 +23,7 @@ const customMerge = deepmergeCustom({ mergeArrays: false });
 
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
+  onMessageError: (message: VoiceMessage) => void;
   onConnected: () => void;
   onDisconnected: () => void;
   onTransportStateChanged: (state: TransportState) => void;
@@ -46,7 +48,7 @@ export type VoiceEventCallbacks = Partial<{
   onBotStoppedSpeaking: (participant: Participant) => void;
   onUserStartedSpeaking: () => void;
   onUserStoppedSpeaking: () => void;
-  onJsonCompletion: (jsonString: string) => void;
+
   onMetrics: (data: PipecatMetrics) => void;
   onUserTranscript: (data: Transcript) => void;
   onBotTranscript: (data: string) => void;
@@ -57,21 +59,23 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   private _transport: Transport;
   private readonly _baseUrl: string;
   private _startResolve: ((value: unknown) => void) | undefined;
-  private _updateConfigResolve:
-    | ((value: void | PromiseLike<void>) => void)
-    | undefined;
-  private _updateConfigReject: ((value: unknown) => void) | undefined;
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
+  private _messageDispatcher: MessageDispatcher;
 
   constructor(options: VoiceClientOptions) {
     super();
 
     this._baseUrl = options.baseUrl;
+
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
     const wrappedCallbacks: VoiceEventCallbacks = {
       ...options.callbacks,
+      onMessageError: (message: VoiceMessage) => {
+        options?.callbacks?.onMessageError?.(message);
+        this.emit(VoiceEvent.MessageError, message);
+      },
       onConnected: () => {
         options?.callbacks?.onConnected?.();
         this.emit(VoiceEvent.Connected);
@@ -176,6 +180,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       ...options,
       callbacks: wrappedCallbacks,
     };
+
+    // Create a new message dispatch queue for async message handling
+    this._messageDispatcher = new MessageDispatcher(this._transport);
   }
 
   // ------ Transport methods
@@ -354,20 +361,16 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       useDeepMerge = false,
       sendPartial = false,
     }: { useDeepMerge?: boolean; sendPartial?: boolean } = {}
-  ) {
+  ): Promise<unknown> {
     const newConfig = useDeepMerge ? customMerge(this.config, config) : config;
-    console.log(newConfig);
 
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
     if (this._transport.state === "ready") {
-      return new Promise<void>((resolve, reject) => {
-        this._updateConfigResolve = resolve;
-        this._updateConfigReject = reject;
-        this._transport.sendMessage(
-          VoiceMessage.updateConfig(sendPartial ? config : newConfig)
-        );
-      });
+      return this._messageDispatcher.dispatch(
+        VoiceMessage.updateConfig(sendPartial ? config : newConfig),
+        true
+      );
     } else {
       this.config = newConfig;
     }
@@ -393,7 +396,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    */
   public async action(action: ActionData) {
     if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.action(action));
+      this._messageDispatcher.dispatch(VoiceMessage.action(action));
     } else {
       throw new VoiceErrors.VoiceError(
         "Attempted to send action while transport not in ready state"
@@ -440,6 +443,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
       return this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
     }
+
     switch (ev.type) {
       case VoiceMessageType.BOT_READY:
         clearTimeout(this._handshakeTimeout);
@@ -455,13 +459,18 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       }
       case VoiceMessageType.CONFIG: {
         // Update local config and resolve promise
-        this.config = (ev.data as ConfigData).config;
-        this._updateConfigResolve?.();
+        const resp = this._messageDispatcher.resolve(ev);
+        this.config = (resp.data as ConfigData).config;
+        break;
+      }
+      case VoiceMessageType.ACTION_RESPONSE: {
+        this._messageDispatcher.resolve(ev);
         break;
       }
       case VoiceMessageType.ERROR_RESPONSE: {
         //@TODO: this needs to be generic
-        this._updateConfigReject?.(ev.data);
+        const resp = this._messageDispatcher.reject(ev);
+        this._options.callbacks?.onMessageError?.(resp as VoiceMessage);
         break;
       }
       case VoiceMessageType.USER_STARTED_SPEAKING:
@@ -491,11 +500,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this.emit(VoiceEvent.BotTranscript, botData.text as string);
         break;
       }
-      case VoiceMessageType.JSON_COMPLETION:
-        //@TODO add to wrapped callbacks
-        this._options.callbacks?.onJsonCompletion?.(ev.data as string);
-        this.emit(VoiceEvent.JSONCompletion, ev.data as string);
-        break;
       default:
         this._options.callbacks?.onGenericMessage?.(ev.data);
     }

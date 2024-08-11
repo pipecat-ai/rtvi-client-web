@@ -188,9 +188,13 @@ export const Sandbox = () => {
               disabled={!editedConfig || configUpdating}
               onClick={async () => {
                 setConfigUpdating(true);
-                await voiceClient.updateConfig(
-                  editedConfig as VoiceClientConfigOption[]
-                );
+                try {
+                  await voiceClient.updateConfig(
+                    editedConfig as VoiceClientConfigOption[]
+                  );
+                } catch (e) {
+                  console.error("Failed to update config", e);
+                }
                 setConfigUpdating(false);
                 setEditedConfig(null);
               }}
@@ -247,7 +251,9 @@ export const Sandbox = () => {
           />
           <button
             disabled={state !== "ready"}
-            onClick={() => voiceClient.action(editedAction as ActionData)}
+            onClick={async () =>
+              await voiceClient.action(editedAction as ActionData)
+            }
           >
             Send action
           </button>

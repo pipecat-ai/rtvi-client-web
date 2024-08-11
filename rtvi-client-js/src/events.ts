@@ -3,10 +3,12 @@ import {
   PipecatMetrics,
   Transcript,
   VoiceClientConfigOption,
+  VoiceMessage,
 } from ".";
 import { Participant, TransportState } from "./transport";
 
 export enum VoiceEvent {
+  MessageError = "messageError",
   Connected = "connected",
   Disconnected = "disconnected",
   TransportStateChanged = "transportStateChanged",
@@ -35,7 +37,6 @@ export enum VoiceEvent {
   UserStoppedSpeaking = "userStoppedSpeaking",
   LocalAudioLevel = "localAudioLevel",
 
-  JSONCompletion = "jsonCompletion",
   Metrics = "metrics",
   UserTranscript = "userTranscript",
   BotTranscript = "botTranscript",
@@ -70,10 +71,11 @@ export type VoiceEvents = {
   userStoppedSpeaking: () => void;
   localAudioLevel: (level: number) => void;
 
-  jsonCompletion: (jsonString: string) => void;
   metrics: (data: PipecatMetrics) => void;
   userTranscript: (data: Transcript) => void;
   botTranscript: (text: string) => void;
+
+  messageError: (message: VoiceMessage) => void;
 };
 
 export type VoiceEventHandler<E extends VoiceEvent> =

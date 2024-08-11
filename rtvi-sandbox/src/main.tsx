@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { PipecatMetrics, VoiceEvent } from "realtime-ai";
+import { PipecatMetrics, VoiceEvent, VoiceMessage } from "realtime-ai";
 import { DailyVoiceClient } from "realtime-ai-daily";
 import { VoiceClientProvider } from "realtime-ai-react";
 import { Sandbox } from "./SandboxApp";
@@ -38,6 +38,9 @@ const voiceClient = new DailyVoiceClient({
   timeout: 15 * 1000,
   enableCam: false,
   callbacks: {
+    onMessageError: (message: VoiceMessage) => {
+      console.log("[CALLBACK] Message error", message);
+    },
     onGenericMessage: (data: unknown) => {
       console.log("[CALLBACK] Generic message:", data);
     },
@@ -67,9 +70,6 @@ const voiceClient = new DailyVoiceClient({
     },
     onUserStoppedSpeaking: () => {
       console.log("[CALLBACK] Local stopped talking");
-    },
-    onJsonCompletion: (jsonString: string) => {
-      console.log("[CALLBACK] JSON Completion: ", jsonString);
     },
     onMetrics: (data: PipecatMetrics) => {
       console.log("[CALLBACK] Metrics:", data);
