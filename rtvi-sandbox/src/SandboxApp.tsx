@@ -113,6 +113,13 @@ export const Sandbox = () => {
     }, [])
   );
 
+  useVoiceClientEvent(
+    VoiceEvent.LLMFunctionCallStart,
+    useCallback((functionName: string) => {
+      console.log("!!! Function call start:", functionName);
+    }, [])
+  );
+
   async function start() {
     try {
       await voiceClient.start();

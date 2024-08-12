@@ -51,6 +51,7 @@ export type VoiceEventCallbacks = Partial<{
     toolCallId: string,
     args: any
   ) => void;
+  onLLMFunctionCallStart: (functionName: string) => void;
   onMetrics: (data: PipecatMetrics) => void;
   onUserTranscript: (data: Transcript) => void;
   onBotTranscript: (data: string) => void;
@@ -542,6 +543,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           ev.data.tool_call_id,
           ev.data.args
         );
+        break;
+      case VoiceMessageType.LLM_FUNCTION_CALL_START:
+        this._options.callbacks?.onLLMFunctionCallStart?.(
+          ev.data.function_name as string
+        );
+        this.emit(VoiceEvent.LLMFunctionCallStart, ev.data.function_name);
         break;
       default:
         this._options.callbacks?.onGenericMessage?.(ev.data);

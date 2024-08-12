@@ -32,6 +32,7 @@ export enum VoiceMessageType {
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
   LLM_FUNCTION_CALL = "llm-function-call", // LLM requesting a function call
+  LLM_FUNCTION_CALL_START = "llm-function-call-start", // The LLM has started returning a function call
   ERROR_RESPONSE = "error-response", // Error response from the bot
 }
 

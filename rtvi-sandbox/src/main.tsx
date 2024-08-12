@@ -7,24 +7,27 @@ import { Sandbox } from "./SandboxApp";
 const voiceClient = new DailyVoiceClient({
   baseUrl: import.meta.env.VITE_BASE_URL,
   services: {
-    llm: "openai",
+    llm: "anthropic",
     tts: "cartesia",
   },
   config: [
     {
       service: "llm",
       options: [
-        { name: "model", value: "gpt-4o" },
+        { name: "model", value: "claude-3-sonnet-20240229" },
         {
           name: "messages",
           value: [
             {
-              role: "system",
+              // anthropic: user; openai: system
+              role: "user",
               content:
                 "You are a assistant called Curtis. You can ask me anything. Keep response brief and legible. Start by telling me to ask for the weather in San Francisco.",
             },
           ],
         },
+        // OpenAI
+        /*
         {
           name: "tools",
           value: [
@@ -50,6 +53,34 @@ const voiceClient = new DailyVoiceClient({
                   },
                   required: ["location", "format"],
                 },
+              },
+            },
+          ],
+        },
+        */
+        // Anthropic
+        {
+          name: "tools",
+          value: [
+            {
+              name: "get_current_weather",
+              description:
+                "Get the current weather for a location. This includes the conditions as well as the temperature.",
+              input_schema: {
+                type: "object",
+                properties: {
+                  location: {
+                    type: "string",
+                    description: "The city and state, e.g. San Francisco, CA",
+                  },
+                  format: {
+                    type: "string",
+                    enum: ["celsius", "fahrenheit"],
+                    description:
+                      "The temperature unit to use. Infer this from the users location.",
+                  },
+                },
+                required: ["location", "format"],
               },
             },
           ],
@@ -94,8 +125,19 @@ const voiceClient = new DailyVoiceClient({
     onJsonCompletion: (jsonString: string) => {
       console.log("[CALLBACK] JSON Completion:", jsonString);
     },
-    onLLMFunctionCall: (functionName: string, args: any) => {
-      console.log("[CALLBACK] LLM Function Call:", { functionName, args });
+    onLLMFunctionCall: (
+      functionName: string,
+      toolCallId: string,
+      args: any
+    ) => {
+      console.log("[CALLBACK] LLM Function Call:", {
+        functionName,
+        toolCallId,
+        args,
+      });
+    },
+    onLLMFunctionCallStart: (functionName: string) => {
+      console.log("[CALLBACK] LLM Function Call Start:", { functionName });
     },
     onMetrics: (data: PipecatMetrics) => {
       console.log("[CALLBACK] Metrics:", data);

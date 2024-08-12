@@ -40,6 +40,7 @@ export enum VoiceEvent {
   UserTranscript = "userTranscript",
   BotTranscript = "botTranscript",
   LLMFunctionCall = "llmFunctionCall",
+  LLMFunctionCallStart = "llmFunctionCall",
 }
 
 export type VoiceEvents = {
@@ -75,11 +76,8 @@ export type VoiceEvents = {
   metrics: (data: PipecatMetrics) => void;
   userTranscript: (data: Transcript) => void;
   botTranscript: (text: string) => void;
-  llmFunctionCall: (
-    functionName: string,
-    toolCallId: string,
-    args: any
-  ) => void;
+  llmFunctionCall: (functionName: string, toolCallId: string, args: any) => any;
+  llmFunctionCallStart: (functionName: string) => void;
 };
 
 export type VoiceEventHandler<E extends VoiceEvent> =
