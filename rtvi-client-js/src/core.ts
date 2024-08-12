@@ -1,15 +1,15 @@
-//import { deepmergeCustom } from "deepmerge-ts";
+import { deepmergeCustom } from "deepmerge-ts";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
 import {
   ActionData,
   BotReadyData,
+  ConfigData,
+  MessageDispatcher,
   PipecatMetrics,
   Transcript,
-  VoiceClientConfigLLM,
   VoiceClientConfigOption,
-  VoiceClientLLMMessage,
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageMetrics,
@@ -19,8 +19,11 @@ import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { Participant, Transport, TransportState } from "./transport";
 
+const customMerge = deepmergeCustom({ mergeArrays: false });
+
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
+  onMessageError: (message: VoiceMessage) => void;
   onConnected: () => void;
   onDisconnected: () => void;
   onTransportStateChanged: (state: TransportState) => void;
@@ -41,10 +44,6 @@ export type VoiceEventCallbacks = Partial<{
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
-  onBotStartedTalking: (participant: Participant) => void;
-  onBotStoppedTalking: (participant: Participant) => void;
-  onLocalStartedTalking: () => void;
-  onLocalStoppedTalking: () => void;
   onJsonCompletion: (jsonString: string) => void;
   onLLMFunctionCall: (
     functionName: string,
@@ -52,6 +51,11 @@ export type VoiceEventCallbacks = Partial<{
     args: any
   ) => void;
   onLLMFunctionCallStart: (functionName: string) => void;
+  onBotStartedSpeaking: (participant: Participant) => void;
+  onBotStoppedSpeaking: (participant: Participant) => void;
+  onUserStartedSpeaking: () => void;
+  onUserStoppedSpeaking: () => void;
+
   onMetrics: (data: PipecatMetrics) => void;
   onUserTranscript: (data: Transcript) => void;
   onBotTranscript: (data: string) => void;
@@ -62,21 +66,23 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   private _transport: Transport;
   private readonly _baseUrl: string;
   private _startResolve: ((value: unknown) => void) | undefined;
-  private _updateConfigResolve:
-    | ((value: void | PromiseLike<void>) => void)
-    | undefined;
-  private _updateConfigReject: ((value: unknown) => void) | undefined;
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
+  private _messageDispatcher: MessageDispatcher;
 
   constructor(options: VoiceClientOptions) {
     super();
 
     this._baseUrl = options.baseUrl;
+
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
     const wrappedCallbacks: VoiceEventCallbacks = {
       ...options.callbacks,
+      onMessageError: (message: VoiceMessage) => {
+        options?.callbacks?.onMessageError?.(message);
+        this.emit(VoiceEvent.MessageError, message);
+      },
       onConnected: () => {
         options?.callbacks?.onConnected?.();
         this.emit(VoiceEvent.Connected);
@@ -141,25 +147,25 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onBotDisconnected?.(p);
         this.emit(VoiceEvent.BotDisconnected, p);
       },
-      onBotStartedTalking: (p) => {
-        options?.callbacks?.onBotStartedTalking?.(p);
-        this.emit(VoiceEvent.BotStartedTalking, p);
+      onBotStartedSpeaking: (p) => {
+        options?.callbacks?.onBotStartedSpeaking?.(p);
+        this.emit(VoiceEvent.BotStartedSpeaking, p);
       },
-      onBotStoppedTalking: (p) => {
-        options?.callbacks?.onBotStoppedTalking?.(p);
-        this.emit(VoiceEvent.BotStoppedTalking, p);
+      onBotStoppedSpeaking: (p) => {
+        options?.callbacks?.onBotStoppedSpeaking?.(p);
+        this.emit(VoiceEvent.BotStoppedSpeaking, p);
       },
       onRemoteAudioLevel: (level, p) => {
         options?.callbacks?.onRemoteAudioLevel?.(level, p);
         this.emit(VoiceEvent.RemoteAudioLevel, level, p);
       },
-      onLocalStartedTalking: () => {
-        options?.callbacks?.onLocalStartedTalking?.();
-        this.emit(VoiceEvent.LocalStartedTalking);
+      onUserStartedSpeaking: () => {
+        options?.callbacks?.onUserStartedSpeaking?.();
+        this.emit(VoiceEvent.UserStartedSpeaking);
       },
-      onLocalStoppedTalking: () => {
-        options?.callbacks?.onLocalStoppedTalking?.();
-        this.emit(VoiceEvent.LocalStoppedTalking);
+      onUserStoppedSpeaking: () => {
+        options?.callbacks?.onUserStoppedSpeaking?.();
+        this.emit(VoiceEvent.UserStoppedSpeaking);
       },
       onLocalAudioLevel: (level) => {
         options?.callbacks?.onLocalAudioLevel?.(level);
@@ -181,6 +187,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       ...options,
       callbacks: wrappedCallbacks,
     };
+
+    // Create a new message dispatch queue for async message handling
+    this._messageDispatcher = new MessageDispatcher(this._transport);
   }
 
   // ------ Transport methods
@@ -356,29 +365,21 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public async updateConfig(
     config: VoiceClientConfigOption[],
     {
-      //useDeepMerge = false,
+      useDeepMerge = false,
       sendPartial = false,
     }: { useDeepMerge?: boolean; sendPartial?: boolean } = {}
-  ) {
-    /*if (useDeepMerge) {
-      const customMerge = deepmergeCustom({ mergeArrays: false });
-      this.config = customMerge(this.config, config);
-    } else {
-      this.config = config;
-    }*/
+  ): Promise<unknown> {
+    const newConfig = useDeepMerge ? customMerge(this.config, config) : config;
 
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
     if (this._transport.state === "ready") {
-      return new Promise<void>((resolve, reject) => {
-        this._updateConfigResolve = resolve;
-        this._updateConfigReject = reject;
-        this._transport.sendMessage(
-          VoiceMessage.updateConfig(sendPartial ? config : this.config)
-        );
-      });
+      return this._messageDispatcher.dispatch(
+        VoiceMessage.updateConfig(sendPartial ? config : newConfig),
+        true
+      );
     } else {
-      this.config = config;
+      this.config = newConfig;
     }
   }
 
@@ -402,7 +403,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    */
   public async action(action: ActionData) {
     if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.action(action));
+      this._messageDispatcher.dispatch(VoiceMessage.action(action));
     } else {
       throw new VoiceErrors.VoiceError(
         "Attempted to send action while transport not in ready state"
@@ -410,6 +411,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
+  /**
+   * Describe available / registered actions the bot has
+   */
   public async describeActions() {
     if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.describeActions());
@@ -420,52 +424,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
-  // ------ LLM context methods
-
-  public get llmContext(): VoiceClientConfigLLM | undefined {
-    //@TODO: Implement
-    return undefined;
-  }
-
-  /**
-   * Merge the current LLM context with a new provided context
-   * @param llmConfig - VoiceClientConfigLLM partial object with the new context
-   */
-  public set llmContext(llmConfig: VoiceClientConfigLLM) {
-    console.log(llmConfig);
-    /*this.config = {
-      ...this._options.config,
-      llm: {
-        ...this._options.config?.llm,
-        ...llmConfig,
-      },
-    } as VoiceClientConfigOption[];
-
-    if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.updateLLMContext(llmConfig));
-    }
-
-    this._options.callbacks?.onConfigUpdated?.(this.config);*/
-  }
-
-  /**
-   * Append a message to the live LLM context. Requires the bot to be connected.
-   * @param message - LLM message (role and content)
-   */
-  public appendLLMContext(
-    messages: VoiceClientLLMMessage | VoiceClientLLMMessage[]
-  ): void {
-    if (this._transport.state === "ready") {
-      if (!Array.isArray(messages)) {
-        messages = [messages];
-      }
-      this._transport.sendMessage(VoiceMessage.appendLLMContext(messages));
-    } else {
-      throw new VoiceErrors.VoiceError(
-        "Attempt to update LLM context while transport not in ready state"
-      );
-    }
-  }
+  // ------ Transport methods
 
   /**
    * Get the session expiry time for the transport session (if applicable)
@@ -483,9 +442,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
-  // ------ Handlers
+  // ------ Message handler
+
   protected handleMessage(ev: VoiceMessage): void {
     if (ev instanceof VoiceMessageMetrics) {
+      //@TODO: add to wrapped metrics
       this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
       return this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
     }
@@ -505,16 +466,34 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       }
       case VoiceMessageType.CONFIG: {
         // Update local config and resolve promise
-        this.config = ev.data as VoiceClientConfigOption[];
-        this._updateConfigResolve?.();
+        const resp = this._messageDispatcher.resolve(ev);
+        this.config = (resp.data as ConfigData).config;
+        break;
+      }
+      case VoiceMessageType.ACTION_RESPONSE: {
+        this._messageDispatcher.resolve(ev);
         break;
       }
       case VoiceMessageType.ERROR_RESPONSE: {
-        // Reject update config promise
-        this._updateConfigReject?.(ev.data);
+        //@TODO: this needs to be generic
+        const resp = this._messageDispatcher.reject(ev);
+        this._options.callbacks?.onMessageError?.(resp as VoiceMessage);
         break;
       }
+      case VoiceMessageType.USER_STARTED_SPEAKING:
+        this._options.callbacks?.onUserStartedSpeaking?.();
+        break;
+      case VoiceMessageType.USER_STOPPED_SPEAKING:
+        this._options.callbacks?.onUserStoppedSpeaking?.();
+        break;
+      case VoiceMessageType.BOT_STARTED_SPEAKING:
+        this._options.callbacks?.onBotStartedSpeaking?.(ev.data as Participant);
+        break;
+      case VoiceMessageType.BOT_STOPPED_SPEAKING:
+        this._options.callbacks?.onBotStoppedSpeaking?.(ev.data as Participant);
+        break;
       case VoiceMessageType.USER_TRANSCRIPTION: {
+        //@TODO add to wrapped callbacks
         const transcriptData = ev.data as Transcript;
         const transcript = transcriptData as Transcript;
         this._options.callbacks?.onUserTranscript?.(transcript);
@@ -522,6 +501,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         break;
       }
       case VoiceMessageType.BOT_TRANSCRIPTION: {
+        //@TODO add to wrapped callbacks
         const botData = ev.data as Transcript;
         this._options.callbacks?.onBotTranscript?.(botData.text as string);
         this.emit(VoiceEvent.BotTranscript, botData.text as string);

@@ -1,6 +1,5 @@
 # Real-Time Voice Inference Web SDK
 
-tbd.
 
 ## Install
 

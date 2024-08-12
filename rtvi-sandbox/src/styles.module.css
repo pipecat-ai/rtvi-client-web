@@ -8,6 +8,15 @@ p {
   margin: 0 0 10px 0;
 }
 
+ul {
+  margin: 0px;
+}
+hr {
+  width: 100%;
+  border-style: solid;
+  border-color: #ddd;
+}
+
 .mono {
   font-family: "Roboto Mono", monospace;
 }
@@ -40,6 +49,7 @@ p {
   align-items: flex-start;
   padding: 10px;
   border: 1px solid #ccc;
+  gap: 10px;
 
   h3 {
     margin: 0 0 15px 0;
