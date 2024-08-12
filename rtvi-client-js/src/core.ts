@@ -61,6 +61,13 @@ export type VoiceEventCallbacks = Partial<{
   onBotTranscript: (data: string) => void;
 }>;
 
+export type FunctionCallParams = {
+  functionName: string;
+  arguments: any;
+};
+
+export type FunctionCallCallback = (fn: FunctionCallParams) => Promise<any>;
+
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
   protected _options: VoiceClientOptions;
   private _transport: Transport;
@@ -69,11 +76,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
   private _messageDispatcher: MessageDispatcher;
+  private _functionCallCallback: FunctionCallCallback | null;
 
   constructor(options: VoiceClientOptions) {
     super();
 
     this._baseUrl = options.baseUrl;
+    this._functionCallCallback = null;
 
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
@@ -442,6 +451,17 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
+  // ------ Function call handler
+
+  /**
+   * If the LLM wants to call a function, RTVI will invoke the callback defined
+   * here. Whatever the callback returns will be sent to the LLM as the function result.
+   */
+
+  public async handleFunctionCall(callback: FunctionCallCallback) {
+    this._functionCallCallback = callback;
+  }
+
   // ------ Message handler
 
   protected handleMessage(ev: VoiceMessage): void {
@@ -523,6 +543,27 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           ev.data.tool_call_id,
           ev.data.args
         );
+        if (this._functionCallCallback) {
+          const fn = {
+            functionName: ev.data.function_name,
+            arguments: ev.data.args,
+          };
+          const result = this._functionCallCallback(fn);
+          if (this._transport.state === "ready") {
+            this._transport.sendMessage(
+              VoiceMessage.llmFunctionCallResult({
+                function_name: ev.data.function_name,
+                tool_call_id: ev.data.tool_call_id,
+                arguments: ev.data.args,
+                result,
+              })
+            );
+          } else {
+            throw new VoiceErrors.VoiceError(
+              "Attempted to send a function call result from bot while transport not in ready state"
+            );
+          }
+        }
         break;
       case VoiceMessageType.LLM_FUNCTION_CALL_START:
         this._options.callbacks?.onLLMFunctionCallStart?.(

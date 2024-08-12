@@ -24,6 +24,7 @@ export enum VoiceMessageType {
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
   LLM_FUNCTION_CALL = "llm-function-call", // LLM requesting a function call
   LLM_FUNCTION_CALL_START = "llm-function-call-start", // The LLM has started returning a function call
+  LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
   ERROR_RESPONSE = "error-response", // Error response from the bot
   USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
@@ -65,6 +66,7 @@ export type Transcript = {
 
 export type LLMFunctionCallData = {
   function_name: string;
+  tool_call_id: string;
   args: any;
 };
 
@@ -107,6 +109,10 @@ export class VoiceMessage {
 
   static describeActions(): VoiceMessage {
     return new VoiceMessage(VoiceMessageType.DESCRIBE_ACTIONS, {});
+  }
+
+  static llmFunctionCallResult(data: any): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.LLM_FUNCTION_CALL_RESULT, data);
   }
 
   // Actions (generic)

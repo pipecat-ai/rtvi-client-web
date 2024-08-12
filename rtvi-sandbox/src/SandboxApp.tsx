@@ -13,6 +13,7 @@ import {
   ConnectionTimeoutError,
   RateLimitError,
   TransportAuthBundleError,
+  FunctionCallCallback,
   VoiceClientConfigOption,
   VoiceEvent,
 } from "realtime-ai";
@@ -33,9 +34,6 @@ export const Sandbox = () => {
   const { availableMics, selectedMic, updateMic } =
     useVoiceClientMediaDevices();
   const [configUpdating, setConfigUpdating] = useState(false);
-  const [configDescription, setConfigDescription] = useState<
-    VoiceClientConfigOption[] | null
-  >();
   const [config, setConfig] = useState<VoiceClientConfigOption[]>(
     voiceClient.config
   );
@@ -57,9 +55,8 @@ export const Sandbox = () => {
     }, [])
   );
 
-  useVoiceClientEvent(VoiceEvent.ConfigDescribe, (e: unknown) => {
+  useVoiceClientEvent(VoiceEvent.ConfigDescribe, (e) => {
     console.log("[EVENT] Config description: ", e);
-    setConfigDescription(e as VoiceClientConfigOption[]);
   });
 
   useVoiceClientEvent(
@@ -82,40 +79,11 @@ export const Sandbox = () => {
     }, [])
   );
 
-  useVoiceClientEvent(
-    VoiceEvent.LLMFunctionCall,
-    useCallback((functionName: string, toolCallId: string, args: any) => {
-      // TODO-CB: Should something in RTVI/daily handle this return?
-      console.log("!!! function call received in the app!", {
-        functionName,
-        toolCallId,
-        args,
-      });
-      // TODO-CB: Should the LLM processor do this by pushing a frame upstream?
-      const functionCall = {
-        role: "assistant",
-        tool_calls: [
-          {
-            id: toolCallId,
-            function: { name: functionName, arguments: JSON.stringify(args) },
-            type: "function",
-          },
-        ],
-      };
-      const functionResponse = {
-        role: "tool",
-        tool_call_id: toolCallId,
-        content: JSON.stringify({ conditions: "nice", temperature: 72 }),
-      };
-      voiceClient.action({
-        service: "llm",
-        action: "append-context",
-        arguments: [
-          { name: "messages", value: [functionCall, functionResponse] },
-        ],
-      });
-    }, [])
-  );
+  // TODO-CB: TYPES
+  voiceClient.handleFunctionCall((fn: any) => {
+    console.log({ fn });
+    return { conditions: "nice", temperature: 72 };
+  });
 
   useVoiceClientEvent(
     VoiceEvent.LLMFunctionCallStart,
@@ -202,11 +170,9 @@ export const Sandbox = () => {
           )}
         </div>
 
-        <hr />
-
         <div className={styles.card}>
           <h3>Configuration</h3>
-          <strong>Services registered</strong>
+          <strong>Services</strong>
           <ul>
             {Object.entries(voiceClient.services).map(([k, v]) => (
               <li key={k.toString()}>
@@ -215,14 +181,12 @@ export const Sandbox = () => {
             ))}
           </ul>
 
-          <strong>Config editor</strong>
+          <strong>Config</strong>
           <ReactJson
             enableClipboard={false}
-            collapsed={true}
-            name="config"
             onEdit={(e) => setEditedConfig(e.updated_src)}
             onAdd={(e) => setEditedConfig(e.updated_src)}
-            style={{ width: "100%", fontSize: "14px" }}
+            style={{ width: "100%" }}
             src={config}
           />
           <div style={{ display: "flex", gap: "10px" }}>
@@ -230,13 +194,9 @@ export const Sandbox = () => {
               disabled={!editedConfig || configUpdating}
               onClick={async () => {
                 setConfigUpdating(true);
-                try {
-                  await voiceClient.updateConfig(
-                    editedConfig as VoiceClientConfigOption[]
-                  );
-                } catch (e) {
-                  console.error("Failed to update config", e);
-                }
+                await voiceClient.updateConfig(
+                  editedConfig as VoiceClientConfigOption[]
+                );
                 setConfigUpdating(false);
                 setEditedConfig(null);
               }}
@@ -259,19 +219,6 @@ export const Sandbox = () => {
             </button>
           </div>
         </div>
-        {configDescription && (
-          <div className={styles.card}>
-            <h3>Config description</h3>
-            <ReactJson
-              enableClipboard={true}
-              name="config"
-              style={{ width: "100%", fontSize: "14px" }}
-              src={configDescription}
-            />
-          </div>
-        )}
-
-        <hr />
 
         <div className={styles.card}>
           <h3>Actions</h3>
@@ -293,9 +240,7 @@ export const Sandbox = () => {
           />
           <button
             disabled={state !== "ready"}
-            onClick={async () =>
-              await voiceClient.action(editedAction as ActionData)
-            }
+            onClick={() => voiceClient.action(editedAction as ActionData)}
           >
             Send action
           </button>
