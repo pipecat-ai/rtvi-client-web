@@ -82,6 +82,18 @@ export const Sandbox = () => {
     }, [])
   );
 
+  voiceClient.handleFunctionCall((fn: any) => {
+    console.log({ fn });
+    return { conditions: "nice", temperature: 72 };
+  });
+
+  useVoiceClientEvent(
+    VoiceEvent.LLMFunctionCallStart,
+    useCallback((functionName: string) => {
+      console.log("!!! Function call start:", functionName);
+    }, [])
+  );
+
   async function start() {
     try {
       await voiceClient.start();

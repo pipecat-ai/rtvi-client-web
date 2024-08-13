@@ -13,6 +13,12 @@ const voiceClient = new DailyVoiceClient({
   },
   config: [
     {
+      service: "tts",
+      options: [
+        { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" },
+      ],
+    },
+    {
       service: "llm",
       options: [
         { name: "model", value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" },
@@ -28,13 +34,91 @@ const voiceClient = new DailyVoiceClient({
         },
       ],
     },
-    {
-      service: "tts",
-      options: [
-        { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" },
-      ],
-    },
   ],
+  // OpenAI/Anthropic function calling config
+  /*
+      config: [
+      {
+        service: "llm",
+        options: [
+          // or claude-3-5-sonnet-20240620
+          { name: "model", value: "gpt-4o" },
+          {
+            name: "messages",
+            value: [
+              {
+                // anthropic: user; openai: system
+                role: "system",
+                content:
+                  "You are a cat named Clarissa. You can ask me anything. Keep response brief and legible. Start by telling me to ask for the weather in San Francisco.",
+              },
+            ],
+          },
+          // OpenAI
+
+          {
+            name: "tools",
+            value: [
+              {
+                type: "function",
+                function: {
+                  name: "get_current_weather",
+                  description:
+                    "Get the current weather for a location. This includes the conditions as well as the temperature.",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      location: {
+                        type: "string",
+                        description:
+                          "The city and state, e.g. San Francisco, CA",
+                      },
+                      format: {
+                        type: "string",
+                        enum: ["celsius", "fahrenheit"],
+                        description:
+                          "The temperature unit to use. Infer this from the users location.",
+                      },
+                    },
+                    required: ["location", "format"],
+                  },
+                },
+              },
+            ],
+          },
+
+          // Anthropic
+
+          // {
+          //   name: "tools",
+          //   value: [
+          //     {
+          //       name: "get_current_weather",
+          //       description:
+          //         "Get the current weather for a location. This includes the conditions as well as the temperature.",
+          //       input_schema: {
+          //         type: "object",
+          //         properties: {
+          //           location: {
+          //             type: "string",
+          //             description: "The city and state, e.g. San Francisco, CA",
+          //           },
+          //           format: {
+          //             type: "string",
+          //             enum: ["celsius", "fahrenheit"],
+          //             description:
+          //               "The temperature unit to use. Infer this from the users location.",
+          //           },
+          //         },
+          //         required: ["location", "format"],
+          //       },
+          //     },
+          //   ],
+          // },
+        ],
+      },
+    ],
+    */
   timeout: 15 * 1000,
   enableCam: false,
   callbacks: {
@@ -97,6 +181,8 @@ voiceClient.on(VoiceEvent.Connected, () => {
 voiceClient.on(VoiceEvent.Disconnected, () => {
   console.log("[EVENT] User disconnected");
 });
+
+// voiceClient.helper<LLMHelper>("llm").llmContext();
 
 const rootContainer = document.querySelector("#app") ?? document.body;
 

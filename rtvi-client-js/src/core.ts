@@ -2,10 +2,19 @@ import { deepmergeCustom } from "deepmerge-ts";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
+//SOF: move this to LLM helper
+export type FunctionCallParams = {
+  functionName: string;
+  arguments: unknown;
+};
+export type FunctionCallCallback = (fn: FunctionCallParams) => Promise<unknown>;
+// EOF: Move to LLM helper
+
 import {
   ActionData,
   BotReadyData,
   ConfigData,
+  LLMFunctionCallData,
   MessageDispatcher,
   PipecatMetrics,
   Transcript,
@@ -44,6 +53,9 @@ export type VoiceEventCallbacks = Partial<{
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
+  onJsonCompletion: (jsonString: string) => void;
+  onLLMFunctionCall: (func: LLMFunctionCallData) => void;
+  onLLMFunctionCallStart: (functionName: string) => void;
   onBotStartedSpeaking: (participant: Participant) => void;
   onBotStoppedSpeaking: (participant: Participant) => void;
   onUserStartedSpeaking: () => void;
@@ -62,11 +74,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
   private _messageDispatcher: MessageDispatcher;
+  private _functionCallCallback: FunctionCallCallback | null;
 
   constructor(options: VoiceClientOptions) {
     super();
 
     this._baseUrl = options.baseUrl;
+    this._functionCallCallback = null;
 
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
@@ -454,6 +468,17 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
+  // ------ Function call handler
+
+  /**
+   * If the LLM wants to call a function, RTVI will invoke the callback defined
+   * here. Whatever the callback returns will be sent to the LLM as the function result.
+   */
+
+  public async handleFunctionCall(callback: FunctionCallCallback) {
+    this._functionCallCallback = callback;
+  }
+
   // ------ Message handler
 
   protected handleMessage(ev: VoiceMessage): void {
@@ -517,6 +542,47 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         const botData = ev.data as Transcript;
         this._options.callbacks?.onBotTranscript?.(botData.text as string);
         this.emit(VoiceEvent.BotTranscript, botData.text as string);
+        break;
+      }
+      case VoiceMessageType.JSON_COMPLETION:
+        this._options.callbacks?.onJsonCompletion?.(ev.data as string);
+        this.emit(VoiceEvent.JSONCompletion, ev.data as string);
+        break;
+      case VoiceMessageType.LLM_FUNCTION_CALL: {
+        const d = ev.data as LLMFunctionCallData;
+        this._options.callbacks?.onLLMFunctionCall?.(
+          ev.data as LLMFunctionCallData
+        );
+        this.emit(VoiceEvent.LLMFunctionCall, ev.data as LLMFunctionCallData);
+        if (this._functionCallCallback) {
+          const fn = {
+            functionName: d.function_name,
+            arguments: d.args,
+          };
+          const result = this._functionCallCallback(fn);
+          if (this._transport.state === "ready") {
+            this._transport.sendMessage(
+              VoiceMessage.llmFunctionCallResult({
+                function_name: d.function_name,
+                tool_call_id: d.tool_call_id,
+                arguments: d.args,
+                result,
+              })
+            );
+          } else {
+            throw new VoiceErrors.VoiceError(
+              "Attempted to send a function call result from bot while transport not in ready state"
+            );
+          }
+        }
+        break;
+      }
+      case VoiceMessageType.LLM_FUNCTION_CALL_START: {
+        const e = ev.data as LLMFunctionCallData;
+        this._options.callbacks?.onLLMFunctionCallStart?.(
+          e.function_name as string
+        );
+        this.emit(VoiceEvent.LLMFunctionCallStart, e.function_name);
         break;
       }
       default:
