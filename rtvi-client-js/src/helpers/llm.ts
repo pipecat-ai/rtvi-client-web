@@ -18,12 +18,14 @@ export interface LLMHelperOptions extends VoiceClientHelperOptions {
 }
 
 export class LLMHelper extends VoiceClientHelper {
+  protected override _options: LLMHelperOptions;
+
   constructor(options: LLMHelperOptions) {
     super(options);
-    console.log(options);
+    this._options = options;
   }
 
-  public get llmContext(): LLMMessages | undefined {
+  public getContext(): LLMMessages | undefined {
     return undefined;
   }
 }

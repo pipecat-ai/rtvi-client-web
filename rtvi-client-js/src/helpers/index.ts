@@ -5,7 +5,9 @@ export interface VoiceClientHelperOptions {
 }
 
 export abstract class VoiceClientHelper {
+  protected _options: VoiceClientHelperOptions;
+
   constructor(options: VoiceClientHelperOptions) {
-    console.log(options);
+    this._options = options;
   }
 }

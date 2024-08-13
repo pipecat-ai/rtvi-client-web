@@ -1,10 +1,5 @@
 import { createRoot } from "react-dom/client";
-import {
-  PipecatMetrics,
-  VoiceEvent,
-  VoiceMessage,
-  LLMHelper,
-} from "realtime-ai";
+import { PipecatMetrics, VoiceEvent, VoiceMessage } from "realtime-ai";
 import { DailyVoiceClient } from "realtime-ai-daily";
 import { VoiceClientProvider } from "realtime-ai-react";
 import { Sandbox } from "./SandboxApp";
@@ -15,15 +10,6 @@ const voiceClient = new DailyVoiceClient({
   services: {
     llm: "together",
     tts: "cartesia",
-  },
-  helpers: {
-    llm: new LLMHelper({
-      callbacks: {
-        onLLMMessage: (message) => {
-          console.log("[CALLBACK] LLM message:", message);
-        },
-      },
-    }),
   },
   config: [
     {
@@ -111,8 +97,6 @@ voiceClient.on(VoiceEvent.Connected, () => {
 voiceClient.on(VoiceEvent.Disconnected, () => {
   console.log("[EVENT] User disconnected");
 });
-
-voiceClient.helper<LLMHelper>("llm").llmContext();
 
 const rootContainer = document.querySelector("#app") ?? document.body;
 

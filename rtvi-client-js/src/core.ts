@@ -187,12 +187,20 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   // ------ Helpers
 
-  public helper<T>(name: string): T {
-    const helper = this._options.helpers?.[name];
-    if (!helper) {
-      throw new Error(`Helper ${name} not found`);
+  public get helpers() {
+    const helpers = this._options.helpers;
+    if (!helpers) {
+      throw new Error(`No helpers registered to client`);
     }
-    return helper as T;
+    return new Proxy(helpers, {
+      get(target, prop: string) {
+        if (!Reflect.has(target, prop)) {
+          throw new Error(`The helper '${String(prop)}' does not exist.`);
+        }
+        const helper = Reflect.get(target, prop);
+        return helper;
+      },
+    });
   }
 
   // ------ Transport methods
