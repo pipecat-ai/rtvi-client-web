@@ -25,7 +25,15 @@ const voiceClient = new DailyVoiceClient({
       },
     }),
   },
+  // Config order items matter (we usually specify voice first).
   config: [
+
+    {
+      service: "tts",
+      options: [
+        { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" },
+      ],
+    },
     {
       service: "llm",
       options: [
@@ -40,12 +48,6 @@ const voiceClient = new DailyVoiceClient({
             },
           ],
         },
-      ],
-    },
-    {
-      service: "tts",
-      options: [
-        { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" },
       ],
     },
   ],
