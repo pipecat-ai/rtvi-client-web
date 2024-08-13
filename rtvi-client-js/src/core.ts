@@ -38,7 +38,7 @@ export type VoiceEventCallbacks = Partial<{
   onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
   onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
   onCamUpdated: (cam: MediaDeviceInfo) => void;
-  onMicUpdated: (cam: MediaDeviceInfo) => void;
+  onMicUpdated: (mic: MediaDeviceInfo) => void;
 
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
@@ -201,6 +201,16 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     this._messageDispatcher = new MessageDispatcher(this._transport);
   }
 
+  // ------ Helpers
+
+  public helper<T>(name: string): T {
+    const helper = this._options.helpers?.[name];
+    if (!helper) {
+      throw new Error(`Helper ${name} not found`);
+    }
+    return helper as T;
+  }
+
   // ------ Transport methods
   public async initDevices() {
     await this._transport.initDevices();
@@ -242,6 +252,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
             mode: "cors",
             headers: {
               "Content-Type": "application/json",
+              ...this._options.customHeaders,
             },
             body: JSON.stringify({
               services: this._options.services,
@@ -532,29 +543,30 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this.emit(VoiceEvent.JSONCompletion, ev.data as string);
         break;
       case VoiceMessageType.LLM_FUNCTION_CALL:
+        const d = ev.data as any;
         this._options.callbacks?.onLLMFunctionCall?.(
-          ev.data.function_name as string,
-          ev.data.tool_call_id as string,
-          ev.data.args as any
+          d.function_name as string,
+          d.tool_call_id as string,
+          d.args as any
         );
         this.emit(
           VoiceEvent.LLMFunctionCall,
-          ev.data.function_name,
-          ev.data.tool_call_id,
-          ev.data.args
+          d.function_name,
+          d.tool_call_id,
+          d.args
         );
         if (this._functionCallCallback) {
           const fn = {
-            functionName: ev.data.function_name,
-            arguments: ev.data.args,
+            functionName: d.function_name,
+            arguments: d.args,
           };
           const result = this._functionCallCallback(fn);
           if (this._transport.state === "ready") {
             this._transport.sendMessage(
               VoiceMessage.llmFunctionCallResult({
-                function_name: ev.data.function_name,
-                tool_call_id: ev.data.tool_call_id,
-                arguments: ev.data.args,
+                function_name: d.function_name,
+                tool_call_id: d.tool_call_id,
+                arguments: d.args,
                 result,
               })
             );
@@ -566,10 +578,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         }
         break;
       case VoiceMessageType.LLM_FUNCTION_CALL_START:
+        const e = ev.data as any;
         this._options.callbacks?.onLLMFunctionCallStart?.(
-          ev.data.function_name as string
+          e.function_name as string
         );
-        this.emit(VoiceEvent.LLMFunctionCallStart, ev.data.function_name);
+        this.emit(VoiceEvent.LLMFunctionCallStart, e.function_name);
         break;
       default:
         this._options.callbacks?.onGenericMessage?.(ev.data);

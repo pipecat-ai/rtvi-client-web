@@ -41,7 +41,8 @@ export enum VoiceEvent {
   UserTranscript = "userTranscript",
   BotTranscript = "botTranscript",
   LLMFunctionCall = "llmFunctionCall",
-  LLMFunctionCallStart = "llmFunctionCall",
+  LLMFunctionCallStart = "llmFunctionCallStart",
+  JSONCompletion = "jsonCompletion",
 }
 
 export type VoiceEvents = {
@@ -78,6 +79,7 @@ export type VoiceEvents = {
   botTranscript: (text: string) => void;
   llmFunctionCall: (functionName: string, toolCallId: string, args: any) => any;
   llmFunctionCallStart: (functionName: string) => void;
+  jsonCompletion: (data: string) => void;
 
   messageError: (message: VoiceMessage) => void;
 };

@@ -25,6 +25,7 @@ export enum VoiceMessageType {
   LLM_FUNCTION_CALL = "llm-function-call", // LLM requesting a function call
   LLM_FUNCTION_CALL_START = "llm-function-call-start", // The LLM has started returning a function call
   LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
+  JSON_COMPLETION = "llm-json-completion", // Used for JSON responses from the LLM
   ERROR_RESPONSE = "error-response", // Error response from the bot
   USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking

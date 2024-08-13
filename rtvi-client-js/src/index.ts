@@ -1,4 +1,5 @@
 import { Client, VoiceEventCallbacks } from "./core";
+import { VoiceClientHelper } from "./helpers";
 import { VoiceMessage } from "./messages";
 import { Transport } from "./transport";
 
@@ -9,6 +10,11 @@ export interface VoiceClientOptions {
    * Defaults to a POST request with a the config object as the body
    */
   baseUrl: string;
+
+  /**
+   * Custom HTTP headers to be send with the POST request to baseUrl
+   */
+  customHeaders?: { [key: string]: string };
 
   /**
    * Set transport class for media streaming
@@ -35,9 +41,15 @@ export interface VoiceClientOptions {
   config?: VoiceClientConfigOption[];
 
   /**
+   * Helper classes for additional functionality  (e.g. LLMHelper)
+   */
+  helpers?: VoiceClientHelpers;
+
+  /**
    * Handshake timeout
    *
    * How long should the client wait for the bot ready event (when authenticating / requesting an agent)
+   * Defaults to no timeout (undefined)
    */
   timeout?: number;
 
@@ -76,6 +88,7 @@ export type VoiceClientConfigLLM = {
   model?: string;
   messages?: VoiceClientLLMMessage[];
 };
+export type VoiceClientHelpers = Partial<Record<string, VoiceClientHelper>>;
 
 /**
  * RTVI Voice Client
@@ -85,7 +98,6 @@ export class VoiceClient extends Client {
     const options: VoiceClientOptions = {
       ...opts,
       transport: opts.transport,
-      services: opts.services,
       config: opts.config || [],
     };
 
@@ -96,5 +108,7 @@ export class VoiceClient extends Client {
 export * from "./core";
 export * from "./errors";
 export * from "./events";
+export * from "./helpers";
+export * from "./helpers/llm";
 export * from "./messages";
 export * from "./transport";
