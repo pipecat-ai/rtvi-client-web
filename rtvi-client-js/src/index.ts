@@ -78,6 +78,16 @@ export type VoiceClientConfigOption = {
   options: ConfigOption[];
 };
 
+export type VoiceClientLLMMessage = {
+  role: string;
+  content: string;
+  tool_call_id?: string;
+};
+
+export type VoiceClientConfigLLM = {
+  model?: string;
+  messages?: VoiceClientLLMMessage[];
+};
 export type VoiceClientHelpers = Partial<Record<string, VoiceClientHelper>>;
 
 /**

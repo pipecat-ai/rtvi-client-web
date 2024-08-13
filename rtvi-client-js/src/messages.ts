@@ -12,17 +12,21 @@ export enum VoiceMessageType {
 
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
-  ERROR_RESPONSE = "error-response", // Error response from the bot
   TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
   CONFIG = "config",
   CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
-  CONFIG_UPDATED = "config-updated", // Configuration options have changed successfull
+  CONFIG_UPDATED = "config-updated", // Configuration options have changed successfully
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   ACTIONS_AVAILABLE = "actions-available", // Actions available on the bot
   ACTION_RESPONSE = "action-response",
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
+  LLM_FUNCTION_CALL = "llm-function-call", // LLM requesting a function call
+  LLM_FUNCTION_CALL_START = "llm-function-call-start", // The LLM has started returning a function call
+  LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
+  JSON_COMPLETION = "llm-json-completion", // Used for JSON responses from the LLM
+  ERROR_RESPONSE = "error-response", // Error response from the bot
   USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
   BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
@@ -59,6 +63,12 @@ export type Transcript = {
   final: boolean;
   timestamp: string;
   user_id: string;
+};
+
+export type LLMFunctionCallData = {
+  function_name: string;
+  tool_call_id: string;
+  args: any;
 };
 
 export class VoiceMessage {
@@ -100,6 +110,10 @@ export class VoiceMessage {
 
   static describeActions(): VoiceMessage {
     return new VoiceMessage(VoiceMessageType.DESCRIBE_ACTIONS, {});
+  }
+
+  static llmFunctionCallResult(data: any): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.LLM_FUNCTION_CALL_RESULT, data);
   }
 
   // Actions (generic)
