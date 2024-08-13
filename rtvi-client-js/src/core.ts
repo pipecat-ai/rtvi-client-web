@@ -38,7 +38,7 @@ export type VoiceEventCallbacks = Partial<{
   onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
   onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
   onCamUpdated: (cam: MediaDeviceInfo) => void;
-  onMicUpdated: (cam: MediaDeviceInfo) => void;
+  onMicUpdated: (mic: MediaDeviceInfo) => void;
 
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
@@ -185,6 +185,16 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     this._messageDispatcher = new MessageDispatcher(this._transport);
   }
 
+  // ------ Helpers
+
+  public helper<T>(name: string): T {
+    const helper = this._options.helpers?.[name];
+    if (!helper) {
+      throw new Error(`Helper ${name} not found`);
+    }
+    return helper as T;
+  }
+
   // ------ Transport methods
   public async initDevices() {
     await this._transport.initDevices();
@@ -226,6 +236,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
             mode: "cors",
             headers: {
               "Content-Type": "application/json",
+              ...this._options.customHeaders,
             },
             body: JSON.stringify({
               services: this._options.services,
