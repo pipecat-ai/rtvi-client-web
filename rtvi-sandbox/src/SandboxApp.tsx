@@ -13,7 +13,6 @@ import {
   ConnectionTimeoutError,
   RateLimitError,
   TransportAuthBundleError,
-  FunctionCallCallback,
   VoiceClientConfigOption,
   VoiceEvent,
 } from "realtime-ai";
@@ -34,6 +33,9 @@ export const Sandbox = () => {
   const { availableMics, selectedMic, updateMic } =
     useVoiceClientMediaDevices();
   const [configUpdating, setConfigUpdating] = useState(false);
+  const [configDescription, setConfigDescription] = useState<
+    VoiceClientConfigOption[] | null
+  >();
   const [config, setConfig] = useState<VoiceClientConfigOption[]>(
     voiceClient.config
   );
@@ -55,8 +57,9 @@ export const Sandbox = () => {
     }, [])
   );
 
-  useVoiceClientEvent(VoiceEvent.ConfigDescribe, (e) => {
+  useVoiceClientEvent(VoiceEvent.ConfigDescribe, (e: unknown) => {
     console.log("[EVENT] Config description: ", e);
+    setConfigDescription(e as VoiceClientConfigOption[]);
   });
 
   useVoiceClientEvent(
@@ -79,7 +82,6 @@ export const Sandbox = () => {
     }, [])
   );
 
-  // TODO-CB: TYPES
   voiceClient.handleFunctionCall((fn: any) => {
     console.log({ fn });
     return { conditions: "nice", temperature: 72 };
@@ -170,9 +172,11 @@ export const Sandbox = () => {
           )}
         </div>
 
+        <hr />
+
         <div className={styles.card}>
           <h3>Configuration</h3>
-          <strong>Services</strong>
+          <strong>Services registered</strong>
           <ul>
             {Object.entries(voiceClient.services).map(([k, v]) => (
               <li key={k.toString()}>
@@ -181,12 +185,14 @@ export const Sandbox = () => {
             ))}
           </ul>
 
-          <strong>Config</strong>
+          <strong>Config editor</strong>
           <ReactJson
             enableClipboard={false}
+            collapsed={true}
+            name="config"
             onEdit={(e) => setEditedConfig(e.updated_src)}
             onAdd={(e) => setEditedConfig(e.updated_src)}
-            style={{ width: "100%" }}
+            style={{ width: "100%", fontSize: "14px" }}
             src={config}
           />
           <div style={{ display: "flex", gap: "10px" }}>
@@ -194,9 +200,13 @@ export const Sandbox = () => {
               disabled={!editedConfig || configUpdating}
               onClick={async () => {
                 setConfigUpdating(true);
-                await voiceClient.updateConfig(
-                  editedConfig as VoiceClientConfigOption[]
-                );
+                try {
+                  await voiceClient.updateConfig(
+                    editedConfig as VoiceClientConfigOption[]
+                  );
+                } catch (e) {
+                  console.error("Failed to update config", e);
+                }
                 setConfigUpdating(false);
                 setEditedConfig(null);
               }}
@@ -219,6 +229,19 @@ export const Sandbox = () => {
             </button>
           </div>
         </div>
+        {configDescription && (
+          <div className={styles.card}>
+            <h3>Config description</h3>
+            <ReactJson
+              enableClipboard={true}
+              name="config"
+              style={{ width: "100%", fontSize: "14px" }}
+              src={configDescription}
+            />
+          </div>
+        )}
+
+        <hr />
 
         <div className={styles.card}>
           <h3>Actions</h3>
@@ -240,7 +263,9 @@ export const Sandbox = () => {
           />
           <button
             disabled={state !== "ready"}
-            onClick={() => voiceClient.action(editedAction as ActionData)}
+            onClick={async () =>
+              await voiceClient.action(editedAction as ActionData)
+            }
           >
             Send action
           </button>
