@@ -1,11 +1,6 @@
 import { deepmerge } from "deepmerge-ts";
 
-import {
-  ActionData,
-  VoiceClient,
-  VoiceClientConfigOption,
-  VoiceMessage,
-} from "..";
+import { ActionData, VoiceClientConfigOption, VoiceMessage } from "..";
 import { VoiceClientHelper, VoiceClientHelperOptions } from ".";
 
 // --- Types
@@ -46,8 +41,8 @@ export interface LLMHelperOptions extends VoiceClientHelperOptions {
 export class LLMHelper extends VoiceClientHelper {
   protected declare _options: LLMHelperOptions;
 
-  constructor(voiceClient: VoiceClient, options: LLMHelperOptions) {
-    super(voiceClient, options);
+  constructor(options: LLMHelperOptions) {
+    super(options);
   }
 
   public getContext(): LLMContextMessage | undefined {

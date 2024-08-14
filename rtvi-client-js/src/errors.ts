@@ -17,6 +17,14 @@ export class ConnectionTimeoutError extends VoiceError {
   }
 }
 
+export class BotNotReadyError extends VoiceError {
+  constructor(message?: string | undefined) {
+    super(
+      message ?? "Attempt to call action on bot that is not in 'ready' state."
+    );
+  }
+}
+
 export class TransportAuthBundleError extends VoiceError {
   override readonly status = 500;
   constructor(message?: string | undefined) {

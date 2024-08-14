@@ -13,13 +13,15 @@ export interface VoiceClientHelperOptions {
 
 export abstract class VoiceClientHelper {
   protected _options: VoiceClientHelperOptions;
-  protected _voiceClient: VoiceClient;
+  protected declare _voiceClient: VoiceClient;
 
-  constructor(voiceClient: VoiceClient, options: VoiceClientHelperOptions) {
-    this._voiceClient = voiceClient;
+  constructor(options: VoiceClientHelperOptions) {
     this._options = options;
   }
 
   public abstract handleMessage(ev: VoiceMessage): void;
   public abstract getMessageTypes(): string[];
+  public set voiceClient(voiceClient: VoiceClient) {
+    this._voiceClient = voiceClient;
+  }
 }

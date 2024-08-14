@@ -16,6 +16,7 @@ import {
   RateLimitError,
   TransportAuthBundleError,
   VoiceClientConfigOption,
+  VoiceError,
   VoiceEvent,
 } from "realtime-ai";
 
@@ -108,7 +109,7 @@ export const Sandbox = () => {
       } else if (e instanceof ConnectionTimeoutError) {
         setError(e.message);
       } else {
-        setError("Unknown error occurred");
+        setError((e as VoiceError).message || "Unknown error occured");
       }
     }
   }

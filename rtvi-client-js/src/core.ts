@@ -231,6 +231,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       throw new Error(`Helper must be an instance of VoiceClientHelper`);
     }
 
+    // Attach voice client to helper
+    helper.voiceClient = this;
+
     this._helpers[name] = helper;
 
     return this._helpers[name];
@@ -258,6 +261,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   public async start() {
+    if (
+      ["authenticating", "connecting", "connected", "ready"].includes(
+        this._transport.state
+      )
+    ) {
+      throw new VoiceErrors.VoiceError("Voice client has already been started");
+    }
+
     this._abortController = new AbortController();
 
     // Establish transport session and await bot ready signal
@@ -410,7 +421,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.getBotConfig());
     } else {
-      throw new VoiceErrors.VoiceError(
+      throw new VoiceErrors.BotNotReadyError(
         "Attempted to get config from bot while transport not in ready state"
       );
     }
@@ -445,7 +456,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.describeConfig());
     } else {
-      throw new VoiceErrors.VoiceError(
+      throw new VoiceErrors.BotNotReadyError(
         "Attempted to get config description while transport not in ready state"
       );
     }
@@ -460,9 +471,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (this._transport.state === "ready") {
       return this._messageDispatcher.dispatch(VoiceMessage.action(action));
     } else {
-      throw new VoiceErrors.VoiceError(
-        "Attempted to send action while transport not in ready state"
-      );
+      throw new VoiceErrors.BotNotReadyError();
     }
   }
 
@@ -473,9 +482,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (this._transport.state === "ready") {
       this._transport.sendMessage(VoiceMessage.describeActions());
     } else {
-      throw new VoiceErrors.VoiceError(
-        "Attempted to describe actions while transport not in ready state"
-      );
+      throw new VoiceErrors.BotNotReadyError();
     }
   }
 
@@ -485,13 +492,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Get the session expiry time for the transport session (if applicable)
    */
   public get transportExpiry(): number | undefined {
-    if (
-      this._transport.state === "connected" ||
-      this._transport.state === "ready"
-    ) {
+    if (["connected", "ready"].includes(this._transport.state)) {
       return this._transport.expiry;
     } else {
-      throw new VoiceErrors.VoiceError(
+      throw new VoiceErrors.BotNotReadyError(
         "Attempted to get transport expiry time when transport not in connected or ready state"
       );
     }
@@ -602,7 +606,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
               );
             });
           } else {
-            throw new VoiceErrors.VoiceError(
+            throw new VoiceErrors.BotNotReadyError(
               "Attempted to send a function call result from bot while transport not in ready state"
             );
           }

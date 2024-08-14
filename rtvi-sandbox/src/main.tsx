@@ -181,7 +181,7 @@ const voiceClient = new DailyVoiceClient({
 // Helpers
 voiceClient.registerHelper(
   "llm",
-  new LLMHelper(voiceClient, {
+  new LLMHelper({
     callbacks: {
       onLLMMessage: (message) => {
         console.log(message);
