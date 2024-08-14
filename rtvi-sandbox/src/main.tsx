@@ -139,6 +139,9 @@ const voiceClient = new DailyVoiceClient({
     onConnected: () => {
       console.log("[CALLBACK] Connected");
     },
+    onBotReady: () => {
+      console.log("[CALLBACK] Bot ready");
+    },
     onDisconnected: () => {
       console.log("[CALLBACK] Disconnected");
     },
@@ -186,8 +189,6 @@ voiceClient.registerHelper(
     },
   })
 ) as LLMHelper;
-
-// voiceClient.helper<LLMHelper>("llm").llmContext();
 
 // Some convenience events
 // These are not required, but can be useful for debugging

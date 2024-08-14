@@ -623,4 +623,21 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._options.callbacks?.onGenericMessage?.(ev.data);
     }
   }
+
+  public getServiceOptionsFromConfig(service: string): unknown {
+    // Check if we have registered service with name service
+    if (!service) {
+      throw new Error("Target service name is required");
+    }
+    // Find matching service name in the config and update the messages
+    const configServiceKey = this.config.find(
+      (config: VoiceClientConfigOption) => config.service === service
+    );
+
+    if (!configServiceKey) {
+      throw new Error("No service with name " + service + " found in config");
+    }
+
+    return configServiceKey;
+  }
 }

@@ -35,6 +35,7 @@ export const Sandbox = () => {
   const { availableMics, selectedMic, updateMic } =
     useVoiceClientMediaDevices();
   const [configUpdating, setConfigUpdating] = useState(false);
+  const [actionDispatching, setActionDispatching] = useState(false);
   const [configDescription, setConfigDescription] = useState<
     VoiceClientConfigOption[] | null
   >();
@@ -230,9 +231,11 @@ export const Sandbox = () => {
               Log bot config description
             </button>
             <button
-              onClick={() => {
+              disabled={actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
                 const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
-                llmHelper.updateContext("llm", {
+                await llmHelper.updateContext("llm", {
                   messages: [
                     {
                       role: "system",
@@ -240,9 +243,24 @@ export const Sandbox = () => {
                     },
                   ],
                 });
+                setActionDispatching(false);
               }}
             >
               Test update LLM context with helper
+            </button>
+            <button
+              disabled={actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                await llmHelper.appendContext("llm", {
+                  role: "user",
+                  content: "Tell me a joke!",
+                });
+                setActionDispatching(false);
+              }}
+            >
+              Test append LLM context with helper
             </button>
           </div>
         </div>

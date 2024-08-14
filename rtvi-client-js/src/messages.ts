@@ -49,7 +49,7 @@ export type BotReadyData = {
 export type ActionData = {
   service: string;
   action: string;
-  arguments: { name: string; value: string }[];
+  arguments: { name: string; value: unknown }[];
 };
 
 export type PipecatMetricsData = {

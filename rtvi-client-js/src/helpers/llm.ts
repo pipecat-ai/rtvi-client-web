@@ -1,6 +1,6 @@
 import { deepmerge } from "deepmerge-ts";
 
-import { VoiceClient, VoiceClientConfigOption } from "..";
+import { ActionData, VoiceClient, VoiceClientConfigOption } from "..";
 import { VoiceClientHelper, VoiceClientHelperOptions } from ".";
 
 // --- Types
@@ -14,11 +14,12 @@ export type LLMContext = {
 };
 
 // --- Events
-export type LLMEvent =
-  | "llm-message"
-  | "llm-context"
-  | "llm-function-call"
-  | "llm-function-start";
+export enum LLMEvent {
+  LLMMessage = "llm-message",
+  LLMContext = "llm-context",
+  LLMFunctionCall = "llm-function-call",
+  LLMFunctionStart = "llm-function-start",
+}
 
 // --- Message types
 export type LLMMessageType =
@@ -51,19 +52,10 @@ export class LLMHelper extends VoiceClientHelper {
   public async updateContext(
     service: string,
     context: LLMContext
-  ): Promise<void | null> {
-    // Check if we have registered service with name service
-    if (!service) {
-      throw new Error("Target service name is required");
-    }
-    // Find matching service name in the config and update the messages
-    const currentContext = this._voiceClient.config.find(
-      (config: VoiceClientConfigOption) => config.service === service
-    );
-
-    if (!currentContext) {
-      throw new Error("No service with name " + service + " found in config");
-    }
+  ): Promise<unknown> {
+    const currentContext = this._voiceClient.getServiceOptionsFromConfig(
+      service
+    ) as VoiceClientConfigOption;
 
     currentContext.options = [
       ...currentContext.options.filter((option) => option.name !== "messages"),
@@ -76,9 +68,42 @@ export class LLMHelper extends VoiceClientHelper {
     const newConfig = deepmerge(currentContext, this._voiceClient.config);
 
     if (this._voiceClient.state === "ready") {
-      //@TODO: dispatch action
+      return this._voiceClient.action({
+        service,
+        action: "update-context",
+        arguments: [
+          {
+            name: "messages",
+            value: context.messages,
+          },
+        ],
+      } as ActionData);
     } else {
-      this._voiceClient.updateConfig(newConfig as VoiceClientConfigOption[]);
+      return this._voiceClient.updateConfig(
+        newConfig as VoiceClientConfigOption[]
+      );
+    }
+  }
+
+  public async appendContext(
+    service: string,
+    context: LLMContextMessage
+  ): Promise<unknown> {
+    this._voiceClient.getServiceOptionsFromConfig(service);
+
+    if (this._voiceClient.state === "ready") {
+      return this._voiceClient.action({
+        service,
+        action: "append-context",
+        arguments: [
+          {
+            name: "messages",
+            value: [context],
+          },
+        ],
+      } as ActionData);
+    } else {
+      // Update config
     }
   }
 }
