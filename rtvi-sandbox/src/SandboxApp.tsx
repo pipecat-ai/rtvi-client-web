@@ -12,6 +12,7 @@ import {
   BotReadyData,
   ConnectionTimeoutError,
   FunctionCallParams,
+  LLMHelper,
   RateLimitError,
   TransportAuthBundleError,
   VoiceClientConfigOption,
@@ -227,6 +228,21 @@ export const Sandbox = () => {
               onClick={() => voiceClient.describeConfig()}
             >
               Log bot config description
+            </button>
+            <button
+              onClick={() => {
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                llmHelper.updateContext("llm", {
+                  messages: [
+                    {
+                      role: "system",
+                      content: "You are a chatbot named Frankie",
+                    },
+                  ],
+                });
+              }}
+            >
+              Test update LLM context with helper
             </button>
           </div>
         </div>

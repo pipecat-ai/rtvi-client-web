@@ -23,10 +23,13 @@ export enum VoiceMessageType {
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
+
+  //@TODO move to llm helper
   LLM_FUNCTION_CALL = "llm-function-call", // LLM requesting a function call
   LLM_FUNCTION_CALL_START = "llm-function-call-start", // The LLM has started returning a function call
   LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
-  JSON_COMPLETION = "llm-json-completion", // Used for JSON responses from the LLM
+  LLM_JSON_COMPLETION = "llm-json-completion", // Used for JSON responses from the LLM
+
   ERROR_RESPONSE = "error-response", // Error response from the bot
   USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
@@ -66,6 +69,7 @@ export type Transcript = {
   user_id: string;
 };
 
+//@TODO: move to helper
 export type LLMFunctionCallData = {
   function_name: string;
   tool_call_id: string;
@@ -114,6 +118,7 @@ export class VoiceMessage {
     return new VoiceMessage(VoiceMessageType.DESCRIBE_ACTIONS, {});
   }
 
+  //@TODO: move to helper
   static llmFunctionCallResult(data: unknown): VoiceMessage {
     return new VoiceMessage(VoiceMessageType.LLM_FUNCTION_CALL_RESULT, data);
   }
@@ -129,6 +134,8 @@ export class VoiceMessageMetrics extends VoiceMessage {
     super(VoiceMessageType.METRICS, data, "0");
   }
 }
+
+// ----- Message Dispatcher
 
 interface QueuedVoiceMessage {
   message: VoiceMessage;
@@ -188,8 +195,6 @@ export class MessageDispatcher {
       }
       // Remove message from queue
       this._queue = this._queue.filter((msg) => msg.message.id !== message.id);
-    } else {
-      //@TODO handle unknown message here
     }
 
     return message;

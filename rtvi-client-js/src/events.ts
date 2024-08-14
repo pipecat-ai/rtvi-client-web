@@ -8,6 +8,9 @@ import {
 } from ".";
 import { Participant, TransportState } from "./transport";
 
+// Change these to snake case to match the rest of the codebase
+// Make a strict string enum
+
 export enum VoiceEvent {
   MessageError = "messageError",
   Error = "error",

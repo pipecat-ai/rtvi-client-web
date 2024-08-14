@@ -1,4 +1,3 @@
-import { deepmergeCustom } from "deepmerge-ts";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
@@ -19,6 +18,8 @@ import {
   PipecatMetrics,
   Transcript,
   VoiceClientConfigOption,
+  VoiceClientHelper,
+  VoiceClientHelpers,
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageMetrics,
@@ -27,8 +28,6 @@ import {
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { Participant, Transport, TransportState } from "./transport";
-
-const customMerge = deepmergeCustom({ mergeArrays: false });
 
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
@@ -75,12 +74,18 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
   private _messageDispatcher: MessageDispatcher;
+  private _helpers: VoiceClientHelpers;
+
+  // @TODO: move to LLM helper
   private _functionCallCallback: FunctionCallCallback | null;
 
   constructor(options: VoiceClientOptions) {
     super();
 
     this._baseUrl = options.baseUrl;
+    this._helpers = {};
+
+    //@TODO: move to LLM helper
     this._functionCallCallback = null;
 
     // Wrap transport callbacks with event triggers
@@ -206,20 +211,45 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   // ------ Helpers
 
-  public get helpers() {
-    const helpers = this._options.helpers;
-    if (!helpers) {
-      throw new Error(`No helpers registered to client`);
+  /**
+   * Register a new helper to the client
+   * This (optionally) provides a way to reference the helper directly
+   * from the client and use the event dispatcher
+   * @param name - Name of the helper
+   * @param helper - Helper instance
+   */
+  public registerHelper(
+    name: string,
+    helper: VoiceClientHelper
+  ): VoiceClientHelper {
+    if (this._helpers[name]) {
+      throw new Error(`Helper with name '${name}' already registered`);
     }
-    return new Proxy(helpers, {
-      get(target, prop: string) {
-        if (!Reflect.has(target, prop)) {
-          throw new Error(`The helper '${String(prop)}' does not exist.`);
-        }
-        const helper = Reflect.get(target, prop);
-        return helper;
-      },
-    });
+
+    // Check helper is instance of VoiceClientHelper
+    if (!(helper instanceof VoiceClientHelper)) {
+      throw new Error(`Helper must be an instance of VoiceClientHelper`);
+    }
+
+    this._helpers[name] = helper;
+
+    return this._helpers[name];
+  }
+
+  public getHelper<T extends VoiceClientHelper>(name: string): T {
+    const helper = this._helpers[name];
+    if (!helper) {
+      throw new Error(`Helper with name '${name}' not found`);
+    }
+    return helper as T;
+  }
+
+  public unregisterHelper(name: string) {
+    if (!this._helpers[name]) {
+      throw new Error(`Helper with name '${name}' not registered`);
+    }
+
+    delete this._helpers[name];
   }
 
   // ------ Transport methods
@@ -394,23 +424,17 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param options.sendPartial - Update single service config (e.g. llm or tts) or the whole config
    */
   public async updateConfig(
-    config: VoiceClientConfigOption[],
-    {
-      useDeepMerge = false,
-      sendPartial = false,
-    }: { useDeepMerge?: boolean; sendPartial?: boolean } = {}
+    config: VoiceClientConfigOption[]
   ): Promise<unknown> {
-    const newConfig = useDeepMerge ? customMerge(this.config, config) : config;
-
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
     if (this._transport.state === "ready") {
       return this._messageDispatcher.dispatch(
-        VoiceMessage.updateConfig(sendPartial ? config : newConfig),
+        VoiceMessage.updateConfig(config),
         true
       );
     } else {
-      this.config = newConfig;
+      this.config = config;
     }
   }
 
@@ -432,9 +456,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   /**
    * Dispatch an action message to the bot
    */
-  public async action(action: ActionData) {
+  public async action(action: ActionData): Promise<unknown> {
     if (this._transport.state === "ready") {
-      this._messageDispatcher.dispatch(VoiceMessage.action(action));
+      return this._messageDispatcher.dispatch(VoiceMessage.action(action));
     } else {
       throw new VoiceErrors.VoiceError(
         "Attempted to send action while transport not in ready state"
@@ -550,7 +574,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this.emit(VoiceEvent.BotTranscript, botData.text as string);
         break;
       }
-      case VoiceMessageType.JSON_COMPLETION:
+      //@TODO: move to LLM helper
+      case VoiceMessageType.LLM_JSON_COMPLETION:
         this._options.callbacks?.onJsonCompletion?.(ev.data as string);
         this.emit(VoiceEvent.JSONCompletion, ev.data as string);
         break;
@@ -593,6 +618,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         break;
       }
       default:
+        // Check helpers for message handling
+
         this._options.callbacks?.onGenericMessage?.(ev.data);
     }
   }

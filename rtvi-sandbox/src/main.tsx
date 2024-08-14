@@ -1,5 +1,10 @@
 import { createRoot } from "react-dom/client";
-import { PipecatMetrics, VoiceEvent, VoiceMessage } from "realtime-ai";
+import {
+  LLMHelper,
+  PipecatMetrics,
+  VoiceEvent,
+  VoiceMessage,
+} from "realtime-ai";
 import { DailyVoiceClient } from "realtime-ai-daily";
 import { VoiceClientProvider } from "realtime-ai-react";
 import { Sandbox } from "./SandboxApp";
@@ -169,6 +174,20 @@ const voiceClient = new DailyVoiceClient({
     },*/
   },
 });
+
+// Helpers
+voiceClient.registerHelper(
+  "llm",
+  new LLMHelper(voiceClient, {
+    callbacks: {
+      onLLMMessage: (message) => {
+        console.log(message);
+      },
+    },
+  })
+) as LLMHelper;
+
+// voiceClient.helper<LLMHelper>("llm").llmContext();
 
 // Some convenience events
 // These are not required, but can be useful for debugging

@@ -1,5 +1,4 @@
 import { Client, VoiceEventCallbacks } from "./core";
-import { VoiceClientHelper } from "./helpers";
 import { VoiceMessage } from "./messages";
 import { Transport } from "./transport";
 
@@ -39,11 +38,6 @@ export interface VoiceClientOptions {
    * Service configuration options for services and further customization
    */
   config?: VoiceClientConfigOption[];
-
-  /**
-   * Helper classes for additional functionality  (e.g. LLMHelper)
-   */
-  helpers?: VoiceClientHelpers;
 
   /**
    * Handshake timeout
@@ -88,7 +82,6 @@ export type VoiceClientConfigLLM = {
   model?: string;
   messages?: VoiceClientLLMMessage[];
 };
-export type VoiceClientHelpers = Partial<Record<string, VoiceClientHelper>>;
 
 /**
  * RTVI Voice Client
