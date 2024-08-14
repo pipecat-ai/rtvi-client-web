@@ -127,7 +127,13 @@ export const Sandbox = () => {
         <div>Bot RTVI version: {botVersion}</div>
         <div>
           {state === "connected" || state === "ready" ? (
-            <button onClick={() => voiceClient.disconnect()}>Disconnect</button>
+            <button
+              onClick={async () => {
+                await voiceClient.disconnect();
+              }}
+            >
+              Disconnect
+            </button>
           ) : (
             <button onClick={() => start()}>Connect</button>
           )}

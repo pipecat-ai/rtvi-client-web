@@ -69,11 +69,11 @@ export type VoiceEventCallbacks = Partial<{
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
   protected _options: VoiceClientOptions;
   private _transport: Transport;
+  private _messageDispatcher: MessageDispatcher;
   private readonly _baseUrl: string;
   private _startResolve: ((value: unknown) => void) | undefined;
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
-  private _messageDispatcher: MessageDispatcher;
   private _helpers: VoiceClientHelpers;
 
   // @TODO: move to LLM helper
@@ -190,20 +190,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       },
     };
 
-    // Instantiate the transport class
-    this._transport = new options.transport!(
-      {
-        ...options,
-        callbacks: wrappedCallbacks,
-      },
-      this.handleMessage.bind(this)
-    )!;
-
     // Update options to reference wrapped callbacks
     this._options = {
       ...options,
       callbacks: wrappedCallbacks,
     };
+
+    // Instantiate the transport class
+    const cls = this._options.transport!;
+    this._transport = new cls(this._options, this.handleMessage.bind(this))!;
 
     // Create a new message dispatch queue for async message handling
     this._messageDispatcher = new MessageDispatcher(this._transport);
@@ -275,7 +270,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._transport.state
       )
     ) {
-      throw new VoiceErrors.VoiceError("Voice client has already been started");
+      throw new VoiceErrors.VoiceError(
+        "Voice client has already been started. Please call disconnect() before starting again."
+      );
     }
 
     this._abortController = new AbortController();
@@ -350,7 +347,20 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     if (this._abortController) {
       this._abortController.abort();
     }
+
     await this._transport.disconnect();
+
+    this._reset();
+  }
+
+  private _reset() {
+    this._transport = new this._options.transport!(
+      this._options,
+      this.handleMessage.bind(this)
+    )!;
+
+    // Create a new message dispatch queue for async message handling
+    this._messageDispatcher = new MessageDispatcher(this._transport);
   }
 
   public get state(): TransportState {
