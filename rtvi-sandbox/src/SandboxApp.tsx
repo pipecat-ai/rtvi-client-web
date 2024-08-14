@@ -11,6 +11,7 @@ import {
   ActionData,
   BotReadyData,
   ConnectionTimeoutError,
+  FunctionCallParams,
   RateLimitError,
   TransportAuthBundleError,
   VoiceClientConfigOption,
@@ -82,7 +83,7 @@ export const Sandbox = () => {
     }, [])
   );
 
-  voiceClient.handleFunctionCall((fn: any) => {
+  voiceClient.handleFunctionCall(async (fn: FunctionCallParams) => {
     console.log({ fn });
     return { conditions: "nice", temperature: 72 };
   });

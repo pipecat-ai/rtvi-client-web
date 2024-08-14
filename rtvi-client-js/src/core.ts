@@ -559,16 +559,17 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
             functionName: d.function_name,
             arguments: d.args,
           };
-          const result = this._functionCallCallback(fn);
           if (this._transport.state === "ready") {
-            this._transport.sendMessage(
-              VoiceMessage.llmFunctionCallResult({
-                function_name: d.function_name,
-                tool_call_id: d.tool_call_id,
-                arguments: d.args,
-                result,
-              })
-            );
+            this._functionCallCallback(fn).then((result) => {
+              this._transport.sendMessage(
+                VoiceMessage.llmFunctionCallResult({
+                  function_name: d.function_name,
+                  tool_call_id: d.tool_call_id,
+                  arguments: d.args,
+                  result,
+                })
+              );
+            });
           } else {
             throw new VoiceErrors.VoiceError(
               "Attempted to send a function call result from bot while transport not in ready state"
