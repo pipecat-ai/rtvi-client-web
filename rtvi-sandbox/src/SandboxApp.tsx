@@ -236,7 +236,7 @@ export const Sandbox = () => {
               onClick={async () => {
                 setActionDispatching(true);
                 const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
-                await llmHelper.updateContext("llm", {
+                await llmHelper.updateContext({
                   messages: [
                     {
                       role: "system",
@@ -254,7 +254,7 @@ export const Sandbox = () => {
               onClick={async () => {
                 setActionDispatching(true);
                 const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
-                await llmHelper.appendContext("llm", {
+                await llmHelper.appendContext({
                   role: "user",
                   content: "Tell me a joke!",
                 });
@@ -293,6 +293,8 @@ export const Sandbox = () => {
           <h3>Action dispatch</h3>
           <ReactJson
             enableClipboard={false}
+            onDelete={(e) => setEditedAction(e.updated_src)}
+            onAdd={(e) => setEditedAction(e.updated_src)}
             onEdit={(e) => setEditedAction(e.updated_src)}
             style={{ width: "100%" }}
             src={templateAction}

@@ -49,12 +49,9 @@ export class LLMHelper extends VoiceClientHelper {
     return undefined;
   }
 
-  public async updateContext(
-    service: string,
-    context: LLMContext
-  ): Promise<unknown> {
+  public async updateContext(context: LLMContext): Promise<unknown> {
     const currentContext = this._voiceClient.getServiceOptionsFromConfig(
-      service
+      this._service
     ) as VoiceClientConfigOption;
 
     currentContext.options = [
@@ -69,7 +66,7 @@ export class LLMHelper extends VoiceClientHelper {
 
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
-        service,
+        service: this._service,
         action: "update-context",
         arguments: [
           {
@@ -85,15 +82,12 @@ export class LLMHelper extends VoiceClientHelper {
     }
   }
 
-  public async appendContext(
-    service: string,
-    context: LLMContextMessage
-  ): Promise<unknown> {
-    this._voiceClient.getServiceOptionsFromConfig(service);
+  public async appendContext(context: LLMContextMessage): Promise<unknown> {
+    this._voiceClient.getServiceOptionsFromConfig(this._service);
 
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
-        service,
+        service: this._service,
         action: "append-context",
         arguments: [
           {

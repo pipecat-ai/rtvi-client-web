@@ -215,15 +215,24 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Register a new helper to the client
    * This (optionally) provides a way to reference the helper directly
    * from the client and use the event dispatcher
-   * @param name - Name of the helper
+   * @param service - Targer service for this helper
    * @param helper - Helper instance
    */
   public registerHelper(
-    name: string,
+    service: string,
     helper: VoiceClientHelper
   ): VoiceClientHelper {
-    if (this._helpers[name]) {
-      throw new Error(`Helper with name '${name}' already registered`);
+    if (this._helpers[service]) {
+      throw new Error(
+        `Helper targeting service '${service}' already registered`
+      );
+    }
+
+    // Check service exists in config
+    if (!this._options.services[service]) {
+      throw new Error(
+        `Service with name '${service}' not found in the provided services object`
+      );
     }
 
     // Check helper is instance of VoiceClientHelper
@@ -233,26 +242,26 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     // Attach voice client to helper
     helper.voiceClient = this;
+    helper.service = service;
 
-    this._helpers[name] = helper;
+    this._helpers[service] = helper;
 
-    return this._helpers[name];
+    return this._helpers[service];
   }
 
-  public getHelper<T extends VoiceClientHelper>(name: string): T {
-    const helper = this._helpers[name];
+  public getHelper<T extends VoiceClientHelper>(service: string): T {
+    const helper = this._helpers[service];
     if (!helper) {
-      throw new Error(`Helper with name '${name}' not found`);
+      throw new Error(`Helper targeting service '${service}' not found`);
     }
     return helper as T;
   }
 
-  public unregisterHelper(name: string) {
-    if (!this._helpers[name]) {
-      throw new Error(`Helper with name '${name}' not registered`);
+  public unregisterHelper(service: string) {
+    if (!this._helpers[service]) {
+      throw new Error(`Helper targerting service '${service}' not registered`);
     }
-
-    delete this._helpers[name];
+    delete this._helpers[service];
   }
 
   // ------ Transport methods
