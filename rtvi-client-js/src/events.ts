@@ -10,6 +10,8 @@ import { Participant, TransportState } from "./transport";
 
 export enum VoiceEvent {
   MessageError = "messageError",
+  Error = "error",
+
   Connected = "connected",
   Disconnected = "disconnected",
   TransportStateChanged = "transportStateChanged",
@@ -82,6 +84,7 @@ export type VoiceEvents = {
   llmFunctionCallStart: (functionName: string) => void;
   jsonCompletion: (data: string) => void;
 
+  error: (message: VoiceMessage) => void;
   messageError: (message: VoiceMessage) => void;
 };
 

@@ -33,6 +33,7 @@ const customMerge = deepmergeCustom({ mergeArrays: false });
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
   onMessageError: (message: VoiceMessage) => void;
+  onError: (message: VoiceMessage) => void;
   onConnected: () => void;
   onDisconnected: () => void;
   onTransportStateChanged: (state: TransportState) => void;
@@ -89,6 +90,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onMessageError: (message: VoiceMessage) => {
         options?.callbacks?.onMessageError?.(message);
         this.emit(VoiceEvent.MessageError, message);
+      },
+      onError: (message: VoiceMessage) => {
+        options?.callbacks?.onError?.(message);
+        this.emit(VoiceEvent.Error, message);
       },
       onConnected: () => {
         options?.callbacks?.onConnected?.();
@@ -502,7 +507,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         break;
       }
       case VoiceMessageType.CONFIG: {
-        // Update local config and resolve promise
         const resp = this._messageDispatcher.resolve(ev);
         this.config = (resp.data as ConfigData).config;
         break;
@@ -512,11 +516,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         break;
       }
       case VoiceMessageType.ERROR_RESPONSE: {
-        //@TODO: this needs to be generic
         const resp = this._messageDispatcher.reject(ev);
         this._options.callbacks?.onMessageError?.(resp as VoiceMessage);
         break;
       }
+      case VoiceMessageType.ERROR:
+        this._options.callbacks?.onError?.(ev);
+        break;
       case VoiceMessageType.USER_STARTED_SPEAKING:
         this._options.callbacks?.onUserStartedSpeaking?.();
         break;

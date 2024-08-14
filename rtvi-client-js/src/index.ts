@@ -98,6 +98,7 @@ export class VoiceClient extends Client {
     const options: VoiceClientOptions = {
       ...opts,
       transport: opts.transport,
+      enableMic: opts.enableMic ?? true,
       config: opts.config || [],
     };
 

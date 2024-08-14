@@ -125,6 +125,9 @@ const voiceClient = new DailyVoiceClient({
     onMessageError: (message: VoiceMessage) => {
       console.log("[CALLBACK] Message error", message);
     },
+    onError: (message: VoiceMessage) => {
+      console.log("[CALLBACK] Error", message);
+    },
     onGenericMessage: (data: unknown) => {
       console.log("[CALLBACK] Generic message:", data);
     },
