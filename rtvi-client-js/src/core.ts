@@ -348,6 +348,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       this._abortController.abort();
     }
 
+    clearTimeout(this._handshakeTimeout);
+
     await this._transport.disconnect();
 
     this._reset();
