@@ -1,6 +1,11 @@
 import { deepmerge } from "deepmerge-ts";
 
-import { ActionData, VoiceClient, VoiceClientConfigOption } from "..";
+import {
+  ActionData,
+  VoiceClient,
+  VoiceClientConfigOption,
+  VoiceMessage,
+} from "..";
 import { VoiceClientHelper, VoiceClientHelperOptions } from ".";
 
 // --- Types
@@ -15,18 +20,18 @@ export type LLMContext = {
 
 // --- Events
 export enum LLMEvent {
-  LLMMessage = "llm-message",
-  LLMContext = "llm-context",
-  LLMFunctionCall = "llm-function-call",
-  LLMFunctionStart = "llm-function-start",
+  LLM_FUNCTION_CALL = "llm-function-call",
+  LLM_FUNCTION_CALL_START = "llm-function-call-start",
+  LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
+  LLM_JSON_COMPLETION = "llm-json-completion",
 }
-
 // --- Message types
-export type LLMMessageType =
-  | "llm-function-call"
-  | "llm-function-call-start"
-  | "llm-function-call-result"
-  | "llm-json-completion";
+export enum LLMMessageType {
+  LLM_FUNCTION_CALL = "llm-function-call",
+  LLM_FUNCTION_CALL_START = "llm-function-call-start",
+  LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
+  LLM_JSON_COMPLETION = "llm-json-completion",
+}
 
 // --- Callbacks
 export type LLMHelperCallbacks = Partial<{
@@ -105,5 +110,13 @@ export class LLMHelper extends VoiceClientHelper {
     } else {
       // Update config
     }
+  }
+
+  public handleMessage(ev: VoiceMessage): void {
+    console.log(ev);
+  }
+
+  public getMessageTypes(): string[] {
+    return Object.values(LLMMessageType) as string[];
   }
 }

@@ -617,10 +617,21 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this.emit(VoiceEvent.LLMFunctionCallStart, e.function_name);
         break;
       }
-      default:
-        // Check helpers for message handling
-
-        this._options.callbacks?.onGenericMessage?.(ev.data);
+      default: {
+        let match: boolean = false;
+        // Pass message to registered helpered
+        for (const helper of Object.values(
+          this._helpers
+        ) as VoiceClientHelper[]) {
+          if (helper.getMessageTypes().includes(ev.type)) {
+            match = true;
+            helper.handleMessage(ev);
+          }
+        }
+        if (!match) {
+          this._options.callbacks?.onGenericMessage?.(ev.data);
+        }
+      }
     }
   }
 
