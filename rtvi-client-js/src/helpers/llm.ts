@@ -67,7 +67,7 @@ export class LLMHelper extends VoiceClientHelper {
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
         service: this._service,
-        action: "update-context",
+        action: "update_context",
         arguments: [
           {
             name: "messages",
@@ -88,7 +88,7 @@ export class LLMHelper extends VoiceClientHelper {
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
         service: this._service,
-        action: "append-context",
+        action: "append_context",
         arguments: [
           {
             name: "messages",
