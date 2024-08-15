@@ -1,9 +1,23 @@
 import { deepmerge } from "deepmerge-ts";
 
-import { ActionData, VoiceClientConfigOption, VoiceMessage } from "..";
+import {
+  ActionData,
+  VoiceClientConfigOption,
+  VoiceEvent,
+  VoiceMessage,
+} from "..";
+import * as VoiceErrors from "./../errors";
 import { VoiceClientHelper, VoiceClientHelperOptions } from ".";
 
 // --- Types
+
+export type LLMFunctionCallData = {
+  function_name: string;
+  tool_call_id: string;
+  args: unknown;
+  result?: unknown;
+};
+
 export type LLMContextMessage = {
   role: string;
   content: string;
@@ -13,13 +27,13 @@ export type LLMContext = {
   messages?: LLMContextMessage[];
 };
 
-// --- Events
-export enum LLMEvent {
-  LLM_FUNCTION_CALL = "llm-function-call",
-  LLM_FUNCTION_CALL_START = "llm-function-call-start",
-  LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
-  LLM_JSON_COMPLETION = "llm-json-completion",
-}
+export type FunctionCallParams = {
+  functionName: string;
+  arguments: unknown;
+};
+
+export type FunctionCallCallback = (fn: FunctionCallParams) => Promise<unknown>;
+
 // --- Message types
 export enum LLMMessageType {
   LLM_FUNCTION_CALL = "llm-function-call",
@@ -30,6 +44,9 @@ export enum LLMMessageType {
 
 // --- Callbacks
 export type LLMHelperCallbacks = Partial<{
+  onLLMJsonCompletion: (jsonString: string) => void;
+  onLLMFunctionCall: (func: LLMFunctionCallData) => void;
+  onLLMFunctionCallStart: (functionName: string) => void;
   onLLMMessage: (message: LLMContextMessage) => void;
 }>;
 
@@ -40,25 +57,34 @@ export interface LLMHelperOptions extends VoiceClientHelperOptions {
 
 export class LLMHelper extends VoiceClientHelper {
   protected declare _options: LLMHelperOptions;
+  private _functionCallCallback: FunctionCallCallback | null;
 
   constructor(options: LLMHelperOptions) {
     super(options);
-  }
 
-  private _getMessagesKey(): string {
-    return this._voiceClient.state === "ready"
-      ? "messages"
-      : "initial_messages";
+    this._functionCallCallback = null;
   }
 
   public getMessageTypes(): string[] {
     return Object.values(LLMMessageType) as string[];
   }
 
+  /**
+   * LLM context messages key
+   * If the transport is in the ready state, the key is "messages"
+   * Otherwise, the key is "initial_messages"
+   * @returns string
+   */
+  private _getMessagesKey(): string {
+    return this._voiceClient.state === "ready"
+      ? "messages"
+      : "initial_messages";
+  }
+
   // --- Actions
 
   public getContext(): Promise<unknown> | void {
-    //@TODO: handle non-ready return too
+    //@TODO: handle non-ready return too?
 
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
@@ -159,7 +185,66 @@ export class LLMHelper extends VoiceClientHelper {
 
   // --- Handlers
 
+  /**
+   * If the LLM wants to call a function, RTVI will invoke the callback defined
+   * here. Whatever the callback returns will be sent to the LLM as the function result.
+   * @param callback
+   * @returns void
+   */
+  public handleFunctionCall(callback: FunctionCallCallback): void {
+    this._functionCallCallback = callback;
+  }
+
   public handleMessage(ev: VoiceMessage): void {
-    console.log(ev);
+    switch (ev.type) {
+      case LLMMessageType.LLM_JSON_COMPLETION:
+        this._options.callbacks?.onLLMJsonCompletion?.(ev.data as string);
+        this._voiceClient.emit(VoiceEvent.LLMJsonCompletion, ev.data as string);
+        break;
+      case LLMMessageType.LLM_FUNCTION_CALL: {
+        const d = ev.data as LLMFunctionCallData;
+        this._options.callbacks?.onLLMFunctionCall?.(
+          ev.data as LLMFunctionCallData
+        );
+        this._voiceClient.emit(
+          VoiceEvent.LLMFunctionCall,
+          ev.data as LLMFunctionCallData
+        );
+        if (this._functionCallCallback) {
+          const fn = {
+            functionName: d.function_name,
+            arguments: d.args,
+          };
+          if (this._voiceClient.state === "ready") {
+            this._functionCallCallback(fn).then((result) => {
+              this._voiceClient.sendMessage(
+                new VoiceMessage(LLMMessageType.LLM_FUNCTION_CALL_RESULT, {
+                  function_name: d.function_name,
+                  tool_call_id: d.tool_call_id,
+                  arguments: d.args,
+                  result,
+                })
+              );
+            });
+          } else {
+            throw new VoiceErrors.BotNotReadyError(
+              "Attempted to send a function call result from bot while transport not in ready state"
+            );
+          }
+        }
+        break;
+      }
+      case LLMMessageType.LLM_FUNCTION_CALL_START: {
+        const e = ev.data as LLMFunctionCallData;
+        this._options.callbacks?.onLLMFunctionCallStart?.(
+          e.function_name as string
+        );
+        this._voiceClient.emit(
+          VoiceEvent.LLMFunctionCallStart,
+          e.function_name
+        );
+        break;
+      }
+    }
   }
 }

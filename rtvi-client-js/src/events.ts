@@ -8,9 +8,6 @@ import {
 } from ".";
 import { Participant, TransportState } from "./transport";
 
-// Change these to snake case to match the rest of the codebase
-// Make a strict string enum
-
 export enum VoiceEvent {
   MessageError = "messageError",
   Error = "error",
@@ -47,12 +44,13 @@ export enum VoiceEvent {
   Metrics = "metrics",
   UserTranscript = "userTranscript",
   BotTranscript = "botTranscript",
+
   LLMFunctionCall = "llmFunctionCall",
   LLMFunctionCallStart = "llmFunctionCallStart",
-  JSONCompletion = "jsonCompletion",
+  LLMJsonCompletion = "llmJsonCompletion",
 }
 
-export type VoiceEvents = {
+export type VoiceEvents = Partial<{
   connected: () => void;
   disconnected: () => void;
   transportStateChanged: (state: TransportState) => void;
@@ -85,13 +83,14 @@ export type VoiceEvents = {
   metrics: (data: PipecatMetrics) => void;
   userTranscript: (data: Transcript) => void;
   botTranscript: (text: string) => void;
-  llmFunctionCall: (func: LLMFunctionCallData) => unknown;
-  llmFunctionCallStart: (functionName: string) => void;
-  jsonCompletion: (data: string) => void;
 
   error: (message: VoiceMessage) => void;
   messageError: (message: VoiceMessage) => void;
-};
+
+  llmFunctionCall: (func: LLMFunctionCallData) => void;
+  llmFunctionCallStart: (functionName: string) => void;
+  llmJsonCompletion: (data: string) => void;
+}>;
 
 export type VoiceEventHandler<E extends VoiceEvent> =
   E extends keyof VoiceEvents ? VoiceEvents[E] : never;

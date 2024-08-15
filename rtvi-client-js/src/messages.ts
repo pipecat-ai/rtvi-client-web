@@ -28,12 +28,6 @@ export enum VoiceMessageType {
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
   BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
   BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
-
-  //@TODO move to llm helper
-  LLM_FUNCTION_CALL = "llm-function-call", // LLM requesting a function call
-  LLM_FUNCTION_CALL_START = "llm-function-call-start", // The LLM has started returning a function call
-  LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
-  LLM_JSON_COMPLETION = "llm-json-completion", // Used for JSON responses from the LLM
 }
 
 export type ConfigData = {
@@ -66,14 +60,6 @@ export type Transcript = {
   final: boolean;
   timestamp: string;
   user_id: string;
-};
-
-//@TODO: move to helper
-export type LLMFunctionCallData = {
-  function_name: string;
-  tool_call_id: string;
-  args: unknown;
-  result?: unknown;
 };
 
 export class VoiceMessage {
@@ -115,11 +101,6 @@ export class VoiceMessage {
 
   static describeActions(): VoiceMessage {
     return new VoiceMessage(VoiceMessageType.DESCRIBE_ACTIONS, {});
-  }
-
-  //@TODO: move to helper
-  static llmFunctionCallResult(data: unknown): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.LLM_FUNCTION_CALL_RESULT, data);
   }
 
   // Actions (generic)

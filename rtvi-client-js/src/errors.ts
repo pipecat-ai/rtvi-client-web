@@ -46,6 +46,7 @@ export class ConfigUpdateError extends VoiceError {
 
 // Currently unused
 
+/*
 export class BotStartError extends VoiceError {
   override readonly status = 400;
   constructor(message?: string | undefined) {
@@ -66,3 +67,4 @@ export class AuthenticationError extends VoiceError {
     super(message ?? "Unable to authenticate");
   }
 }
+*/

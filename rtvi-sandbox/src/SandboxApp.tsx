@@ -13,7 +13,7 @@ import {
   ConnectionTimeoutError,
   FunctionCallParams,
   LLMHelper,
-  RateLimitError,
+  Participant,
   Transcript,
   TransportAuthBundleError,
   VoiceClientConfigOption,
@@ -83,14 +83,14 @@ export const Sandbox = () => {
   );
   useVoiceClientEvent(
     VoiceEvent.ParticipantConnected,
-    useCallback((p) => {
+    useCallback((p: Participant) => {
       if (!p.local) setIsBotConnected(true);
     }, [])
   );
 
   useVoiceClientEvent(
     VoiceEvent.ParticipantLeft,
-    useCallback((p) => {
+    useCallback((p: Participant) => {
       if (!p.local) setIsBotConnected(false);
     }, [])
   );
@@ -104,10 +104,12 @@ export const Sandbox = () => {
     }, [])
   );
 
-  voiceClient.handleFunctionCall(async (fn: FunctionCallParams) => {
-    console.log({ fn });
-    return { conditions: "nice", temperature: 72 };
-  });
+  (voiceClient.getHelper("llm") as LLMHelper).handleFunctionCall(
+    async (fn: FunctionCallParams) => {
+      console.log({ fn });
+      return { conditions: "nice", temperature: 72 };
+    }
+  );
 
   useVoiceClientEvent(
     VoiceEvent.LLMFunctionCallStart,
@@ -120,9 +122,7 @@ export const Sandbox = () => {
     try {
       await voiceClient.start();
     } catch (e) {
-      if (e instanceof RateLimitError) {
-        setError("Demo is currently at capacity. Please try again later.");
-      } else if (e instanceof TransportAuthBundleError) {
+      if (e instanceof TransportAuthBundleError) {
         setError(e.message);
       } else if (e instanceof ConnectionTimeoutError) {
         setError(e.message);
