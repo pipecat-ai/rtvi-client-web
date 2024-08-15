@@ -11,11 +11,6 @@ export interface VoiceClientOptions {
   baseUrl: string;
 
   /**
-   * Custom HTTP headers to be send with the POST request to baseUrl
-   */
-  customHeaders?: { [key: string]: string };
-
-  /**
    * Set transport class for media streaming
    */
   transport?: new (
@@ -60,6 +55,21 @@ export interface VoiceClientOptions {
    * Default to false
    */
   enableCam?: boolean;
+
+  /**
+   * Custom HTTP headers to be send with the POST request to baseUrl
+   */
+  customHeaders?: { [key: string]: string };
+
+  /**
+   * Custom start method handler for retrieving auth bundle for transport
+   * @param abortController
+   * @returns Promise<void>
+   */
+  customAuthHandler?: (
+    baseUrl: string,
+    abortController: AbortController
+  ) => Promise<void>;
 }
 
 export type ConfigOption = {

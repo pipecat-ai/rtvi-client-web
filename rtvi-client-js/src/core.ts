@@ -300,24 +300,30 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           }, this._options.timeout);
         }
 
-        // Send POST request to the provided base_url to connect and start the bot
-        // @params config - VoiceClientConfigOption[] object with the configuration
         let authBundle: unknown;
+        const customAuthHandler = this._options.customAuthHandler;
 
         try {
-          authBundle = await fetch(`${this._baseUrl}`, {
-            method: "POST",
-            mode: "cors",
-            headers: {
-              "Content-Type": "application/json",
-              ...this._options.customHeaders,
-            },
-            body: JSON.stringify({
-              services: this._options.services,
-              config,
-            }),
-            signal: this._abortController?.signal,
-          }).then((res) => res.json());
+          if (customAuthHandler) {
+            authBundle = await customAuthHandler(
+              this._baseUrl,
+              this._abortController!
+            );
+          } else {
+            authBundle = await fetch(`${this._baseUrl}`, {
+              method: "POST",
+              mode: "cors",
+              headers: {
+                "Content-Type": "application/json",
+                ...this._options.customHeaders,
+              },
+              body: JSON.stringify({
+                services: this._options.services,
+                config,
+              }),
+              signal: this._abortController?.signal,
+            }).then((res) => res.json());
+          }
         } catch (e) {
           clearTimeout(this._handshakeTimeout);
           this._transport.state = "error";
