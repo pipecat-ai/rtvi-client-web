@@ -83,9 +83,12 @@ export class LLMHelper extends VoiceClientHelper {
 
   // --- Actions
 
+  /**
+   * Bot's current LLM context. Bot must be in the ready state.
+   * @returns Promise<unknown> | void
+   */
   public getContext(): Promise<unknown> | void {
     //@TODO: handle non-ready return too?
-
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
         service: this._service,
@@ -94,6 +97,13 @@ export class LLMHelper extends VoiceClientHelper {
     }
   }
 
+  /**
+   * Update the bot's LLM context.
+   * If this is called while the transport is not in the ready state, the local context will be updated
+   * @param context LLMContext - The new context
+   * @param interrupt boolean - Whether to interrupt the bot, or wait until it has finished speaking
+   * @returns Promise<unknown>
+   */
   public async setContext(
     context: LLMContext,
     interrupt: boolean = false
@@ -138,6 +148,13 @@ export class LLMHelper extends VoiceClientHelper {
     }
   }
 
+  /**
+   * Append a new message to the LLM context.
+   * If this is called while the transport is not in the ready state, the local context will be updated
+   * @param context LLMContextMessage
+   * @param runImmediately boolean - wait until pipeline is idle before running
+   * @returns
+   */
   public async appendToMessages(
     context: LLMContextMessage,
     runImmediately: boolean = false
@@ -166,6 +183,13 @@ export class LLMHelper extends VoiceClientHelper {
     }
   }
 
+  /**
+   * Run the bot's current LLM context.
+   * Useful when appending messages to the context without runImmediately set to true.
+   * Will do nothing if the bot is not in the ready state.
+   * @param interrupt boolean - Whether to interrupt the bot, or wait until it has finished speaking
+   * @returns Promise<unknown>
+   */
   public async run(interrupt: boolean = false): Promise<unknown> {
     if (this._voiceClient.state !== "ready") {
       return;
