@@ -38,6 +38,7 @@ export type VoiceEventCallbacks = Partial<{
   onTransportStateChanged: (state: TransportState) => void;
   onConfigUpdated: (config: VoiceClientConfigOption[]) => void;
   onConfigDescribe: (configDescription: unknown) => void;
+  onActionsAvailable: (actions: unknown) => void;
   onBotConnected: (participant: Participant) => void;
   onBotReady: (botReadyData: BotReadyData) => void;
   onBotDisconnected: (participant: Participant) => void;
@@ -120,6 +121,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         options?.callbacks?.onConfigDescribe?.(configDescription);
         this.emit(VoiceEvent.ConfigDescribe, configDescription);
       },
+      onActionsAvailable: (actionsAvailable: unknown) => {
+        options?.callbacks?.onActionsAvailable?.(actionsAvailable);
+        this.emit(VoiceEvent.ActionsAvailable, actionsAvailable);
+      },
       onParticipantJoined: (p) => {
         options?.callbacks?.onParticipantJoined?.(p);
         this.emit(VoiceEvent.ParticipantConnected, p);
@@ -187,6 +192,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onLocalAudioLevel: (level) => {
         options?.callbacks?.onLocalAudioLevel?.(level);
         this.emit(VoiceEvent.LocalAudioLevel, level);
+      },
+      onUserTranscript: (data) => {
+        options?.callbacks?.onUserTranscript?.(data);
+        this.emit(VoiceEvent.UserTranscript, data);
       },
     };
 
@@ -558,6 +567,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       case VoiceMessageType.CONFIG: {
         const resp = this._messageDispatcher.resolve(ev);
         this.config = (resp.data as ConfigData).config;
+        break;
+      }
+      case VoiceMessageType.ACTIONS_AVAILABLE: {
+        this._options.callbacks?.onActionsAvailable?.(ev.data);
         break;
       }
       case VoiceMessageType.ACTION_RESPONSE: {

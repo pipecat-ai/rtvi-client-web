@@ -12,7 +12,8 @@ export class ConnectionTimeoutError extends VoiceError {
   override readonly status = 500;
   constructor(message?: string | undefined) {
     super(
-      message ?? "Bot did not enter ready state within the specified timeout"
+      message ??
+        "Bot did not enter ready state within the specified timeout period."
     );
   }
 }
@@ -35,6 +36,15 @@ export class TransportAuthBundleError extends VoiceError {
   }
 }
 
+export class ConfigUpdateError extends VoiceError {
+  override readonly status = 400;
+  constructor(message?: string | undefined) {
+    super(message ?? "Unable to update configuration");
+  }
+}
+
+// Currently unused
+
 export class BotStartError extends VoiceError {
   override readonly status = 400;
   constructor(message?: string | undefined) {
@@ -53,12 +63,5 @@ export class AuthenticationError extends VoiceError {
   override readonly status = 500;
   constructor(message?: string | undefined) {
     super(message ?? "Unable to authenticate");
-  }
-}
-
-export class ConfigUpdateError extends VoiceError {
-  override readonly status = 400;
-  constructor(message?: string | undefined) {
-    super(message ?? "Unable to update configuration");
   }
 }

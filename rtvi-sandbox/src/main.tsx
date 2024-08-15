@@ -28,7 +28,7 @@ const voiceClient = new DailyVoiceClient({
       options: [
         { name: "model", value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" },
         {
-          name: "messages",
+          name: "initial_messages",
           value: [
             {
               role: "system",
@@ -37,9 +37,11 @@ const voiceClient = new DailyVoiceClient({
             },
           ],
         },
+        { name: "run_on_config", value: true },
       ],
     },
   ],
+
   // OpenAI/Anthropic function calling config
   /*
       config: [
@@ -49,7 +51,7 @@ const voiceClient = new DailyVoiceClient({
           // or claude-3-5-sonnet-20240620
           { name: "model", value: "gpt-4o" },
           {
-            name: "messages",
+            name: "initial_messages",
             value: [
               {
                 // anthropic: user; openai: system
@@ -169,12 +171,6 @@ const voiceClient = new DailyVoiceClient({
     onMetrics: (data: PipecatMetrics) => {
       console.log("[CALLBACK] Metrics:", data);
     },
-    /*onUserTranscript: (data: Transcript) => {
-      console.log("[CALLBACK] User Transcript:", data);
-    },
-    onBotTranscript: (text: string) => {
-      console.log("[CALLBACK] Bot Transcript:", text);
-    },*/
   },
 });
 

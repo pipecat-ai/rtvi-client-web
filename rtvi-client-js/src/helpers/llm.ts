@@ -45,19 +45,45 @@ export class LLMHelper extends VoiceClientHelper {
     super(options);
   }
 
-  public getContext(): LLMContextMessage | undefined {
-    return undefined;
+  private _getMessagesKey(): string {
+    return this._voiceClient.state === "ready"
+      ? "messages"
+      : "initial_messages";
   }
 
-  public async updateContext(context: LLMContext): Promise<unknown> {
+  public getMessageTypes(): string[] {
+    return Object.values(LLMMessageType) as string[];
+  }
+
+  // --- Actions
+
+  public getContext(): Promise<unknown> | void {
+    //@TODO: handle non-ready return too
+
+    if (this._voiceClient.state === "ready") {
+      return this._voiceClient.action({
+        service: this._service,
+        action: "get_context",
+      } as ActionData);
+    }
+  }
+
+  public async setContext(
+    context: LLMContext,
+    interrupt: boolean = false
+  ): Promise<unknown> {
     const currentContext = this._voiceClient.getServiceOptionsFromConfig(
       this._service
     ) as VoiceClientConfigOption;
 
+    const messages_key = this._getMessagesKey();
+
     currentContext.options = [
-      ...currentContext.options.filter((option) => option.name !== "messages"),
+      ...currentContext.options.filter(
+        (option) => option.name !== messages_key
+      ),
       {
-        name: "messages",
+        name: messages_key,
         value: context.messages,
       },
     ];
@@ -67,11 +93,15 @@ export class LLMHelper extends VoiceClientHelper {
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
         service: this._service,
-        action: "update-context",
+        action: "set_context",
         arguments: [
           {
-            name: "messages",
+            name: messages_key,
             value: context.messages,
+          },
+          {
+            name: "interrupt",
+            value: interrupt,
           },
         ],
       } as ActionData);
@@ -82,30 +112,54 @@ export class LLMHelper extends VoiceClientHelper {
     }
   }
 
-  public async appendContext(context: LLMContextMessage): Promise<unknown> {
+  public async appendToMessages(
+    context: LLMContextMessage,
+    runImmediately: boolean = false
+  ): Promise<unknown> {
     this._voiceClient.getServiceOptionsFromConfig(this._service);
+
+    const messages_key = this._getMessagesKey();
 
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
         service: this._service,
-        action: "append-context",
+        action: "append_to_messages",
         arguments: [
           {
-            name: "messages",
+            name: messages_key,
             value: [context],
+          },
+          {
+            name: "run_immediately",
+            value: runImmediately,
           },
         ],
       } as ActionData);
     } else {
-      // Update config
+      // @TODO: Update initial messages config
     }
   }
 
-  public handleMessage(ev: VoiceMessage): void {
-    console.log(ev);
+  public async run(interrupt: boolean = false): Promise<unknown> {
+    if (this._voiceClient.state !== "ready") {
+      return;
+    }
+
+    return this._voiceClient.action({
+      service: this._service,
+      action: "run",
+      arguments: [
+        {
+          name: "interrupt",
+          value: interrupt,
+        },
+      ],
+    } as ActionData);
   }
 
-  public getMessageTypes(): string[] {
-    return Object.values(LLMMessageType) as string[];
+  // --- Handlers
+
+  public handleMessage(ev: VoiceMessage): void {
+    console.log(ev);
   }
 }

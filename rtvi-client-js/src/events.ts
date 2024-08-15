@@ -21,6 +21,7 @@ export enum VoiceEvent {
 
   ConfigUpdated = "configUpdated",
   ConfigDescribe = "configDescribe",
+  ActionsAvailable = "actionsAvailable",
 
   ParticipantConnected = "participantConnected",
   ParticipantLeft = "participantLeft",
@@ -58,6 +59,7 @@ export type VoiceEvents = {
 
   configUpdated: (config: VoiceClientConfigOption[]) => void;
   configDescribe: (configDescription: unknown) => void;
+  actionsAvailable: (actions: unknown) => void;
 
   participantConnected: (p: Participant) => void;
   participantLeft: (p: Participant) => void;

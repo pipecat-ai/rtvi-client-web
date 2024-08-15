@@ -14,6 +14,7 @@ import {
   FunctionCallParams,
   LLMHelper,
   RateLimitError,
+  Transcript,
   TransportAuthBundleError,
   VoiceClientConfigOption,
   VoiceError,
@@ -40,6 +41,9 @@ export const Sandbox = () => {
   const [configDescription, setConfigDescription] = useState<
     VoiceClientConfigOption[] | null
   >();
+  const [actionsAvailable, setActionsAvailable] = useState<unknown | null>(
+    null
+  );
   const [config, setConfig] = useState<VoiceClientConfigOption[]>(
     voiceClient.config
   );
@@ -66,6 +70,11 @@ export const Sandbox = () => {
     setConfigDescription(e as VoiceClientConfigOption[]);
   });
 
+  useVoiceClientEvent(VoiceEvent.ActionsAvailable, (e: unknown) => {
+    console.log("[EVENT] Actions available: ", e);
+    setActionsAvailable(e);
+  });
+
   useVoiceClientEvent(
     VoiceEvent.Disconnected,
     useCallback(() => {
@@ -83,6 +92,15 @@ export const Sandbox = () => {
     VoiceEvent.ParticipantLeft,
     useCallback((p) => {
       if (!p.local) setIsBotConnected(false);
+    }, [])
+  );
+
+  useVoiceClientEvent(
+    VoiceEvent.UserTranscript,
+    useCallback((transcript: Transcript) => {
+      if (transcript.final) {
+        console.log("[EVENT] User transcript:", transcript.text);
+      }
     }, [])
   );
 
@@ -202,6 +220,7 @@ export const Sandbox = () => {
             name="config"
             onEdit={(e) => setEditedConfig(e.updated_src)}
             onAdd={(e) => setEditedConfig(e.updated_src)}
+            onDelete={(e) => setEditedConfig(e.updated_src)}
             style={{ width: "100%", fontSize: "14px" }}
             src={config}
           />
@@ -223,8 +242,11 @@ export const Sandbox = () => {
             >
               {configUpdating
                 ? "Updating..."
+                : !editedConfig
+                ? "No changes to save"
                 : "Save (and update if transport ready)"}
             </button>
+            |
             <button
               disabled={state !== "ready"}
               onClick={() => voiceClient.getBotConfig()}
@@ -236,38 +258,6 @@ export const Sandbox = () => {
               onClick={() => voiceClient.describeConfig()}
             >
               Log bot config description
-            </button>
-            <button
-              disabled={actionDispatching}
-              onClick={async () => {
-                setActionDispatching(true);
-                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
-                await llmHelper.updateContext({
-                  messages: [
-                    {
-                      role: "system",
-                      content: "You are a chatbot named Frankie",
-                    },
-                  ],
-                });
-                setActionDispatching(false);
-              }}
-            >
-              Test update LLM context with helper
-            </button>
-            <button
-              disabled={actionDispatching}
-              onClick={async () => {
-                setActionDispatching(true);
-                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
-                await llmHelper.appendContext({
-                  role: "user",
-                  content: "Tell me a joke!",
-                });
-                setActionDispatching(false);
-              }}
-            >
-              Test append LLM context with helper
             </button>
           </div>
         </div>
@@ -287,11 +277,19 @@ export const Sandbox = () => {
 
         <div className={styles.card}>
           <h3>Actions</h3>
+          {!!actionsAvailable && (
+            <ReactJson
+              enableClipboard={true}
+              name="config"
+              style={{ width: "100%", fontSize: "14px" }}
+              src={actionsAvailable as object}
+            />
+          )}
           <button
             disabled={state !== "ready"}
             onClick={() => voiceClient.describeActions()}
           >
-            Log available actions
+            Retrieve actions available from bot
           </button>
         </div>
 
@@ -313,6 +311,105 @@ export const Sandbox = () => {
           >
             Send action
           </button>
+          <hr />
+
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              disabled={state !== "ready" || actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                await llmHelper.getContext();
+                setActionDispatching(false);
+              }}
+            >
+              LLM: Get context
+            </button>
+            <button
+              disabled={state !== "ready" || actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                await llmHelper.setContext(
+                  {
+                    messages: [
+                      {
+                        role: "system",
+                        content: "You are a chatbot named Frankie",
+                      },
+                    ],
+                  },
+                  true
+                );
+                setActionDispatching(false);
+              }}
+            >
+              LLM: Test set context (with interrupt)
+            </button>
+            <button
+              disabled={state !== "ready" || actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                await llmHelper.appendToMessages({
+                  role: "user",
+                  content: "Tell me a joke!",
+                });
+                setActionDispatching(false);
+              }}
+            >
+              LLM: append LLM context (no run immediately)
+            </button>
+            <button
+              disabled={state !== "ready" || actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                await llmHelper.run(true);
+                setActionDispatching(false);
+              }}
+            >
+              LLM: run inference (with interrupt)
+            </button>
+            |
+            <button
+              disabled={state !== "ready" || actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
+                await voiceClient.action({
+                  service: "tts",
+                  action: "say",
+                  arguments: [
+                    {
+                      name: "text",
+                      value: "You asked me to say something, so I am!",
+                    },
+                    {
+                      name: "interrupt",
+                      value: true,
+                    },
+                  ],
+                });
+                setActionDispatching(false);
+              }}
+            >
+              TTS: Test say (with interrupt)
+            </button>
+            <button
+              disabled={state !== "ready" || actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
+                await voiceClient.action({
+                  service: "tts",
+                  action: "interrupt",
+                  arguments: [],
+                });
+                setActionDispatching(false);
+              }}
+            >
+              TTS: Interrupt
+            </button>
+          </div>
         </div>
       </main>
       <VoiceClientAudio />
