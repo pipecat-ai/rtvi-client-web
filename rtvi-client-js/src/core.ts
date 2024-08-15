@@ -269,10 +269,18 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   // ------ Transport methods
+
+  /**
+   * Initialize the local media devices
+   */
   public async initDevices() {
     await this._transport.initDevices();
   }
 
+  /**
+   * Start the voice client session with chosen transport
+   * Call async (await) to handle errors
+   */
   public async start() {
     if (
       ["authenticating", "connecting", "connected", "ready"].includes(
@@ -352,6 +360,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     });
   }
 
+  /**
+   * Disconnect the voice client from the transport
+   * Reset / reinitialize transport and abort any pending requests
+   */
   public async disconnect() {
     if (this._abortController) {
       this._abortController.abort();
@@ -374,10 +386,16 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     this._messageDispatcher = new MessageDispatcher(this._transport);
   }
 
+  /**
+   * Get the current state of the transport
+   */
   public get state(): TransportState {
     return this._transport.state;
   }
 
+  /**
+   * Get registered services from voice client constructor options
+   */
   public get services(): { [key: string]: string } {
     return this._options.services;
   }
@@ -430,6 +448,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   // ------ Config methods
 
+  /**
+   * Current client configuration
+   * For the most up-to-date configuration, use getBotConfig method
+   * @returns VoiceClientConfigOption[] - Array of configuration options
+   */
   public get config(): VoiceClientConfigOption[] {
     return this._options.config!;
   }
@@ -438,6 +461,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Set new configuration parameters.
    * Note: this does nothing if the transport is connectd. Use updateConfig method instead
    * @param config - VoiceClientConfigOption[] partial object with the new configuration
+   * @returns VoiceClientConfigOption[] - Updated configuration
    */
   protected set config(config: VoiceClientConfigOption[]) {
     this._options.config = config;
@@ -446,10 +470,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * Request the bot to send its current configuration
+   * @returns Promise<unknown> - Promise that resolves with the bot's configuration
    */
-  public getBotConfig() {
+  public async getBotConfig(): Promise<unknown> {
     if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.getBotConfig());
+      return this._messageDispatcher.dispatch(VoiceMessage.getBotConfig());
     } else {
       throw new VoiceErrors.BotNotReadyError(
         "Attempted to get config from bot while transport not in ready state"
@@ -458,11 +483,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   /**
-   * Update pipeline and seervices
+   * Update pipeline and services
    * @param config - VoiceClientConfigOption[] partial object with the new configuration
    * @param options - Options for the update
    * @param options.useDeepMerge - Whether to use deep merge or shallow merge
    * @param options.sendPartial - Update single service config (e.g. llm or tts) or the whole config
+   * @returns Promise<unknown> - Promise that resolves with the updated configuration
    */
   public async updateConfig(
     config: VoiceClientConfigOption[]
@@ -480,11 +506,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   /**
-   * Request the bot to describe its current configuration
+   * Request bot describe the current configuration options
+   * @returns Promise<unknown> - Promise that resolves with the bot's configuration description
    */
-  public describeConfig() {
+  public describeConfig(): Promise<unknown> {
     if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.describeConfig());
+      return this._messageDispatcher.dispatch(VoiceMessage.describeConfig());
     } else {
       throw new VoiceErrors.BotNotReadyError(
         "Attempted to get config description while transport not in ready state"
@@ -492,10 +519,38 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
   }
 
+  /**
+   * Returns configuration options for specified service key
+   * @param serviceKey - Service name to get options for (e.g. "llm")
+   * @returns VoiceClientConfigOption - Configuration options for the service
+   */
+  public getServiceOptionsFromConfig(
+    serviceKey: string
+  ): VoiceClientConfigOption {
+    // Check if we have registered service with name service
+    if (!serviceKey) {
+      throw new Error("Target service name is required");
+    }
+    // Find matching service name in the config and update the messages
+    const configServiceKey = this.config.find(
+      (config: VoiceClientConfigOption) => config.service === serviceKey
+    );
+
+    if (!configServiceKey) {
+      throw new Error(
+        "No service with name " + serviceKey + " not found in config"
+      );
+    }
+
+    return configServiceKey;
+  }
+
   // ------ Actions
 
   /**
    * Dispatch an action message to the bot
+   * @param action - ActionData object with the action to dispatch
+   * @returns Promise<unknown> - Promise that resolves with the action response
    */
   public async action(action: ActionData): Promise<unknown> {
     if (this._transport.state === "ready") {
@@ -507,10 +562,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * Describe available / registered actions the bot has
+   * @returns Promise<unknown> - Promise that resolves with the bot's actions
    */
-  public async describeActions() {
+  public async describeActions(): Promise<unknown> {
     if (this._transport.state === "ready") {
-      this._transport.sendMessage(VoiceMessage.describeActions());
+      return this._messageDispatcher.dispatch(VoiceMessage.describeActions());
     } else {
       throw new VoiceErrors.BotNotReadyError();
     }
@@ -520,6 +576,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * Get the session expiry time for the transport session (if applicable)
+   * @returns number - Expiry time in milliseconds
    */
   public get transportExpiry(): number | undefined {
     if (["connected", "ready"].includes(this._transport.state)) {
@@ -533,11 +590,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   // ------ Function call handler
 
+  //@TODO move to LLM helper
   /**
    * If the LLM wants to call a function, RTVI will invoke the callback defined
    * here. Whatever the callback returns will be sent to the LLM as the function result.
    */
-
   public async handleFunctionCall(callback: FunctionCallCallback) {
     this._functionCallCallback = callback;
   }
@@ -671,22 +728,5 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         }
       }
     }
-  }
-
-  public getServiceOptionsFromConfig(service: string): unknown {
-    // Check if we have registered service with name service
-    if (!service) {
-      throw new Error("Target service name is required");
-    }
-    // Find matching service name in the config and update the messages
-    const configServiceKey = this.config.find(
-      (config: VoiceClientConfigOption) => config.service === service
-    );
-
-    if (!configServiceKey) {
-      throw new Error("No service with name " + service + " found in config");
-    }
-
-    return configServiceKey;
   }
 }

@@ -249,7 +249,11 @@ export const Sandbox = () => {
             |
             <button
               disabled={state !== "ready"}
-              onClick={() => voiceClient.getBotConfig()}
+              onClick={async () => {
+                setConfigUpdating(true);
+                await voiceClient.getBotConfig();
+                setConfigUpdating(false);
+              }}
             >
               Fetch current bot config
             </button>

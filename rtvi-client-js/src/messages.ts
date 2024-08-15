@@ -13,8 +13,9 @@ export enum VoiceMessageType {
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
   TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
-  CONFIG = "config",
-  ERROR = "error",
+  CONFIG = "config", // Bot configuration
+  ERROR = "error", // Bot initialization error
+  ERROR_RESPONSE = "error-response", // Error response from the bot in response to an action
   CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
   CONFIG_UPDATED = "config-updated", // Configuration options have changed successfully
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
@@ -23,18 +24,16 @@ export enum VoiceMessageType {
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
+  USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
+  USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
+  BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
+  BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
 
   //@TODO move to llm helper
   LLM_FUNCTION_CALL = "llm-function-call", // LLM requesting a function call
   LLM_FUNCTION_CALL_START = "llm-function-call-start", // The LLM has started returning a function call
   LLM_FUNCTION_CALL_RESULT = "llm-function-call-result",
   LLM_JSON_COMPLETION = "llm-json-completion", // Used for JSON responses from the LLM
-
-  ERROR_RESPONSE = "error-response", // Error response from the bot
-  USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
-  USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
-  BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
-  BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
 }
 
 export type ConfigData = {

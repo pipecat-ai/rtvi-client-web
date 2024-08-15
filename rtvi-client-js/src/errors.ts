@@ -21,7 +21,8 @@ export class ConnectionTimeoutError extends VoiceError {
 export class BotNotReadyError extends VoiceError {
   constructor(message?: string | undefined) {
     super(
-      message ?? "Attempt to call action on bot that is not in 'ready' state."
+      message ??
+        "Attempt to call action on transport when not in 'ready' state."
     );
   }
 }
