@@ -242,7 +242,7 @@ export const Sandbox = () => {
               onClick={async () => {
                 setActionDispatching(true);
                 const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
-                await llmHelper.updateContext({
+                await llmHelper.setContext({
                   messages: [
                     {
                       role: "system",
@@ -260,7 +260,7 @@ export const Sandbox = () => {
               onClick={async () => {
                 setActionDispatching(true);
                 const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
-                await llmHelper.appendContext({
+                await llmHelper.appendToMessages({
                   role: "user",
                   content: "Tell me a joke!",
                 });
