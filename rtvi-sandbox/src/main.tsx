@@ -12,6 +12,34 @@ import { Sandbox } from "./SandboxApp";
 const voiceClient = new DailyVoiceClient({
   baseUrl: import.meta.env.VITE_BASE_URL,
   enableMic: true,
+  customAuthHandler: async (
+    baseUrl: string,
+    timeout: number | undefined,
+    abortController: AbortController
+  ): Promise<void> => {
+    return await fetch(`${baseUrl}`, {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${import.meta.env.VITE_DAILY_BOTS_KEY}`,
+      },
+      body: JSON.stringify({
+        services: voiceClient.services,
+        config: voiceClient.config,
+        max_duration: 600,
+        bot_profile: "voice_2024_08",
+      }),
+      signal: abortController?.signal,
+    }).then((res) => {
+      clearTimeout(timeout);
+
+      if (res.ok) {
+        return res.json();
+      }
+      return Promise.reject(res);
+    });
+  },
   services: {
     llm: "together",
     tts: "cartesia",
