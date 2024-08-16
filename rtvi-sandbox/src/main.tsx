@@ -11,7 +11,11 @@ import { Sandbox } from "./SandboxApp";
 
 const voiceClient = new DailyVoiceClient({
   baseUrl: import.meta.env.VITE_BASE_URL,
-  enableMic: true,
+  customHeaders: {
+    Authorization:
+      "Bearer 8f7d0f624285130ba5ec56e8a037448af282b37982d051c457d5388bb1671a51",
+  },
+  enableMic: false,
   services: {
     llm: "together",
     tts: "cartesia",
@@ -33,7 +37,7 @@ const voiceClient = new DailyVoiceClient({
             {
               role: "system",
               content:
-                "You are a assistant called ExampleBot. You can ask me anything. Keep responses brief and legible. Introduce yourself first.",
+                "You are a assistant called Frankie. You can ask me anything. Keep responses brief and legible. Introduce yourself first.",
             },
           ],
         },

@@ -15,7 +15,7 @@ import {
   LLMHelper,
   Participant,
   Transcript,
-  TransportAuthBundleError,
+  StartBotError,
   VoiceClientConfigOption,
   VoiceError,
   VoiceEvent,
@@ -104,6 +104,13 @@ export const Sandbox = () => {
     }, [])
   );
 
+  useVoiceClientEvent(
+    VoiceEvent.BotStoppedSpeaking,
+    useCallback(() => {
+      console.log("[EVENT] Bot stopped speaking");
+    }, [])
+  );
+
   (voiceClient.getHelper("llm") as LLMHelper).handleFunctionCall(
     async (fn: FunctionCallParams) => {
       console.log({ fn });
@@ -122,7 +129,8 @@ export const Sandbox = () => {
     try {
       await voiceClient.start();
     } catch (e) {
-      if (e instanceof TransportAuthBundleError) {
+      if (e instanceof StartBotError) {
+        console.log(e.status, e.message);
         setError(e.message);
       } else if (e instanceof ConnectionTimeoutError) {
         setError(e.message);
@@ -323,7 +331,8 @@ export const Sandbox = () => {
               onClick={async () => {
                 setActionDispatching(true);
                 const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
-                await llmHelper.getContext();
+                const c = await llmHelper.getContext();
+                console.log(c);
                 setActionDispatching(false);
               }}
             >

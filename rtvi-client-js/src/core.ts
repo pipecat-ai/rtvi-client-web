@@ -322,17 +322,37 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
                 config,
               }),
               signal: this._abortController?.signal,
-            }).then((res) => res.json());
+            }).then((res) => {
+              clearTimeout(this._handshakeTimeout);
+
+              if (res.ok) {
+                return res.json();
+              }
+              return Promise.reject(res);
+            });
           }
         } catch (e) {
           clearTimeout(this._handshakeTimeout);
           this._transport.state = "error";
-          reject(
-            new VoiceErrors.TransportAuthBundleError(
-              `Failed to connect / invalid auth bundle from provided base url ${this._baseUrl}`
-            )
-          );
-          return;
+          try {
+            if (e instanceof Response) {
+              const errorResp = await e.json();
+              reject(
+                new VoiceErrors.StartBotError(
+                  errorResp.info,
+                  e.status,
+                  errorResp.error
+                )
+              );
+            }
+          } catch (innerError) {
+            reject(
+              new VoiceErrors.StartBotError(
+                `Failed to connect / invalid auth bundle from base url ${this._baseUrl}`
+              )
+            );
+            return;
+          }
         }
 
         try {

@@ -15,7 +15,7 @@ import {
   PipecatMetrics,
   Tracks,
   Transport,
-  TransportAuthBundleError,
+  TransportStartError,
   TransportState,
   VoiceClientOptions,
   VoiceMessage,
@@ -190,7 +190,7 @@ export class DailyTransport extends Transport {
       }
     } catch (e) {
       this.state = "error";
-      throw new TransportAuthBundleError();
+      throw new TransportStartError();
     }
 
     if (abortController.signal.aborted) return;

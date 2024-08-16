@@ -14,6 +14,12 @@ yarn workspace realtime-ai-react build
 
 ## Hack on the framework and play with the sandbox
 
+Install a provider transport
+
+```bash
+yarn workspace realtime-ai-daily build
+```
+
 Watch for file changes:
 
 ```bash

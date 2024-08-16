@@ -2,14 +2,14 @@ export class VoiceError extends Error {
   readonly status: number | undefined;
   readonly error: unknown | undefined;
 
-  constructor(message?: string) {
-    super(message); // Pass the message to the Error constructor
+  constructor(message?: string, status?: number | undefined) {
+    super(message);
     this.error = { message };
+    this.status = status;
   }
 }
 
 export class ConnectionTimeoutError extends VoiceError {
-  override readonly status = 500;
   constructor(message?: string | undefined) {
     super(
       message ??
@@ -18,21 +18,28 @@ export class ConnectionTimeoutError extends VoiceError {
   }
 }
 
+export class StartBotError extends VoiceError {
+  readonly error: string = "invalid-request-error";
+  constructor(message?: string | undefined, status?: number, error?: string) {
+    super(
+      message ?? `Failed to connect / invalid auth bundle from base url`,
+      status ?? 500
+    );
+    this.error = error ?? this.error;
+  }
+}
+
+export class TransportStartError extends VoiceError {
+  constructor(message?: string | undefined) {
+    super(message ?? "Unable to start transport");
+  }
+}
+
 export class BotNotReadyError extends VoiceError {
   constructor(message?: string | undefined) {
     super(
       message ??
         "Attempt to call action on transport when not in 'ready' state."
-    );
-  }
-}
-
-export class TransportAuthBundleError extends VoiceError {
-  override readonly status = 500;
-  constructor(message?: string | undefined) {
-    super(
-      message ??
-        "Failed to connect / invalid auth bundle from provided base url"
     );
   }
 }
