@@ -2,7 +2,7 @@ import { atom, useAtomValue } from "jotai";
 import { atomFamily, useAtomCallback } from "jotai/utils";
 import { PrimitiveAtom } from "jotai/vanilla";
 import { useCallback, useEffect } from "react";
-import { Tracks, VoiceEvent } from "realtime-ai";
+import { Participant, Tracks, VoiceEvent } from "realtime-ai";
 import { useVoiceClient } from "./useVoiceClient";
 import { useVoiceClientEvent } from "./useVoiceClientEvent";
 
@@ -55,7 +55,7 @@ export const useVoiceClientMediaTrack = (
 
   useVoiceClientEvent(
     VoiceEvent.TrackStarted,
-    useCallback((track, participant) => {
+    useCallback((track: MediaStreamTrack, participant?: Participant) => {
       updateTrack(track, track.kind as TrackType, Boolean(participant?.local));
     }, [])
   );

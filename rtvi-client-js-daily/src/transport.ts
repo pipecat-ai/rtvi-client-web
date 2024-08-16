@@ -10,19 +10,19 @@ import Daily, {
   DailyEventObjectTrack,
   DailyParticipant,
 } from "@daily-co/daily-js";
-
 import {
+  Participant,
   PipecatMetrics,
-  TransportAuthBundleError,
+  Tracks,
+  Transport,
+  TransportStartError,
+  TransportState,
   VoiceClientOptions,
   VoiceMessage,
   VoiceMessageMetrics,
-} from "..";
-import type { TransportState } from ".";
-import { Participant, Tracks, Transport } from ".";
-import { AuthBundle } from "./core";
+} from "realtime-ai";
 
-export interface DailyTransportAuthBundle extends AuthBundle {
+export interface DailyTransportAuthBundle {
   room_url: string;
   token: string;
 }
@@ -31,8 +31,6 @@ export class DailyTransport extends Transport {
   protected _state: TransportState = "idle";
 
   private _daily: DailyCall;
-  private _localAudioLevelObserver: (level: number) => void;
-  private _botAudioLevelObserver: (level: number) => void;
   private _botId: string = "";
   private _expiry: number | undefined = undefined;
 
@@ -52,9 +50,6 @@ export class DailyTransport extends Transport {
     });
 
     this.attachEventListeners();
-
-    this._localAudioLevelObserver = () => {};
-    this._botAudioLevelObserver = () => {};
   }
 
   get state(): TransportState {
@@ -162,10 +157,7 @@ export class DailyTransport extends Transport {
     this._selectedMic = infos.mic;
     this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
 
-    // Instantiate audio processors
-    this._localAudioLevelObserver = this.createAudioLevelProcessor(
-      dailyParticipantToParticipant(this._daily.participants().local)
-    );
+    // Instantiate audio observers
     if (!this._daily.isLocalAudioLevelObserverRunning())
       await this._daily.startLocalAudioLevelObserver(100);
     if (!this._daily.isRemoteParticipantsAudioLevelObserverRunning())
@@ -174,10 +166,15 @@ export class DailyTransport extends Transport {
     this.state = "initialized";
   }
 
-  async connect(authBundle: DailyTransportAuthBundle) {
+  async connect(
+    authBundle: DailyTransportAuthBundle,
+    abortController: AbortController
+  ) {
     if (this.state === "idle") {
       await this.initDevices();
     }
+
+    if (abortController.signal.aborted) return;
 
     this.state = "connecting";
 
@@ -186,15 +183,17 @@ export class DailyTransport extends Transport {
         url: authBundle.room_url,
         token: authBundle.token,
       });
-      // Get room expiry
+
       const room = await this._daily.room();
       if (room && "id" in room) {
         this._expiry = room.config?.exp;
       }
     } catch (e) {
       this.state = "error";
-      throw new TransportAuthBundleError();
+      throw new TransportStartError();
     }
+
+    if (abortController.signal.aborted) return;
 
     this.state = "connected";
 
@@ -232,6 +231,7 @@ export class DailyTransport extends Transport {
     this._daily.stopRemoteParticipantsAudioLevelObserver();
 
     await this._daily.leave();
+    await this._daily.destroy();
   }
 
   public sendMessage(message: VoiceMessage) {
@@ -242,8 +242,9 @@ export class DailyTransport extends Transport {
     // Bubble any messages with realtime-ai label
     if (ev.data.label === "rtvi-ai") {
       this._onMessage({
+        id: ev.data.id,
         type: ev.data.type,
-        data: ev.data,
+        data: ev.data.data,
       } as VoiceMessage);
     } else if (ev.data.type === "pipecat-metrics") {
       // Bubble up pipecat metrics, which don't have the "rtvi-ai" label
@@ -297,8 +298,6 @@ export class DailyTransport extends Transport {
 
     if (p.local) return;
 
-    this._botAudioLevelObserver = this.createAudioLevelProcessor(p);
-
     this._botId = ev.participant.session_id;
 
     this._callbacks.onBotConnected?.(p);
@@ -317,7 +316,6 @@ export class DailyTransport extends Transport {
   }
 
   private handleLocalAudioLevel(ev: DailyEventObjectLocalAudioLevel) {
-    this._localAudioLevelObserver(ev.audioLevel);
     this._callbacks.onLocalAudioLevel?.(ev.audioLevel);
   }
 
@@ -329,7 +327,6 @@ export class DailyTransport extends Transport {
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i];
       const level = ev.participantsAudioLevel[id];
-      this._botAudioLevelObserver(level);
       this._callbacks.onRemoteAudioLevel?.(
         level,
         dailyParticipantToParticipant(participants[id])
@@ -341,42 +338,6 @@ export class DailyTransport extends Transport {
     this.state = "disconnected";
     this._botId = "";
     this._callbacks.onDisconnected?.();
-  }
-
-  private createAudioLevelProcessor(
-    participant: Participant,
-    threshold: number = 0.05,
-    silenceDelay: number = 750 // in milliseconds
-  ) {
-    let speaking = false;
-    let silenceTimeout: ReturnType<typeof setTimeout> | null = null;
-
-    return (level: number): void => {
-      if (level > threshold) {
-        if (silenceTimeout) {
-          clearTimeout(silenceTimeout);
-          silenceTimeout = null;
-        }
-        if (!speaking) {
-          speaking = true;
-          if (participant.local) {
-            this._callbacks.onLocalStartedTalking?.();
-          } else {
-            this._callbacks.onBotStartedTalking?.(participant);
-          }
-        }
-      } else if (speaking && !silenceTimeout) {
-        silenceTimeout = setTimeout(() => {
-          speaking = false;
-          if (participant.local) {
-            this._callbacks.onLocalStoppedTalking?.();
-          } else {
-            this._callbacks.onBotStoppedTalking?.(participant);
-          }
-          silenceTimeout = null; // Ensure to reset the timeout to null
-        }, silenceDelay);
-      }
-    };
   }
 }
 

@@ -1,6 +1,6 @@
 import { Client, VoiceEventCallbacks } from "./core";
 import { VoiceMessage } from "./messages";
-import { DailyTransport, Transport } from "./transport";
+import { Transport } from "./transport";
 
 export interface VoiceClientOptions {
   /**
@@ -11,14 +11,36 @@ export interface VoiceClientOptions {
   baseUrl: string;
 
   /**
-   * Override the default transport for media streaming.
-   *
-   * Defaults to DailyTransport
+   * Set transport class for media streaming
    */
   transport?: new (
     options: VoiceClientOptions,
     onMessage: (ev: VoiceMessage) => void
   ) => Transport;
+
+  /**
+   * Optional callback methods for voice events
+   */
+  callbacks?: VoiceEventCallbacks;
+
+  /**
+   * Service key value pairs (e.g. {llm: "openai"} )
+   * A client must have at least one service to connect to a voice server
+   */
+  services: { [key: string]: string };
+
+  /**
+   * Service configuration options for services and further customization
+   */
+  config?: VoiceClientConfigOption[];
+
+  /**
+   * Handshake timeout
+   *
+   * How long should the client wait for the bot ready event (when authenticating / requesting an agent)
+   * Defaults to no timeout (undefined)
+   */
+  timeout?: number;
 
   /**
    * Enable user mic input
@@ -35,24 +57,35 @@ export interface VoiceClientOptions {
   enableCam?: boolean;
 
   /**
-   * Optional callback methods for voice events
+   * Custom HTTP headers to be send with the POST request to baseUrl
    */
-  callbacks?: VoiceEventCallbacks;
+  customHeaders?: { [key: string]: string };
 
   /**
-   * Service configuration options for services and further customization
-   *
+   * Custom start method handler for retrieving auth bundle for transport
+   * @param abortController
+   * @returns Promise<void>
    */
-  config?: VoiceClientConfigOptions;
-
-  // @@ Not yet implemented @@
-  // pipeline?: Array<object>;
-  // tools?: Array<object>;
+  customAuthHandler?: (
+    baseUrl: string,
+    abortController: AbortController
+  ) => Promise<void>;
 }
+
+export type ConfigOption = {
+  name: string;
+  value: unknown;
+};
+
+export type VoiceClientConfigOption = {
+  service: string;
+  options: ConfigOption[];
+};
 
 export type VoiceClientLLMMessage = {
   role: string;
   content: string;
+  tool_call_id?: string;
 };
 
 export type VoiceClientConfigLLM = {
@@ -60,35 +93,16 @@ export type VoiceClientConfigLLM = {
   messages?: VoiceClientLLMMessage[];
 };
 
-export type ConfigTTSOptions = {
-  voice?: string;
-};
-
-export interface VoiceClientConfigOptions {
-  /**
-   * LLM service configuration options
-   */
-  llm?: VoiceClientConfigLLM;
-  tts?: ConfigTTSOptions;
-
-  // Not yet implemented
-  idleTimeout?: number;
-  idlePrompt?: string;
-  stt?: object;
-}
-
 /**
  * RTVI Voice Client
  */
 export class VoiceClient extends Client {
   constructor({ ...opts }: VoiceClientOptions) {
-    // Validate client options
     const options: VoiceClientOptions = {
       ...opts,
-      transport: opts.transport || DailyTransport,
-      config: {
-        ...opts.config,
-      },
+      transport: opts.transport,
+      enableMic: opts.enableMic ?? true,
+      config: opts.config || [],
     };
 
     super(options);
@@ -98,5 +112,7 @@ export class VoiceClient extends Client {
 export * from "./core";
 export * from "./errors";
 export * from "./events";
+export * from "./helpers";
+export * from "./helpers/llm";
 export * from "./messages";
-export type { TransportState } from "./transport";
+export * from "./transport";

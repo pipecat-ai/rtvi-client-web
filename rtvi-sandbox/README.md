@@ -1,11 +1,22 @@
-# Real-Time Voice Inference SDK Demo
+# Real-Time Voice Inference SDK Demo (Daily)
 
-tbd.
 
-# Run dev server
+## Link local package
+
+From `rtvi-client-js` and `rtvi-client-react`:
+
+```shell
+yarn link
+```
+
+## Run dev server
 
 ```bash
-yarn dev
+yarn
+yarn link realtime-ai
+yarn link realtime-ai-daily
+yarn link realtime-ai-react
+yarn run dev
 # or from project root
 yarn workspace rtvi-sandbox dev
 ```

@@ -1,12 +1,24 @@
-import { PipecatMetrics, Transcript, VoiceClientConfigOptions } from ".";
+import {
+  BotReadyData,
+  LLMFunctionCallData,
+  PipecatMetrics,
+  Transcript,
+  VoiceClientConfigOption,
+  VoiceMessage,
+} from ".";
 import { Participant, TransportState } from "./transport";
 
 export enum VoiceEvent {
+  MessageError = "messageError",
+  Error = "error",
+
   Connected = "connected",
   Disconnected = "disconnected",
   TransportStateChanged = "transportStateChanged",
 
   ConfigUpdated = "configUpdated",
+  ConfigDescribe = "configDescribe",
+  ActionsAvailable = "actionsAvailable",
 
   ParticipantConnected = "participantConnected",
   ParticipantLeft = "participantLeft",
@@ -21,26 +33,31 @@ export enum VoiceEvent {
   BotConnected = "botConnected",
   BotReady = "botReady",
   BotDisconnected = "botDisconnected",
-  BotStartedTalking = "botStartedTalking",
-  BotStoppedTalking = "botStoppedTalking",
+  BotStartedSpeaking = "botStartedSpeaking",
+  BotStoppedSpeaking = "botStoppedSpeaking",
   RemoteAudioLevel = "remoteAudioLevel",
 
-  LocalStartedTalking = "localStartedTalking",
-  LocalStoppedTalking = "localStoppedTalking",
+  UserStartedSpeaking = "userStartedSpeaking",
+  UserStoppedSpeaking = "userStoppedSpeaking",
   LocalAudioLevel = "localAudioLevel",
 
-  JSONCompletion = "jsonCompletion",
   Metrics = "metrics",
   UserTranscript = "userTranscript",
   BotTranscript = "botTranscript",
+
+  LLMFunctionCall = "llmFunctionCall",
+  LLMFunctionCallStart = "llmFunctionCallStart",
+  LLMJsonCompletion = "llmJsonCompletion",
 }
 
-export type VoiceEvents = {
+export type VoiceEvents = Partial<{
   connected: () => void;
   disconnected: () => void;
   transportStateChanged: (state: TransportState) => void;
 
-  configUpdated: (config: VoiceClientConfigOptions) => void;
+  configUpdated: (config: VoiceClientConfigOption[]) => void;
+  configDescribe: (configDescription: unknown) => void;
+  actionsAvailable: (actions: unknown) => void;
 
   participantConnected: (p: Participant) => void;
   participantLeft: (p: Participant) => void;
@@ -52,22 +69,28 @@ export type VoiceEvents = {
   camUpdated: (cam: MediaDeviceInfo) => void;
   micUpdated: (cam: MediaDeviceInfo) => void;
 
-  botReady: () => void;
+  botReady: (botData: BotReadyData) => void;
   botConnected: (p: Participant) => void;
   botDisconnected: (p: Participant) => void;
-  botStartedTalking: (p: Participant) => void;
-  botStoppedTalking: (p: Participant) => void;
+  botStartedSpeaking: (p: Participant) => void;
+  botStoppedSpeaking: (p: Participant) => void;
   remoteAudioLevel: (level: number, p: Participant) => void;
 
-  localStartedTalking: () => void;
-  localStoppedTalking: () => void;
+  userStartedSpeaking: () => void;
+  userStoppedSpeaking: () => void;
   localAudioLevel: (level: number) => void;
 
-  jsonCompletion: (jsonString: string) => void;
   metrics: (data: PipecatMetrics) => void;
   userTranscript: (data: Transcript) => void;
   botTranscript: (text: string) => void;
-};
+
+  error: (message: VoiceMessage) => void;
+  messageError: (message: VoiceMessage) => void;
+
+  llmFunctionCall: (func: LLMFunctionCallData) => void;
+  llmFunctionCallStart: (functionName: string) => void;
+  llmJsonCompletion: (data: string) => void;
+}>;
 
 export type VoiceEventHandler<E extends VoiceEvent> =
   E extends keyof VoiceEvents ? VoiceEvents[E] : never;

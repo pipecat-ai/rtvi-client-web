@@ -1,13 +1,11 @@
-import { VoiceClientConfigOptions, VoiceClientOptions, VoiceMessage } from "..";
+import { VoiceClientConfigOption, VoiceClientOptions, VoiceMessage } from "..";
 import { VoiceEventCallbacks } from "../core";
-
-export interface AuthBundle {}
 
 export type TransportState =
   | "idle"
   | "initializing"
   | "initialized"
-  | "handshaking"
+  | "authenticating"
   | "connecting"
   | "connected"
   | "ready"
@@ -34,7 +32,7 @@ export type Tracks = {
 export abstract class Transport {
   protected _options: VoiceClientOptions;
   protected _callbacks: VoiceEventCallbacks;
-  protected _config: VoiceClientConfigOptions;
+  protected _config: VoiceClientConfigOption[];
   protected _onMessage: (ev: VoiceMessage) => void;
   protected _state: TransportState = "idle";
 
@@ -44,14 +42,16 @@ export abstract class Transport {
   ) {
     this._options = options;
     this._callbacks = options.callbacks ?? {};
-    this._config = options.config ?? {};
+    this._config = options.config ?? [];
     this._onMessage = onMessage;
   }
 
   abstract initDevices(): Promise<void>;
 
-  abstract connect(authBundle: AuthBundle): Promise<void>;
-
+  abstract connect(
+    authBundle: unknown,
+    abortController: AbortController
+  ): Promise<void>;
   abstract disconnect(): Promise<void>;
 
   abstract getAllMics(): Promise<MediaDeviceInfo[]>;
