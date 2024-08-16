@@ -307,6 +307,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           if (customAuthHandler) {
             authBundle = await customAuthHandler(
               this._baseUrl,
+              this._options.timeout,
               this._abortController!
             );
           } else {
@@ -320,6 +321,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
               body: JSON.stringify({
                 services: this._options.services,
                 config,
+                ...this._options.customBodyParams,
               }),
               signal: this._abortController?.signal,
             }).then((res) => {

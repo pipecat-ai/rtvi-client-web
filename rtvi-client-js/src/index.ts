@@ -62,12 +62,18 @@ export interface VoiceClientOptions {
   customHeaders?: { [key: string]: string };
 
   /**
+   * Custom request parameters to send with the POST request to baseUrl
+   */
+  customBodyParams?: object;
+
+  /**
    * Custom start method handler for retrieving auth bundle for transport
    * @param abortController
    * @returns Promise<void>
    */
   customAuthHandler?: (
     baseUrl: string,
+    timeout: number | undefined,
     abortController: AbortController
   ) => Promise<void>;
 }
