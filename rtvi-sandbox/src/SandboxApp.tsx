@@ -422,6 +422,30 @@ export const Sandbox = () => {
             >
               TTS: Interrupt
             </button>
+            |
+            <button
+              disabled={state !== "ready" || actionDispatching}
+              onClick={async () => {
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                voiceClient.action({
+                  service: "tts",
+                  action: "say",
+                  arguments: [
+                    {
+                      name: "text",
+                      value: "You asked me to say something, so I am!",
+                    },
+                    {
+                      name: "interrupt",
+                      value: true,
+                    },
+                  ],
+                });
+                llmHelper.getContext();
+              }}
+            >
+              Test consecutive actions
+            </button>
           </div>
         </div>
       </main>
