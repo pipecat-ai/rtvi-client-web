@@ -11,11 +11,7 @@ import { Sandbox } from "./SandboxApp";
 
 const voiceClient = new DailyVoiceClient({
   baseUrl: import.meta.env.VITE_BASE_URL,
-  customHeaders: {
-    Authorization:
-      "Bearer 8f7d0f624285130ba5ec56e8a037448af282b37982d051c457d5388bb1671a51",
-  },
-  enableMic: false,
+  enableMic: true,
   services: {
     llm: "together",
     tts: "cartesia",

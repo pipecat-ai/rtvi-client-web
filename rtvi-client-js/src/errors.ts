@@ -31,7 +31,7 @@ export class StartBotError extends VoiceError {
 
 export class TransportStartError extends VoiceError {
   constructor(message?: string | undefined) {
-    super(message ?? "Unable to start transport");
+    super(message ?? "Unable to connect to transport");
   }
 }
 
