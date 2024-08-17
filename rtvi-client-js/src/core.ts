@@ -5,6 +5,7 @@ import {
   ActionData,
   BotReadyData,
   ConfigData,
+  ConfigOption,
   MessageDispatcher,
   PipecatMetrics,
   Transcript,
@@ -12,6 +13,7 @@ import {
   VoiceClientHelper,
   VoiceClientHelpers,
   VoiceClientOptions,
+  VoiceClientServices,
   VoiceMessage,
   VoiceMessageMetrics,
   VoiceMessageType,
@@ -407,8 +409,22 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   /**
    * Get registered services from voice client constructor options
    */
-  public get services(): { [key: string]: string } {
+  public get services(): VoiceClientServices {
     return this._options.services;
+  }
+
+  public set services(services: VoiceClientServices) {
+    if (
+      !["authenticating", "connecting", "connected", "ready"].includes(
+        this._transport.state
+      )
+    ) {
+      this._options.services = services;
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Cannot set services while transport is connected"
+      );
+    }
   }
 
   // ------ Device methods
@@ -496,9 +512,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   /**
    * Update pipeline and services
    * @param config - VoiceClientConfigOption[] partial object with the new configuration
-   * @param options - Options for the update
-   * @param options.useDeepMerge - Whether to use deep merge or shallow merge
-   * @param options.sendPartial - Update single service config (e.g. llm or tts) or the whole config
    * @returns Promise<unknown> - Promise that resolves with the updated configuration
    */
   public async updateConfig(
@@ -554,6 +567,31 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
 
     return configServiceKey;
+  }
+
+  /**
+   * Returns mutated / merged config for specified key and service config option
+   * @param serviceKey - Service name to get options for (e.g. "llm")
+   * @param option - Service name to get options for (e.g. "llm")
+   * @returns VoiceClientConfigOption[] - Configuration options
+   */
+  public setServiceOptionInConfig(
+    serviceKey: string,
+    option: ConfigOption
+  ): VoiceClientConfigOption[] {
+    const serviceOptions = this.getServiceOptionsFromConfig(serviceKey);
+    if (!serviceOptions) this.config;
+
+    const newServiceOption = {
+      service: serviceKey,
+      options: serviceOptions.options.map((item) =>
+        item.name === option.name ? { ...item, value: option.value } : item
+      ),
+    };
+
+    return this.config.map((item) =>
+      item.service === serviceKey ? newServiceOption : item
+    );
   }
 
   // ------ Actions

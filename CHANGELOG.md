@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `setServiceOptionsInConfig` Returns mutated / merged config for specified key and service config option
 - Voice client constructor `customBodyParams:object`. Add custom request parameters to send with the POST request to baseUrl
+- Set voice client services object (when client has not yet connected)
 
 ### Fixed
 

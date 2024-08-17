@@ -27,7 +27,7 @@ export interface VoiceClientOptions {
    * Service key value pairs (e.g. {llm: "openai"} )
    * A client must have at least one service to connect to a voice server
    */
-  services: { [key: string]: string };
+  services: VoiceClientServices;
 
   /**
    * Service configuration options for services and further customization
@@ -88,16 +88,7 @@ export type VoiceClientConfigOption = {
   options: ConfigOption[];
 };
 
-export type VoiceClientLLMMessage = {
-  role: string;
-  content: string;
-  tool_call_id?: string;
-};
-
-export type VoiceClientConfigLLM = {
-  model?: string;
-  messages?: VoiceClientLLMMessage[];
-};
+export type VoiceClientServices = { [key: string]: string };
 
 /**
  * RTVI Voice Client
