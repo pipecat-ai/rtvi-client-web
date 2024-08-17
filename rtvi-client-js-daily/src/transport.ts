@@ -43,9 +43,14 @@ export class DailyTransport extends Transport {
   ) {
     super(options, onMessage);
 
+    const existingInstance = Daily.getCallInstance();
+    if (existingInstance) {
+      void existingInstance.destroy();
+    }
     this._daily = Daily.createCallObject({
       videoSource: options.enableCam ?? false,
       audioSource: options.enableMic ?? false,
+      allowMultipleCallInstances: true,
       dailyConfig: {},
     });
 
