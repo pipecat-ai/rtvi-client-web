@@ -27,7 +27,7 @@ export interface VoiceClientOptions {
    * Service key value pairs (e.g. {llm: "openai"} )
    * A client must have at least one service to connect to a voice server
    */
-  services: { [key: string]: string };
+  services: VoiceClientServices;
 
   /**
    * Service configuration options for services and further customization
@@ -62,12 +62,18 @@ export interface VoiceClientOptions {
   customHeaders?: { [key: string]: string };
 
   /**
+   * Custom request parameters to send with the POST request to baseUrl
+   */
+  customBodyParams?: object;
+
+  /**
    * Custom start method handler for retrieving auth bundle for transport
    * @param abortController
    * @returns Promise<void>
    */
   customAuthHandler?: (
     baseUrl: string,
+    timeout: number | undefined,
     abortController: AbortController
   ) => Promise<void>;
 }
@@ -82,16 +88,7 @@ export type VoiceClientConfigOption = {
   options: ConfigOption[];
 };
 
-export type VoiceClientLLMMessage = {
-  role: string;
-  content: string;
-  tool_call_id?: string;
-};
-
-export type VoiceClientConfigLLM = {
-  model?: string;
-  messages?: VoiceClientLLMMessage[];
-};
+export type VoiceClientServices = { [key: string]: string };
 
 /**
  * RTVI Voice Client
