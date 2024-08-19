@@ -103,7 +103,6 @@ export const VoiceClientVideo = forwardRef<HTMLVideoElement, Props>(
       video.addEventListener("leavepictureinpicture", handleLeavePIP);
 
       // Videos can be paused if media was played in another app on iOS.
-      // Resuming here, when returning back to Daily call.
       document.addEventListener("visibilitychange", handleVisibilityChange);
       return () => {
         video.removeEventListener("canplay", handleCanPlay);
@@ -190,4 +189,4 @@ export const VoiceClientVideo = forwardRef<HTMLVideoElement, Props>(
     );
   }
 );
-VoiceClientVideo.displayName = "DailyVideo";
+VoiceClientVideo.displayName = "VoiceClientVideo";
