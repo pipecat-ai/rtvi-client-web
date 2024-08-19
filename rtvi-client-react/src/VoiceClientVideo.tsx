@@ -13,10 +13,6 @@ interface Props
   participant: "local" | "bot";
 
   /**
-   * For local user-facing camera streams, we'll automatically mirror the video.
-   */
-  automirror?: boolean;
-  /**
    * Defines whether the video should be fully contained or cover the box. Default: 'contain'.
    */
   fit?: "contain" | "cover";
@@ -24,10 +20,7 @@ interface Props
    * Forces the video to be mirrored, if set.
    */
   mirror?: boolean;
-  /**
-   * Optional styles to apply, when video is playable.
-   */
-  playableStyle?: React.CSSProperties;
+
   /**
    * Optional callback, which is triggered whenever the video's rendered width or height changes.
    * Returns the video's native width, height and aspectRatio.
@@ -39,11 +32,9 @@ export const VoiceClientVideo = forwardRef<HTMLVideoElement, Props>(
   function VoiceClientVideo(
     {
       participant = "local",
-      automirror,
       fit = "contain",
       mirror,
       onResize,
-      playableStyle = {},
       style = {},
       ...props
     },
