@@ -4,6 +4,7 @@ import { Transport, VoiceClientConfigOption } from ".";
 
 export enum VoiceMessageType {
   // Outbound
+  CLIENT_READY = "client-ready",
   UPDATE_CONFIG = "update-config",
   GET_CONFIG = "get-config",
   DESCRIBE_CONFIG = "describe-config",
@@ -51,8 +52,9 @@ export type PipecatMetricsData = {
 };
 
 export type PipecatMetrics = {
-  processing: PipecatMetricsData[];
-  ttfb: PipecatMetricsData[];
+  processing?: PipecatMetricsData[];
+  ttfb?: PipecatMetricsData[];
+  characters?: PipecatMetricsData[];
 };
 
 export type Transcript = {
@@ -87,6 +89,10 @@ export class VoiceMessage {
   }
 
   // Outbound message types
+  static clientReady(): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.CLIENT_READY, {});
+  }
+
   static updateConfig(config: VoiceClientConfigOption[]): VoiceMessage {
     return new VoiceMessage(VoiceMessageType.UPDATE_CONFIG, { config });
   }

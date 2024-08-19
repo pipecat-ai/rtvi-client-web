@@ -369,6 +369,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           reject(e);
           return;
         }
+
+        await this._transport.sendReadyMessage();
       })();
     });
   }
