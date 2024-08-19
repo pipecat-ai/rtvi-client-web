@@ -594,6 +594,30 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     );
   }
 
+  public partialToConfig(
+    config: VoiceClientConfigOption[]
+  ): VoiceClientConfigOption[] {
+    // Merge partial config with existing config
+    return config.map((partial) => {
+      const existing = this.config.find(
+        (item) => item.service === partial.service
+      );
+      if (existing) {
+        return {
+          service: partial.service,
+          options: existing.options.map((option) => {
+            const newOption = partial.options.find(
+              (o) => o.name === option.name
+            );
+            return newOption ? newOption : option;
+          }),
+        };
+      } else {
+        return partial;
+      }
+    });
+  }
+
   // ------ Actions
 
   /**
