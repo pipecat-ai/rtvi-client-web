@@ -5,6 +5,17 @@ All notable changes to **RTVI Client Web** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2024-08-19
+
+### Added
+
+- VoiceClientVideo component added to `rtvi-client-react` for rendering local or remote video tracks
+- partialToConfig voice client method that returns a new VoiceClientConfigOption[] from provided partial. Does not update config.
+
+### Fixed
+
+- Fixes an issue when re-creating a DailyVoiceClient. Doing so will no longer result in throwing an error. Note: Simultaneous DailyVoiceClient instances is not supported. Creating a new DailyVoiceClient will invalidate any pre-existing ones.
+
 ## [0.1.3] - 2024-08-17
 
 ### Added
