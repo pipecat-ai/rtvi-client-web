@@ -53,6 +53,7 @@ export abstract class Transport {
     abortController: AbortController
   ): Promise<void>;
   abstract disconnect(): Promise<void>;
+  abstract sendReadyMessage(): void;
 
   abstract getAllMics(): Promise<MediaDeviceInfo[]>;
   abstract getAllCams(): Promise<MediaDeviceInfo[]>;

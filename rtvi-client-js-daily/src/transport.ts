@@ -205,6 +205,20 @@ export class DailyTransport extends Transport {
     this._callbacks.onConnected?.();
   }
 
+  async sendReadyMessage(): Promise<void> {
+    return new Promise((resolve) => {
+      (async () => {
+        this._daily.on("track-started", (ev) => {
+          console.log(ev);
+          if (!ev.participant?.local) {
+            this.sendMessage(VoiceMessage.clientReady());
+            resolve();
+          }
+        });
+      })();
+    });
+  }
+
   private attachEventListeners() {
     this._daily.on(
       "available-devices-updated",
