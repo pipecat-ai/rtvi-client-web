@@ -52,8 +52,9 @@ export type PipecatMetricsData = {
 };
 
 export type PipecatMetrics = {
-  processing: PipecatMetricsData[];
-  ttfb: PipecatMetricsData[];
+  processing?: PipecatMetricsData[];
+  ttfb?: PipecatMetricsData[];
+  characters?: PipecatMetricsData[];
 };
 
 export type Transcript = {
