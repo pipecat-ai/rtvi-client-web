@@ -447,6 +447,35 @@ export const Sandbox = () => {
               Test consecutive actions
             </button>
           </div>
+          <div style={{ display: "flex", gap: "10px" }}>
+            TTS: Switch language:
+            <select
+              disabled={state !== "ready" || actionDispatching}
+              onChange={(e) => {
+                const lang = e.target.value;
+                setActionDispatching(true);
+                voiceClient.action({
+                  service: "tts",
+                  action: "switch_language",
+                  arguments: [
+                    {
+                      name: "language",
+                      value: lang,
+                    },
+                  ],
+                });
+                setActionDispatching(false);
+              }}
+            >
+              <option value="en">English (en)</option>
+              <option value="fr">French (fr)</option>
+              <option value="de">German (de)</option>
+              <option value="es">Spanish (es)</option>
+              <option value="pt">Portuguese (pt)</option>
+              <option value="zh">Chinese (zh)</option>
+              <option value="ja">Japanese (ja)</option>
+            </select>
+          </div>
         </div>
       </main>
       <VoiceClientAudio />
