@@ -571,7 +571,7 @@ export const Sandbox = () => {
                 setActionDispatching(false);
               }}
             >
-              Switch all to Spanish (and append message)
+              Switch all to Spanish (and update context)
             </button>
             <button
               disabled={state !== "ready" || actionDispatching}
@@ -627,7 +627,7 @@ export const Sandbox = () => {
                 setActionDispatching(false);
               }}
             >
-              Switch all to English (and append message)
+              Switch all to English (and update context)
             </button>
           </div>
         </div>

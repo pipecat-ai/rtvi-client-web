@@ -124,8 +124,6 @@ export class LLMHelper extends VoiceClientHelper {
       },
     ];
 
-    const newConfig = deepmerge(currentContext, this._voiceClient.config);
-
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
         service: this._service,
@@ -142,6 +140,8 @@ export class LLMHelper extends VoiceClientHelper {
         ],
       } as ActionData);
     } else {
+      const newConfig = deepmerge(currentContext, this._voiceClient.config);
+
       return this._voiceClient.updateConfig(
         newConfig as VoiceClientConfigOption[]
       );
