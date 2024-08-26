@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const ROOM_URL_TEMPLATE = "http://192.168.1.18:7860";
+const ROOM_URL_TEMPLATE = process.env.EXPO_PUBLIC_BASE_URL;
 
 export default function App() {
   const [roomUrl, setRoomUrl] = useState(ROOM_URL_TEMPLATE);
@@ -81,8 +81,7 @@ export default function App() {
   // Create the VoiceClient
   useEffect(() => {
     let voiceClient = new RNDailyVoiceClient({
-      // TODO refactor it
-      baseUrl: "http://192.168.1.18:7860",
+      baseUrl: process.env.EXPO_PUBLIC_BASE_URL,
       enableMic: true,
       services: {
         llm: "together",
@@ -114,8 +113,7 @@ export default function App() {
         },
       ],
       customHeaders: {
-          // TODO refactor it
-          "Authorization": `Bearer YOUR_TOKEN`
+          "Authorization": `Bearer ${process.env.EXPO_PUBLIC_DAILY_API_KEY}`
       },
       customBodyParams: {
         "bot_profile": "voice_2024_08",
