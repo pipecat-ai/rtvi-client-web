@@ -25,4 +25,5 @@ Create a `.env.local` in your root with a custom baseURL if you are running your
 
 ```
 VITE_BASE_URL=http://...
+VITE_DAILY_API_KEY=YOUR_API_KEY
 ```

@@ -41,6 +41,13 @@ const voiceClient = new DailyVoiceClient({
       ],
     },
   ],
+  customHeaders: {
+    "Authorization": `Bearer ${import.meta.env.VITE_DAILY_API_KEY}`
+  },
+  customBodyParams: {
+    "bot_profile": "voice_2024_08",
+    "max_duration": 680
+  },
 
   // OpenAI/Anthropic function calling config
   /*

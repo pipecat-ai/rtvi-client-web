@@ -313,6 +313,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
               this._abortController!
             );
           } else {
+            // @ts-ignore
             authBundle = await fetch(`${this._baseUrl}`, {
               method: "POST",
               mode: "cors",
@@ -492,7 +493,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param config - VoiceClientConfigOption[] partial object with the new configuration
    * @returns VoiceClientConfigOption[] - Updated configuration
    */
-  protected set config(config: VoiceClientConfigOption[]) {
+  public set config(config: VoiceClientConfigOption[]) {
     this._options.config = config;
     this._options.callbacks?.onConfigUpdated?.(config);
   }

@@ -6,20 +6,21 @@ import Daily, {
   DailyEventObjectParticipant,
   DailyEventObjectParticipantLeft,
   DailyEventObjectRemoteParticipantsAudioLevel,
-  DailyEventObjectSelectedDevicesUpdated,
   DailyEventObjectTrack,
   DailyParticipant,
-} from "@daily-co/daily-js";
+} from '@daily-co/react-native-daily-js';
+
 import {
+  Transport,
+  TransportStartError,
+  VoiceMessage,
+  VoiceMessageMetrics,
+  MediaDeviceInfo,
   Participant,
   PipecatMetrics,
   Tracks,
-  Transport,
-  TransportStartError,
   TransportState,
   VoiceClientOptions,
-  VoiceMessage,
-  VoiceMessageMetrics,
 } from "realtime-ai";
 
 export interface DailyTransportAuthBundle {
@@ -27,9 +28,10 @@ export interface DailyTransportAuthBundle {
   token: string;
 }
 
-export class DailyTransport extends Transport {
+export class RNDailyTransport extends Transport {
   private _daily: DailyCall;
   private _botId: string = "";
+
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
 
@@ -66,16 +68,15 @@ export class DailyTransport extends Transport {
 
   async getAllCams() {
     const { devices } = await this._daily.enumerateDevices();
-    return devices.filter((d) => d.kind === "videoinput");
+    return devices.filter((d) => d.kind === "videoinput") as MediaDeviceInfo[];
   }
 
   updateCam(camId: string) {
     this._daily
-      .setInputDevicesAsync({
-        videoDeviceId: camId,
-      })
-      .then((infos) => {
-        this._selectedCam = infos.camera;
+      .setCamera(camId)
+      .then(async () => {
+        let inputDevices = await this._daily.getInputDevices()
+        this._selectedCam = inputDevices.camera as MediaDeviceInfo;
       });
   }
 
@@ -85,16 +86,15 @@ export class DailyTransport extends Transport {
 
   async getAllMics() {
     const { devices } = await this._daily.enumerateDevices();
-    return devices.filter((d) => d.kind === "audioinput");
+    return devices.filter((d) => d.kind === "audio") as MediaDeviceInfo[];
   }
 
   updateMic(micId: string) {
     this._daily
-      .setInputDevicesAsync({
-        audioDeviceId: micId,
-      })
-      .then((infos) => {
-        this._selectedMic = infos.mic;
+      .setAudioDevice(micId)
+      .then(async () => {
+        let inputDevices = await this._daily.getInputDevices()
+        this._selectedMic = inputDevices.mic as MediaDeviceInfo;
       });
   }
 
@@ -122,7 +122,7 @@ export class DailyTransport extends Transport {
     const participants = this._daily?.participants();
     const bot = participants?.[this._botId];
 
-    const tracks: Tracks = {
+    /*const tracks: Tracks = {
       local: {
         audio: participants?.local?.tracks?.audio?.persistentTrack,
         video: participants?.local?.tracks?.video?.persistentTrack,
@@ -134,7 +134,11 @@ export class DailyTransport extends Transport {
         audio: bot?.tracks?.audio?.persistentTrack,
         video: bot?.tracks?.video?.persistentTrack,
       };
-    }
+    }*/
+
+    // TODO implement it
+    console.log("Bot id", bot)
+    const tracks: Tracks = { local: {} }
 
     return tracks;
   }
@@ -143,16 +147,19 @@ export class DailyTransport extends Transport {
     if (this.state !== "idle") return;
 
     this.state = "initializing";
-    const infos = await this._daily.startCamera();
+    await this._daily.startCamera();
     const { devices } = await this._daily.enumerateDevices();
     const cams = devices.filter((d) => d.kind === "videoinput");
-    const mics = devices.filter((d) => d.kind === "audioinput");
-    this._callbacks.onAvailableCamsUpdated?.(cams);
-    this._callbacks.onAvailableMicsUpdated?.(mics);
-    this._selectedCam = infos.camera;
-    this._callbacks.onCamUpdated?.(infos.camera as MediaDeviceInfo);
-    this._selectedMic = infos.mic;
-    this._callbacks.onMicUpdated?.(infos.mic as MediaDeviceInfo);
+    const mics = devices.filter((d) => d.kind === "audio");
+
+    this._callbacks.onAvailableCamsUpdated?.(cams as MediaDeviceInfo[]);
+    this._callbacks.onAvailableMicsUpdated?.(mics as MediaDeviceInfo[]);
+
+    let inputDevices = await this._daily.getInputDevices()
+    this._selectedCam = inputDevices.camera as MediaDeviceInfo;
+    this._callbacks.onCamUpdated?.(this._selectedCam);
+    this._selectedMic = inputDevices.mic as MediaDeviceInfo;
+    this._callbacks.onMicUpdated?.(this._selectedMic);
 
     // Instantiate audio observers
     if (!this._daily.isLocalAudioLevelObserverRunning())
@@ -175,6 +182,8 @@ export class DailyTransport extends Transport {
 
     this.state = "connecting";
 
+    console.log("Will connect", authBundle)
+
     try {
       await this._daily.join({
         url: authBundle.room_url,
@@ -186,6 +195,7 @@ export class DailyTransport extends Transport {
         this._expiry = room.config.exp;
       }
     } catch (e) {
+      console.log("connect error", e)
       this.state = "error";
       throw new TransportStartError();
     }
@@ -215,10 +225,12 @@ export class DailyTransport extends Transport {
       "available-devices-updated",
       this.handleAvailableDevicesUpdated.bind(this)
     );
-    this._daily.on(
+
+    // TODO need to replace this for the right method on RN, not sure if we have one
+    /*this._daily.on(
       "selected-devices-updated",
       this.handleSelectedDevicesUpdated.bind(this)
-    );
+    );*/
 
     this._daily.on("track-started", this.handleTrackStarted.bind(this));
     this._daily.on("track-stopped", this.handleTrackStopped.bind(this));
@@ -266,15 +278,17 @@ export class DailyTransport extends Transport {
   private handleAvailableDevicesUpdated(
     ev: DailyEventObjectAvailableDevicesUpdated
   ) {
+    console.log("handleAvailableDevicesUpdated", ev)
     this._callbacks.onAvailableCamsUpdated?.(
-      ev.availableDevices.filter((d) => d.kind === "videoinput")
+      ev.availableDevices.filter((d) => d.kind === "videoinput") as MediaDeviceInfo[]
     );
     this._callbacks.onAvailableMicsUpdated?.(
-      ev.availableDevices.filter((d) => d.kind === "audioinput")
+      ev.availableDevices.filter((d) => d.kind === "audio") as MediaDeviceInfo[]
     );
   }
 
-  private handleSelectedDevicesUpdated(
+  // TODO need to replace this for the right method on RN, not sure if we have one
+  /*private handleSelectedDevicesUpdated(
     ev: DailyEventObjectSelectedDevicesUpdated
   ) {
     if (this._selectedCam?.deviceId !== ev.devices.camera) {
@@ -285,20 +299,24 @@ export class DailyTransport extends Transport {
       this._selectedMic = ev.devices.mic;
       this._callbacks.onMicUpdated?.(ev.devices.mic as MediaDeviceInfo);
     }
-  }
+  }*/
 
   private handleTrackStarted(ev: DailyEventObjectTrack) {
-    this._callbacks.onTrackStarted?.(
+    console.log("Need to handleTrackStarted", ev)
+    // TODO implement it
+    /*this._callbacks.onTrackStarted?.(
       ev.track,
       ev.participant ? dailyParticipantToParticipant(ev.participant) : undefined
-    );
+    );*/
   }
 
   private handleTrackStopped(ev: DailyEventObjectTrack) {
-    this._callbacks.onTrackStopped?.(
+    console.log("Need to handleTrackStopped", ev)
+    // TODO implement it
+    /*this._callbacks.onTrackStopped?.(
       ev.track,
       ev.participant ? dailyParticipantToParticipant(ev.participant) : undefined
-    );
+    );*/
   }
 
   private handleParticipantJoined(ev: DailyEventObjectParticipant) {
@@ -333,14 +351,18 @@ export class DailyTransport extends Transport {
     ev: DailyEventObjectRemoteParticipantsAudioLevel
   ) {
     const participants = this._daily.participants();
-    const ids = Object.keys(ev.participantsAudioLevel);
-    for (let i = 0; i < ids.length; i++) {
-      const id = ids[i];
-      const level = ev.participantsAudioLevel[id];
-      this._callbacks.onRemoteAudioLevel?.(
-        level,
-        dailyParticipantToParticipant(participants[id])
-      );
+
+    for (const participantId in ev.participantsAudioLevel) {
+      if (ev.participantsAudioLevel.hasOwnProperty(participantId)) {
+        const audioLevel = ev.participantsAudioLevel[participantId];
+        let participant = participants[participantId]
+        if(audioLevel && participant) {
+          this._callbacks.onRemoteAudioLevel?.(
+            audioLevel,
+            dailyParticipantToParticipant(participant)
+          );
+        }
+      }
     }
   }
 
