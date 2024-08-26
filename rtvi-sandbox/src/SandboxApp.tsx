@@ -448,33 +448,187 @@ export const Sandbox = () => {
             </button>
           </div>
           <div style={{ display: "flex", gap: "10px" }}>
-            TTS: Switch language:
-            <select
+            <div>
+              STT: Switch language
+              <select
+                disabled={state !== "ready" || actionDispatching}
+                onChange={async (e) => {
+                  const lang = e.target.value;
+                  const model =
+                    lang === "en"
+                      ? "nova-2-conversationalai"
+                      : "nova-2-general";
+                  setActionDispatching(true);
+                  await voiceClient.action({
+                    service: "stt",
+                    action: "switch_model",
+                    arguments: [
+                      {
+                        name: "model",
+                        value: model,
+                      },
+                      {
+                        name: "language",
+                        value: lang,
+                      },
+                    ],
+                  });
+                  setActionDispatching(false);
+                }}
+              >
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+              </select>
+            </div>
+            |
+            <div>
+              TTS: Switch language
+              <select
+                disabled={state !== "ready" || actionDispatching}
+                onChange={async (e) => {
+                  const model = e.target.value;
+                  setActionDispatching(true);
+                  await voiceClient.action({
+                    service: "tts",
+                    action: "switch_model",
+                    arguments: [
+                      {
+                        name: "model",
+                        value: model,
+                      },
+                      {
+                        name: "language",
+                        value: model === "sonic-english" ? "en" : "es",
+                      },
+                      {
+                        name: "voice",
+                        value:
+                          model === "sonic-english"
+                            ? "79a125e8-cd45-4c13-8a67-188112f4dd22"
+                            : "846d6cb0-2301-48b6-9683-48f5618ea2f6",
+                      },
+                    ],
+                  });
+                  setActionDispatching(false);
+                }}
+              >
+                <option value="sonic-english">English</option>
+                <option value="sonic-multilingual">Spanish</option>
+              </select>
+            </div>
+            |
+            <button
               disabled={state !== "ready" || actionDispatching}
-              onChange={(e) => {
-                const lang = e.target.value;
+              onClick={async () => {
                 setActionDispatching(true);
-                voiceClient.action({
-                  service: "tts",
-                  action: "switch_language",
+                await voiceClient.action({
+                  service: "stt",
+                  action: "switch_model",
                   arguments: [
                     {
+                      name: "model",
+                      value: "nova-2-general",
+                    },
+                    {
                       name: "language",
-                      value: lang,
+                      value: "es",
                     },
                   ],
                 });
+
+                await voiceClient.action({
+                  service: "tts",
+                  action: "switch_model",
+                  arguments: [
+                    {
+                      name: "model",
+                      value: "sonic-multilingual",
+                    },
+                    {
+                      name: "language",
+                      value: "es",
+                    },
+                    {
+                      name: "voice",
+                      value: "846d6cb0-2301-48b6-9683-48f5618ea2f6",
+                    },
+                  ],
+                });
+
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                await llmHelper.setContext(
+                  {
+                    messages: [
+                      {
+                        role: "system",
+                        content:
+                          "You are a chatbot named Frankie. Speak to me in only Spanish.",
+                      },
+                    ],
+                  },
+                  true
+                );
                 setActionDispatching(false);
               }}
             >
-              <option value="en">English (en)</option>
-              <option value="fr">French (fr)</option>
-              <option value="de">German (de)</option>
-              <option value="es">Spanish (es)</option>
-              <option value="pt">Portuguese (pt)</option>
-              <option value="zh">Chinese (zh)</option>
-              <option value="ja">Japanese (ja)</option>
-            </select>
+              Switch all to Spanish (and append message)
+            </button>
+            <button
+              disabled={state !== "ready" || actionDispatching}
+              onClick={async () => {
+                setActionDispatching(true);
+                await voiceClient.action({
+                  service: "stt",
+                  action: "switch_model",
+                  arguments: [
+                    {
+                      name: "model",
+                      value: "nova-2-conversationalai",
+                    },
+                    {
+                      name: "language",
+                      value: "en",
+                    },
+                  ],
+                });
+
+                await voiceClient.action({
+                  service: "tts",
+                  action: "switch_model",
+                  arguments: [
+                    {
+                      name: "model",
+                      value: "sonic-english",
+                    },
+                    {
+                      name: "language",
+                      value: "en",
+                    },
+                    {
+                      name: "voice",
+                      value: "79a125e8-cd45-4c13-8a67-188112f4dd22",
+                    },
+                  ],
+                });
+
+                const llmHelper = voiceClient.getHelper("llm") as LLMHelper;
+                await llmHelper.setContext(
+                  {
+                    messages: [
+                      {
+                        role: "system",
+                        content:
+                          "You are a chatbot named Frankie. Speak to me in only English.",
+                      },
+                    ],
+                  },
+                  true
+                );
+                setActionDispatching(false);
+              }}
+            >
+              Switch all to English (and append message)
+            </button>
           </div>
         </div>
       </main>
