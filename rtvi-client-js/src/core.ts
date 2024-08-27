@@ -687,8 +687,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       return this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
     }
 
-    console.log("ALERT", ev);
-
     switch (ev.type) {
       case VoiceMessageType.BOT_READY:
         clearTimeout(this._handshakeTimeout);
