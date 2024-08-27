@@ -41,6 +41,16 @@ const voiceClient = new DailyVoiceClient({
       ],
     },
   ],
+  // Note: In a production environment, it is recommended to avoid calling Daily's API endpoint directly.
+  // Instead, you should route requests through your own server to handle authentication, validation,
+  // and any other necessary logic. Therefore, the baseUrl should be set to the URL of your own server.
+  customHeaders: {
+    "Authorization": `Bearer ${import.meta.env.VITE_DAILY_API_KEY}`
+  },
+  customBodyParams: {
+    "bot_profile": "voice_2024_08",
+    "max_duration": 680
+  },
 
   // OpenAI/Anthropic function calling config
   /*

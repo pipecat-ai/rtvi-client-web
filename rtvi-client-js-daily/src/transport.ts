@@ -28,12 +28,8 @@ export interface DailyTransportAuthBundle {
 }
 
 export class DailyTransport extends Transport {
-  protected _state: TransportState = "idle";
-
   private _daily: DailyCall;
   private _botId: string = "";
-  private _expiry: number | undefined = undefined;
-
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
 
@@ -61,7 +57,7 @@ export class DailyTransport extends Transport {
     return this._state;
   }
 
-  private set state(state: TransportState) {
+  set state(state: TransportState) {
     if (this._state === state) return;
 
     this._state = state;
@@ -122,12 +118,8 @@ export class DailyTransport extends Transport {
     return this._daily.localVideo();
   }
 
-  get expiry(): number | undefined {
-    return this._expiry;
-  }
-
   tracks() {
-    const participants = this._daily?.participants() ?? {};
+    const participants = this._daily?.participants();
     const bot = participants?.[this._botId];
 
     const tracks: Tracks = {
@@ -190,8 +182,8 @@ export class DailyTransport extends Transport {
       });
 
       const room = await this._daily.room();
-      if (room && "id" in room) {
-        this._expiry = room.config?.exp;
+      if (room && "id" in room && room.config && room.config.exp) {
+        this._expiry = room.config.exp;
       }
     } catch (e) {
       this.state = "error";
@@ -206,7 +198,7 @@ export class DailyTransport extends Transport {
   }
 
   async sendReadyMessage(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       (async () => {
         this._daily.on("track-started", (ev) => {
           if (!ev.participant?.local) {
