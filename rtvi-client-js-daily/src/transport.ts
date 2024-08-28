@@ -28,11 +28,8 @@ export interface DailyTransportAuthBundle {
 }
 
 export class DailyTransport extends Transport {
-  protected _state: TransportState = "idle";
-
   private _daily: DailyCall;
   private _botId: string = "";
-  private _expiry: number | undefined = undefined;
 
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
@@ -122,10 +119,6 @@ export class DailyTransport extends Transport {
     return this._daily.localVideo();
   }
 
-  get expiry(): number | undefined {
-    return this._expiry;
-  }
-
   tracks() {
     const participants = this._daily?.participants() ?? {};
     const bot = participants?.[this._botId];
@@ -206,7 +199,7 @@ export class DailyTransport extends Transport {
   }
 
   async sendReadyMessage(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve) => {
       (async () => {
         this._daily.on("track-started", (ev) => {
           if (!ev.participant?.local) {

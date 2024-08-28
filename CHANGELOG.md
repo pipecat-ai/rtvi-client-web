@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.7] - 2024-08-28
 
+### Fixed
+
+- "@daily-co/daily-js" should not be included in the `rtvi-client-js` package.json. This dependency is only necessary for `rtvi-client-js-daily`.
+
 ## [0.1.6] - 2024-08-26
 
 ### Fixed
