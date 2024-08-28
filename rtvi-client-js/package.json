@@ -27,6 +27,7 @@
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
+    "@types/clone-deep": "^4.0.4",
     "@types/jest": "^29.5.12",
     "@typescript-eslint/eslint-plugin": "^7.16.0",
     "@typescript-eslint/parser": "^7.16.0",
@@ -40,6 +41,7 @@
   },
   "dependencies": {
     "@types/events": "^3.0.3",
+    "clone-deep": "^4.0.1",
     "events": "^3.3.0",
     "nanoid": "^5.0.7",
     "typed-emitter": "^2.1.0",

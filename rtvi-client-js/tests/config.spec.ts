@@ -108,22 +108,13 @@ describe("Voice Client Config Getter Helper Methods", () => {
 });
 
 describe("Voice Client Config Setter Helper Methods", () => {
-  test("setServiceOptionInConfig should change the value of a config option", () => {
-    const updatedConfig = voiceClient.setServiceOptionInConfig("llm", {
-      name: "model",
-      value: "NewModel",
-    } as ConfigOption);
-
-    expect(updatedConfig).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          service: "llm",
-          options: expect.arrayContaining([
-            { name: "model", value: "NewModel" },
-          ]),
-        }),
-      ])
-    );
+  test("setServiceOptionInConfig should not mutate client config", () => {
+    expect(
+      voiceClient.setServiceOptionInConfig("llm", {
+        name: "model",
+        value: "NewModel",
+      } as ConfigOption)
+    ).not.toEqual(voiceClient.config);
   });
 
   test("setServiceOptionInConfig should create a new service option key when it is not found", () => {
@@ -152,15 +143,6 @@ describe("Voice Client Config Setter Helper Methods", () => {
     ).not.toEqual(voiceClient.config);
   });
 
-  test("setServiceOptionInConfig should not change the client config", () => {
-    expect(
-      voiceClient.setServiceOptionInConfig("llm", {
-        name: "model",
-        value: "NewModel",
-      } as ConfigOption)
-    ).not.toEqual(voiceClient.config);
-  });
-
   test("setServiceOptionInConfig should return client config with invalid service key", () => {
     expect(
       voiceClient.setServiceOptionInConfig("test", {
@@ -168,6 +150,45 @@ describe("Voice Client Config Setter Helper Methods", () => {
         value: "test",
       } as ConfigOption)
     ).toEqual(voiceClient.config);
+  });
+
+  test("setServiceOptionInConfig should set or update multiple items", () => {
+    const newConfig = voiceClient.setServiceOptionInConfig("llm", [
+      {
+        name: "test",
+        value: "testabc",
+      } as ConfigOption,
+      {
+        name: "test2",
+        value: "test2",
+      } as ConfigOption,
+    ]);
+    expect(newConfig).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          service: "llm",
+          options: expect.arrayContaining([
+            { name: "test", value: "testabc" },
+            { name: "test2", value: "test2" },
+          ]),
+        }),
+      ])
+    );
+  });
+
+  test("setServiceOptionInConfig should not mutate client config when passed array", () => {
+    expect(
+      voiceClient.setServiceOptionInConfig("llm", [
+        {
+          name: "test1",
+          value: "test1",
+        } as ConfigOption,
+        {
+          name: "test2",
+          value: "test2",
+        } as ConfigOption,
+      ])
+    ).not.toEqual(voiceClient.config);
   });
 });
 

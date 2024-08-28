@@ -1,3 +1,4 @@
+import cloneDeep from "clone-deep";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
@@ -601,6 +602,29 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return ({ ...optionValue } as ConfigOption).value;
   }
 
+  private _updateOrAddOption(
+    existingOptions: ConfigOption[],
+    newOption: ConfigOption
+  ): ConfigOption[] {
+    const existingOptionIndex = existingOptions.findIndex(
+      (item) => item.name === newOption.name
+    );
+    if (existingOptionIndex !== -1) {
+      // Update existing option
+      return existingOptions.map((item, index) =>
+        index === existingOptionIndex
+          ? { ...item, value: newOption.value }
+          : item
+      );
+    } else {
+      // Add new option
+      return [
+        ...existingOptions,
+        { name: newOption.name, value: newOption.value },
+      ];
+    }
+  }
+
   /**
    * Returns config with updated config option for specified service key and option name
    * Note: does not update current config, only returns a new object (call updateConfig to apply changes)
@@ -610,40 +634,36 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    */
   public setServiceOptionInConfig(
     serviceKey: string,
-    option: ConfigOption
+    option: ConfigOption | ConfigOption[]
   ): VoiceClientConfigOption[] {
     const serviceOptions = this.getServiceOptionsFromConfig(serviceKey);
 
     if (!serviceOptions) {
-      console.debug("Service with name " + serviceKey + " not found in config");
-      return [...this.config];
+      console.debug(
+        "Service with name '" + serviceKey + "' not found in config"
+      );
+      return cloneDeep(this.config);
     }
 
-    // Change or add the new option to the service config
-    const newServiceOption = {
-      service: serviceKey,
-      options: (() => {
-        const existingItem = serviceOptions.options.find(
-          (item) => item.name === option.name
-        );
-        if (existingItem) {
-          return serviceOptions.options.map((item) =>
-            item.name === option.name ? { ...item, value: option.value } : item
-          );
-        } else {
-          return [
-            ...serviceOptions.options,
-            { name: option.name, value: option.value },
-          ];
-        }
-      })(),
-    };
+    const optionsArray = Array.isArray(option) ? option : [option];
+    const newConfig: VoiceClientConfigOption[] = cloneDeep(this.config);
 
-    return [
-      ...this.config.map((item) =>
-        item.service === serviceKey ? newServiceOption : item
-      ),
-    ];
+    for (const opt of optionsArray) {
+      const existingItem = newConfig.find(
+        (item) => item.service === serviceKey
+      );
+      const updatedOptions = existingItem
+        ? this._updateOrAddOption(existingItem.options, opt)
+        : [{ name: opt.name, value: opt.value }];
+
+      if (existingItem) {
+        existingItem.options = updatedOptions;
+      } else {
+        newConfig.push({ service: serviceKey, options: updatedOptions });
+      }
+    }
+
+    return newConfig;
   }
 
   /**
@@ -655,29 +675,27 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     config: VoiceClientConfigOption[]
   ): VoiceClientConfigOption[] {
     // Merge partial config with existing config
-    return [
-      ...config.map((partial) => {
-        const existing = this.config.find(
-          (item) => item.service === partial.service
+    return cloneDeep(config).map((partial) => {
+      const existing = this.config.find(
+        (item) => item.service === partial.service
+      );
+      if (existing) {
+        return {
+          service: partial.service,
+          options: existing.options.map((option) => {
+            const newOption = partial.options.find(
+              (o) => o.name === option.name
+            );
+            return newOption ? newOption : option;
+          }),
+        };
+      } else {
+        console.debug(
+          "Service with name " + partial.service + " not found in config"
         );
-        if (existing) {
-          return {
-            service: partial.service,
-            options: existing.options.map((option) => {
-              const newOption = partial.options.find(
-                (o) => o.name === option.name
-              );
-              return newOption ? newOption : option;
-            }),
-          };
-        } else {
-          console.debug(
-            "Service with name " + partial.service + " not found in config"
-          );
-          return partial;
-        }
-      }),
-    ];
+        return partial;
+      }
+    });
   }
 
   // ------ Actions

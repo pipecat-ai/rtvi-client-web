@@ -187,8 +187,6 @@ export class LLMHelper extends VoiceClientHelper {
         messages_key
       ) as LLMContextMessage[];
 
-      console.log(currentMessages);
-
       const newConfig: VoiceClientConfigOption[] =
         this._voiceClient.setServiceOptionInConfig(this._service, {
           name: messages_key,
