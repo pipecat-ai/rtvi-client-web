@@ -196,6 +196,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     // Create a new message dispatch queue for async message handling
     this._messageDispatcher = new MessageDispatcher(this._transport);
+
+    console.debug("[RTVI Client] Initialized");
   }
 
   // ------ Helpers
@@ -305,6 +307,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         let authBundle: unknown;
         const customAuthHandler = this._options.customAuthHandler;
 
+        console.debug("[RTVI Client] Connecting to baseUrl", this._baseUrl);
+
         try {
           if (customAuthHandler) {
             authBundle = await customAuthHandler(
@@ -358,6 +362,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
             return;
           }
         }
+
+        console.debug("[RTVI Client] Auth bundle received", authBundle);
 
         try {
           await this._transport.connect(
@@ -548,14 +554,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   /**
    * Returns configuration options for specified service key
    * @param serviceKey - Service name to get options for (e.g. "llm")
-   * @returns VoiceClientConfigOption - Configuration options for the service
+   * @returns VoiceClientConfigOption - Configuration options array for the service with specified key
    */
   public getServiceOptionsFromConfig(
     serviceKey: string
-  ): VoiceClientConfigOption {
+  ): VoiceClientConfigOption | undefined {
     // Check if we have registered service with name service
     if (!serviceKey) {
-      throw new Error("Target service name is required");
+      console.debug("Target service name is required");
+      return undefined;
     }
     // Find matching service name in the config and update the messages
     const configServiceKey = this.config.find(
@@ -563,9 +570,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     );
 
     if (!configServiceKey) {
-      throw new Error(
+      console.debug(
         "No service with name " + serviceKey + " not found in config"
       );
+      return undefined;
     }
 
     // Return a new object, as to not mutate existing state
@@ -573,9 +581,42 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   /**
-   * Returns mutated / merged config for specified key and service config option
+   * Returns configuration option value (unknown) for specified service key and option name
    * @param serviceKey - Service name to get options for (e.g. "llm")
-   * @param option - Service name to get options for (e.g. "llm")
+   * @optional option Name of option return from the config (e.g. "model")
+   * @returns unknown - Service configuration option value
+   */
+  public getServiceOptionValueFromConfig(
+    serviceKey: string,
+    option: string
+  ): unknown | undefined {
+    // Check if we have registered service with name service
+    if (!serviceKey || !option) {
+      console.debug("Target service name and option name is required");
+      return undefined;
+    }
+
+    const configServiceKey: VoiceClientConfigOption | undefined =
+      this.getServiceOptionsFromConfig(serviceKey);
+
+    if (!configServiceKey) {
+      console.debug("Service with name " + serviceKey + " not found in config");
+      return undefined;
+    }
+
+    // Find matching option key in the service config
+    const optionValue: ConfigOption | undefined = configServiceKey.options.find(
+      (o: ConfigOption) => o.name === option
+    );
+
+    return ({ ...optionValue } as ConfigOption).value;
+  }
+
+  /**
+   * Returns config with updated config option for specified service key and option name
+   * Note: does not update current config, only returns a new object (call updateConfig to apply changes)
+   * @param serviceKey - Service name to get options for (e.g. "llm")
+   * @param option - Service name to get options for (e.g. "model")
    * @returns VoiceClientConfigOption[] - Configuration options
    */
   public setServiceOptionInConfig(
@@ -583,7 +624,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     option: ConfigOption
   ): VoiceClientConfigOption[] {
     const serviceOptions = this.getServiceOptionsFromConfig(serviceKey);
-    if (!serviceOptions) this.config;
+
+    if (!serviceOptions) {
+      console.debug("Service with name " + serviceKey + " not found in config");
+      return this.config;
+    }
 
     const newServiceOption = {
       service: serviceKey,
@@ -592,33 +637,45 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       ),
     };
 
-    return this.config.map((item) =>
-      item.service === serviceKey ? newServiceOption : item
-    );
+    return [
+      ...this.config.map((item) =>
+        item.service === serviceKey ? newServiceOption : item
+      ),
+    ];
   }
 
+  /**
+   * Returns a full config array by merging partial config with existing config
+   * @param config - Service name to get options for (e.g. "llm")
+   * @returns VoiceClientConfigOption[] - Configuration options
+   */
   public partialToConfig(
     config: VoiceClientConfigOption[]
   ): VoiceClientConfigOption[] {
     // Merge partial config with existing config
-    return config.map((partial) => {
-      const existing = this.config.find(
-        (item) => item.service === partial.service
-      );
-      if (existing) {
-        return {
-          service: partial.service,
-          options: existing.options.map((option) => {
-            const newOption = partial.options.find(
-              (o) => o.name === option.name
-            );
-            return newOption ? newOption : option;
-          }),
-        };
-      } else {
-        return partial;
-      }
-    });
+    return [
+      ...config.map((partial) => {
+        const existing = this.config.find(
+          (item) => item.service === partial.service
+        );
+        if (existing) {
+          return {
+            service: partial.service,
+            options: existing.options.map((option) => {
+              const newOption = partial.options.find(
+                (o) => o.name === option.name
+              );
+              return newOption ? newOption : option;
+            }),
+          };
+        } else {
+          console.debug(
+            "Service with name " + partial.service + " not found in config"
+          );
+          return partial;
+        }
+      }),
+    ];
   }
 
   // ------ Actions
@@ -681,6 +738,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   protected handleMessage(ev: VoiceMessage): void {
+    console.debug("[Voice Message]", ev);
+
     if (ev instanceof VoiceMessageMetrics) {
       //@TODO: add to wrapped metrics
       this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
