@@ -1,6 +1,6 @@
 {
   "name": "realtime-ai-react",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",
