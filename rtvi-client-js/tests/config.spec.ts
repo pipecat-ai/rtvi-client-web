@@ -109,38 +109,47 @@ describe("Voice Client Config Getter Helper Methods", () => {
 
 describe("Voice Client Config Setter Helper Methods", () => {
   test("setServiceOptionInConfig should change the value of a config option", () => {
+    const updatedConfig = voiceClient.setServiceOptionInConfig("llm", {
+      name: "model",
+      value: "NewModel",
+    } as ConfigOption);
+
+    expect(updatedConfig).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          service: "llm",
+          options: expect.arrayContaining([
+            { name: "model", value: "NewModel" },
+          ]),
+        }),
+      ])
+    );
+  });
+
+  test("setServiceOptionInConfig should create a new service option key when it is not found", () => {
+    const updatedConfig = voiceClient.setServiceOptionInConfig("tts", {
+      name: "test",
+      value: "test",
+    } as ConfigOption);
+
+    expect(updatedConfig).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          service: "tts",
+          options: expect.arrayContaining([
+            { name: "voice", value: "VoiceABC" },
+            { name: "test", value: "test" },
+          ]),
+        }),
+      ])
+    );
+
     expect(
       voiceClient.setServiceOptionInConfig("llm", {
         name: "model",
         value: "NewModel",
       } as ConfigOption)
-    ).toEqual([
-      {
-        service: "vad",
-        options: [{ name: "params", value: { stop_secs: 0.8 } }],
-      },
-      {
-        service: "tts",
-        options: [{ name: "voice", value: "VoiceABC" }],
-      },
-      {
-        service: "llm",
-        options: [
-          { name: "model", value: "NewModel" },
-          {
-            name: "initial_messages",
-            value: [
-              {
-                role: "system",
-                content:
-                  "You are a assistant called ExampleBot. You can ask me anything.",
-              },
-            ],
-          },
-          { name: "run_on_config", value: true },
-        ],
-      },
-    ]);
+    ).not.toEqual(voiceClient.config);
   });
 
   test("setServiceOptionInConfig should not change the client config", () => {
@@ -150,5 +159,36 @@ describe("Voice Client Config Setter Helper Methods", () => {
         value: "NewModel",
       } as ConfigOption)
     ).not.toEqual(voiceClient.config);
+  });
+
+  test("setServiceOptionInConfig should return client config with invalid service key", () => {
+    expect(
+      voiceClient.setServiceOptionInConfig("test", {
+        name: "test",
+        value: "test",
+      } as ConfigOption)
+    ).toEqual(voiceClient.config);
+  });
+});
+
+describe("updateConfig method", () => {
+  test("Config cannot be set as a property", () => {
+    // Check if voiceClient has the config property
+    expect("config" in voiceClient).toBe(true);
+
+    expect(() => {
+      //@ts-expect-error config is protected
+      voiceClient.config = [];
+    }).toThrowError();
+  });
+
+  test("updateConfig method should update the config", () => {
+    const newConfig = voiceClient.setServiceOptionInConfig("test", {
+      name: "test",
+      value: "test",
+    } as ConfigOption);
+
+    voiceClient.updateConfig(newConfig);
+    expect(voiceClient.config).toEqual(newConfig);
   });
 });

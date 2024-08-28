@@ -493,17 +493,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   /**
-   * Set new configuration parameters.
-   * Note: this does nothing if the transport is connectd. Use updateConfig method instead
-   * @param config - VoiceClientConfigOption[] partial object with the new configuration
-   * @returns VoiceClientConfigOption[] - Updated configuration
-   */
-  protected set config(config: VoiceClientConfigOption[]) {
-    this._options.config = config;
-    this._options.callbacks?.onConfigUpdated?.(config);
-  }
-
-  /**
    * Request the bot to send its current configuration
    * @returns Promise<unknown> - Promise that resolves with the bot's configuration
    */
@@ -533,7 +522,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         true
       );
     } else {
-      this.config = config;
+      this._options.config = config;
     }
   }
 
@@ -627,14 +616,27 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     if (!serviceOptions) {
       console.debug("Service with name " + serviceKey + " not found in config");
-      return this.config;
+      return [...this.config];
     }
 
+    // Change or add the new option to the service config
     const newServiceOption = {
       service: serviceKey,
-      options: serviceOptions.options.map((item) =>
-        item.name === option.name ? { ...item, value: option.value } : item
-      ),
+      options: (() => {
+        const existingItem = serviceOptions.options.find(
+          (item) => item.name === option.name
+        );
+        if (existingItem) {
+          return serviceOptions.options.map((item) =>
+            item.name === option.name ? { ...item, value: option.value } : item
+          );
+        } else {
+          return [
+            ...serviceOptions.options,
+            { name: option.name, value: option.value },
+          ];
+        }
+      })(),
     };
 
     return [
@@ -750,7 +752,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       case VoiceMessageType.BOT_READY:
         clearTimeout(this._handshakeTimeout);
         // Hydrate config with the bot's config
-        this.config = (ev.data as BotReadyData).config;
+        this._options.config = (ev.data as BotReadyData).config;
         this._transport.state = "ready";
         this._startResolve?.(ev.data as BotReadyData);
         this._options.callbacks?.onBotReady?.(ev.data as BotReadyData);
@@ -761,7 +763,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       }
       case VoiceMessageType.CONFIG: {
         const resp = this._messageDispatcher.resolve(ev);
-        this.config = (resp.data as ConfigData).config;
+        this._options.config = (resp.data as ConfigData).config;
         break;
       }
       case VoiceMessageType.ACTIONS_AVAILABLE: {
