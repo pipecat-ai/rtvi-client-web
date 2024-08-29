@@ -1,10 +1,11 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   useVoiceClient,
   useVoiceClientEvent,
   useVoiceClientMediaDevices,
   useVoiceClientTransportState,
   VoiceClientAudio,
+  VoiceVisualizer,
 } from "realtime-ai-react";
 import ReactJson from "@microlink/react-json-view";
 import {
@@ -198,12 +199,26 @@ export const Sandbox = () => {
         <div className={styles.card}>
           <div>
             <strong>Local audio gain: </strong>
-            <MicMeter type={VoiceEvent.LocalAudioLevel} />
+            <VoiceVisualizer
+              backgroundColor="transparent"
+              barColor="black"
+              barGap={5}
+              barWidth={5}
+              barMaxHeight={56}
+              participantType="local"
+            />
           </div>
           {isBotConnected && (
             <div className="meter-wrapper">
               <strong>Bot audio gain</strong>
-              <MicMeter type={VoiceEvent.RemoteAudioLevel} />
+              <VoiceVisualizer
+                backgroundColor="transparent"
+                barColor="black"
+                barGap={5}
+                barWidth={5}
+                barMaxHeight={56}
+                participantType="bot"
+              />
             </div>
           )}
         </div>
@@ -450,57 +465,6 @@ export const Sandbox = () => {
         </div>
       </main>
       <VoiceClientAudio />
-    </div>
-  );
-};
-
-type MeterType = VoiceEvent.LocalAudioLevel | VoiceEvent.RemoteAudioLevel;
-
-interface MeterProps {
-  type: MeterType;
-}
-
-const MicMeter: React.FC<MeterProps> = ({ type }) => {
-  const meterRef = useRef<HTMLInputElement>(null);
-
-  useVoiceClientEvent(
-    type,
-    useCallback((level: number) => {
-      if (!meterRef.current) return;
-      meterRef.current.style.width = 100 * Math.min(1, 3 * level) + "%";
-    }, [])
-  );
-
-  useVoiceClientEvent(
-    VoiceEvent.Disconnected,
-    useCallback(() => {
-      if (!meterRef.current) return;
-      meterRef.current.style.width = "";
-    }, [type])
-  );
-
-  return (
-    <div
-      style={{
-        background: "#fafafa",
-        height: "4px",
-        margin: "20px 0",
-        position: "relative",
-        width: "150px",
-      }}
-    >
-      <div
-        ref={meterRef}
-        style={{
-          background: "blue",
-          borderRadius: "4px",
-          position: "absolute",
-          top: 0,
-          left: 0,
-          height: "100%",
-          transition: "width 100ms ease",
-        }}
-      />
     </div>
   );
 };
