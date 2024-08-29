@@ -1,6 +1,7 @@
 export { VoiceClientAudio } from "./VoiceClientAudio";
 export { VoiceClientVideo } from "./VoiceClientVideo";
 export { VoiceClientProvider } from "./VoiceClientProvider";
+export { VoiceVisualizer } from "./VoiceVisualizer";
 export { useVoiceClient } from "./useVoiceClient";
 export { useVoiceClientEvent } from "./useVoiceClientEvent";
 export { useVoiceClientMediaDevices } from "./useVoiceClientMediaDevices";
