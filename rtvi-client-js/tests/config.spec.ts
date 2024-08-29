@@ -155,8 +155,8 @@ describe("Voice Client Config Setter Helper Methods", () => {
   test("setServiceOptionInConfig should set or update multiple items", () => {
     const newConfig = voiceClient.setServiceOptionInConfig("llm", [
       {
-        name: "test",
-        value: "testabc",
+        name: "model",
+        value: "newModel",
       } as ConfigOption,
       {
         name: "test2",
@@ -168,7 +168,7 @@ describe("Voice Client Config Setter Helper Methods", () => {
         expect.objectContaining({
           service: "llm",
           options: expect.arrayContaining([
-            { name: "test", value: "testabc" },
+            { name: "model", value: "newModel" },
             { name: "test2", value: "test2" },
           ]),
         }),

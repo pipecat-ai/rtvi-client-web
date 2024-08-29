@@ -510,16 +510,18 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   /**
    * Update pipeline and services
    * @param config - VoiceClientConfigOption[] partial object with the new configuration
+   * @param interrupt - boolean flag to interrupt the current pipeline, or wait until the next turn
    * @returns Promise<unknown> - Promise that resolves with the updated configuration
    */
   public async updateConfig(
-    config: VoiceClientConfigOption[]
+    config: VoiceClientConfigOption[],
+    interrupt: boolean = false
   ): Promise<unknown> {
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
     if (this._transport.state === "ready") {
       return this._messageDispatcher.dispatch(
-        VoiceMessage.updateConfig(config),
+        VoiceMessage.updateConfig(config, interrupt),
         true
       );
     } else {
