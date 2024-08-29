@@ -1,5 +1,8 @@
 # Real-Time Voice Inference React SDK
 
+[![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.rtvi.ai)
+![NPM Version](https://img.shields.io/npm/v/realtime-ai-react)
+
 ## Install
 
 ```bash

@@ -1,5 +1,8 @@
 # Real-Time Voice Inference Web / JS SDK
 
+[![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.rtvi.ai)
+![NPM Version](https://img.shields.io/npm/v/realtime-ai)
+
 ## Install
 
 ```bash
