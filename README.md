@@ -1,15 +1,14 @@
 # Real-Time Voice Inference Web SDK
 
+[![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.rtvi.ai)
+![NPM Version](https://img.shields.io/npm/v/realtime-ai)
+
 
 ## Install
 
 ```bash
 # Install dependencies & link packages
-yarn
-# Build voice-sdk
-yarn workspace realtime-ai build
-# Build voice-sdk-react
-yarn workspace realtime-ai-react build
+yarn add realtime-ai
 ```
 
 ## Hack on the framework and play with the sandbox
@@ -17,7 +16,8 @@ yarn workspace realtime-ai-react build
 Install a provider transport
 
 ```bash
-yarn workspace realtime-ai-daily build
+yarn
+yarn workspace realtime-ai build
 ```
 
 Watch for file changes:
@@ -26,12 +26,5 @@ Watch for file changes:
 yarn workspace realtime-ai run dev
 ```
 
-Navigate to the sandbox directory and run the project
-
-```bash
-yarn workspace rtvi-sandbox run dev
-```
-
-Navigate to the URL in your browser
 
 

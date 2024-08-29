@@ -16,7 +16,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "parcel build --no-cache",
+    "build": "jest && parcel build --no-cache",
     "dev": "parcel watch",
     "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
     "test": "jest"
