@@ -190,6 +190,37 @@ describe("Voice Client Config Setter Helper Methods", () => {
       ])
     ).not.toEqual(voiceClient.config);
   });
+
+  test("setServiceOptionInConfig should update the passed config when provided", () => {
+    const testConfig: VoiceClientConfigOption[] = [
+      { service: "llm", options: [{ name: "test", value: "test" }] },
+      {
+        service: "tts",
+        options: [{ name: "test2", value: "test2" }],
+      },
+    ];
+    const mutatedConfig = voiceClient.setServiceOptionInConfig(
+      "llm",
+      {
+        name: "test",
+        value: "newTest",
+      } as ConfigOption,
+      testConfig
+    );
+
+    expect(mutatedConfig).toEqual([
+      {
+        service: "llm",
+        options: [{ name: "test", value: "newTest" }],
+      },
+      {
+        service: "tts",
+        options: [{ name: "test2", value: "test2" }],
+      },
+    ]);
+
+    expect(mutatedConfig).not.toEqual(voiceClient.config);
+  });
 });
 
 describe("updateConfig method", () => {

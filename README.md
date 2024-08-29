@@ -78,6 +78,9 @@ await voiceClient.start();
 
 ```
 
+## Documentation
+
+Docs and API reference can be found at https://docs.rtvi.ai
 
 ## Hack on the framework
 

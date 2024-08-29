@@ -632,11 +632,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Note: does not update current config, only returns a new object (call updateConfig to apply changes)
    * @param serviceKey - Service name to get options for (e.g. "llm")
    * @param option - Service name to get options for (e.g. "model")
+   * @param config? - Optional VoiceClientConfigOption[] to update (vs. using current config)
    * @returns VoiceClientConfigOption[] - Configuration options
    */
   public setServiceOptionInConfig(
     serviceKey: string,
-    option: ConfigOption | ConfigOption[]
+    option: ConfigOption | ConfigOption[],
+    config?: VoiceClientConfigOption[]
   ): VoiceClientConfigOption[] {
     const serviceOptions = this.getServiceOptionsFromConfig(serviceKey);
 
@@ -644,11 +646,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       console.debug(
         "Service with name '" + serviceKey + "' not found in config"
       );
-      return cloneDeep(this.config);
+      return config ?? cloneDeep(this.config);
     }
 
     const optionsArray = Array.isArray(option) ? option : [option];
-    const newConfig: VoiceClientConfigOption[] = cloneDeep(this.config);
+    const newConfig: VoiceClientConfigOption[] = cloneDeep(
+      config ?? this.config
+    );
 
     for (const opt of optionsArray) {
       const existingItem = newConfig.find(
