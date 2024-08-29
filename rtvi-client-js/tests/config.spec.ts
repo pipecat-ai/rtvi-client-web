@@ -221,6 +221,29 @@ describe("Voice Client Config Setter Helper Methods", () => {
 
     expect(mutatedConfig).not.toEqual(voiceClient.config);
   });
+
+  test("setConfigOptions update multiple service options and returns mutated object", () => {
+    const newConfig = voiceClient.setConfigOptions([
+      { service: "llm", options: [{ name: "model", value: "NewModel" }] },
+      { service: "tts", options: [{ name: "test", value: "test" }] },
+    ]);
+
+    expect(newConfig).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          service: "llm",
+          options: expect.arrayContaining([
+            { name: "model", value: "NewModel" },
+            { name: "run_on_config", value: true },
+          ]),
+        }),
+        expect.objectContaining({
+          service: "tts",
+          options: expect.arrayContaining([{ name: "test", value: "test" }]),
+        }),
+      ])
+    );
+  });
 });
 
 describe("updateConfig method", () => {

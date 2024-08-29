@@ -628,7 +628,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   }
 
   /**
-   * Returns config with updated config option for specified service key and option name
+   * Returns config with updated option(s) for specified service key and option name
    * Note: does not update current config, only returns a new object (call updateConfig to apply changes)
    * @param serviceKey - Service name to get options for (e.g. "llm")
    * @param option - Service name to get options for (e.g. "model")
@@ -650,9 +650,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
 
     const optionsArray = Array.isArray(option) ? option : [option];
-    const newConfig: VoiceClientConfigOption[] = cloneDeep(
-      config ?? this.config
-    );
+    const newConfig: VoiceClientConfigOption[] =
+      config ?? cloneDeep(this.config);
 
     for (const opt of optionsArray) {
       const existingItem = newConfig.find(
@@ -672,6 +671,26 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return newConfig;
   }
 
+  /**
+   * Returns config object with update properties from passed array
+   * @param configOptions - Array of VoiceClientConfigOption[] to update
+   * @param config? - Optional VoiceClientConfigOption[] to update (vs. using current config)
+   * @returns VoiceClientConfigOption[] - Configuration options
+   */
+  public setConfigOptions(
+    configOptions: VoiceClientConfigOption[],
+    config?: VoiceClientConfigOption[]
+  ): VoiceClientConfigOption[] {
+    let newConfig = config ?? cloneDeep(this.config);
+    for (const configOption of configOptions) {
+      newConfig = this.setServiceOptionInConfig(
+        configOption.service,
+        configOption.options,
+        newConfig
+      );
+    }
+    return newConfig;
+  }
   /**
    * Returns a full config array by merging partial config with existing config
    * @param config - Service name to get options for (e.g. "llm")

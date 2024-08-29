@@ -7,9 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.7] - 2024-08-28
 
-### Improved
+### Fixed
 
+- All config mutation methods (getServiceOptionsFromConfig, getServiceOptionValueFromConfig, setServiceOptionInConfig) now work when not in a ready state.
+
+### Added
+
+- New config method: `getServiceOptionValueFromConfig`. Returns value of config service option with passed service key and option name.
 - setServiceOptionInConfig now accepts either one or many ConfigOption arguments (and will set or update all)
+- setServiceOptionInConfig now accepts an optional 'config' param, which it will use over the default VoiceClient config. Useful if you want to mutate an existing config option across multiple services before calling `updateConfig`.
+- New config method `setConfigOptions` updates multiple service options by running each item through `setServiceOptionInConfig`.
 
 ### Fixed
 
