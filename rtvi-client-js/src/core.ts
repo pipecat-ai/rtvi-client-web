@@ -45,6 +45,15 @@ export type VoiceEventCallbacks = Partial<{
 
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
+  onScreenTrackStarted: (
+    track: MediaStreamTrack,
+    participant?: Participant
+  ) => void;
+  onScreenTrackStopped: (
+    track: MediaStreamTrack,
+    participant?: Participant
+  ) => void;
+  onScreenShareError: (errorMessage: string) => void;
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
 
@@ -125,6 +134,18 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onTrackStopped: (track, p) => {
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(VoiceEvent.TrackedStopped, track, p);
+      },
+      onScreenTrackStarted: (track, p) => {
+        options?.callbacks?.onScreenTrackStarted?.(track, p);
+        this.emit(VoiceEvent.ScreenTrackStarted, track, p);
+      },
+      onScreenTrackStopped: (track, p) => {
+        options?.callbacks?.onScreenTrackStopped?.(track, p);
+        this.emit(VoiceEvent.ScreenTrackStopped, track, p);
+      },
+      onScreenShareError: (errorMessage) => {
+        options?.callbacks?.onScreenShareError?.(errorMessage);
+        this.emit(VoiceEvent.ScreenShareError, errorMessage);
       },
       onAvailableCamsUpdated: (cams) => {
         options?.callbacks?.onAvailableCamsUpdated?.(cams);
@@ -473,6 +494,18 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   public tracks() {
     return this._transport.tracks();
+  }
+
+  public startScreenShare() {
+    return this._transport.startScreenShare();
+  }
+
+  public stopScreenShare() {
+    return this._transport.stopScreenShare();
+  }
+
+  public isSharingScreen() {
+    return this._transport.isSharingScreen();
   }
 
   // ------ Config methods

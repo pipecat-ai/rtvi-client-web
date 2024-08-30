@@ -11,6 +11,7 @@ import { Participant, TransportState } from "./transport";
 export enum VoiceEvent {
   MessageError = "messageError",
   Error = "error",
+  ScreenShareError = "screenShareError",
 
   Connected = "connected",
   Disconnected = "disconnected",
@@ -24,6 +25,8 @@ export enum VoiceEvent {
   ParticipantLeft = "participantLeft",
   TrackStarted = "trackStarted",
   TrackedStopped = "trackStopped",
+  ScreenTrackStarted = "screenTrackStarted",
+  ScreenTrackStopped = "screenTrackStopped",
 
   AvailableCamsUpdated = "availableCamsUpdated",
   AvailableMicsUpdated = "availableMicsUpdated",
@@ -63,6 +66,8 @@ export type VoiceEvents = Partial<{
   participantLeft: (p: Participant) => void;
   trackStarted: (track: MediaStreamTrack, p?: Participant) => void;
   trackStopped: (track: MediaStreamTrack, p?: Participant) => void;
+  screenTrackStarted: (track: MediaStreamTrack, p?: Participant) => void;
+  screenTrackStopped: (track: MediaStreamTrack, p?: Participant) => void;
 
   availableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
   availableMicsUpdated: (cams: MediaDeviceInfo[]) => void;
@@ -86,6 +91,7 @@ export type VoiceEvents = Partial<{
 
   error: (message: VoiceMessage) => void;
   messageError: (message: VoiceMessage) => void;
+  screenShareError: (errorMessage: string) => void;
 
   llmFunctionCall: (func: LLMFunctionCallData) => void;
   llmFunctionCallStart: (functionName: string) => void;

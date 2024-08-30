@@ -13,6 +13,11 @@ interface Props
   participant: "local" | "bot";
 
   /**
+   * Defines the video track type to display. Default: 'video'.
+   */
+  trackType: "screenVideo" | "video";
+
+  /**
    * Defines whether the video should be fully contained or cover the box. Default: 'contain'.
    */
   fit?: "contain" | "cover";
@@ -36,12 +41,13 @@ export const VoiceClientVideo = forwardRef<HTMLVideoElement, Props>(
       mirror,
       onResize,
       style = {},
+      trackType = "video",
       ...props
     },
     ref
   ) {
     const videoTrack: MediaStreamTrack | null = useVoiceClientMediaTrack(
-      "video",
+      trackType,
       participant
     );
 
