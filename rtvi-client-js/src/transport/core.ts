@@ -35,6 +35,7 @@ export abstract class Transport {
   protected _config: VoiceClientConfigOption[];
   protected _onMessage: (ev: VoiceMessage) => void;
   protected _state: TransportState = "idle";
+  protected _expiry?: number = undefined;
 
   constructor(
     options: VoiceClientOptions,
@@ -75,7 +76,9 @@ export abstract class Transport {
   abstract get state(): TransportState;
   abstract set state(state: TransportState);
 
-  abstract get expiry(): number | undefined;
+  get expiry(): number | undefined {
+    return this._expiry;
+  }
 
   abstract tracks(): Tracks;
 }

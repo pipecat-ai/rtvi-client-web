@@ -93,8 +93,14 @@ export class VoiceMessage {
     return new VoiceMessage(VoiceMessageType.CLIENT_READY, {});
   }
 
-  static updateConfig(config: VoiceClientConfigOption[]): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.UPDATE_CONFIG, { config });
+  static updateConfig(
+    config: VoiceClientConfigOption[],
+    interrupt: boolean = false
+  ): VoiceMessage {
+    return new VoiceMessage(VoiceMessageType.UPDATE_CONFIG, {
+      config,
+      interrupt,
+    });
   }
 
   static describeConfig(): VoiceMessage {

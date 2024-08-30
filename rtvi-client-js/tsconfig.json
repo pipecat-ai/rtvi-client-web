@@ -13,6 +13,7 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "moduleDetection": "force",
+    "esModuleInterop": true,
 
     /* Linting */
     "strict": true, 

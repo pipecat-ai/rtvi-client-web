@@ -1,5 +1,3 @@
-import { deepmerge } from "deepmerge-ts";
-
 import {
   ActionData,
   VoiceClientConfigOption,
@@ -84,16 +82,20 @@ export class LLMHelper extends VoiceClientHelper {
   // --- Actions
 
   /**
-   * Bot's current LLM context. Bot must be in the ready state.
-   * @returns Promise<unknown> | void
+   * Bot's current LLM context.
+   * @returns Promise<LLMContextMessage[]>
    */
-  public getContext(): Promise<unknown> | void {
-    //@TODO: handle non-ready return too?
+  public async getContext(): Promise<LLMContextMessage[]> {
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
         service: this._service,
         action: "get_context",
-      } as ActionData);
+      } as ActionData) as Promise<LLMContextMessage[]>;
+    } else {
+      return this._voiceClient.getServiceOptionValueFromConfig(
+        this._service,
+        this._getMessagesKey()
+      ) as LLMContextMessage[];
     }
   }
 
@@ -107,7 +109,7 @@ export class LLMHelper extends VoiceClientHelper {
   public async setContext(
     context: LLMContext,
     interrupt: boolean = false
-  ): Promise<unknown> {
+  ): Promise<VoiceClientConfigOption[]> {
     const currentContext = this._voiceClient.getServiceOptionsFromConfig(
       this._service
     ) as VoiceClientConfigOption;
@@ -124,8 +126,6 @@ export class LLMHelper extends VoiceClientHelper {
       },
     ];
 
-    const newConfig = deepmerge(currentContext, this._voiceClient.config);
-
     if (this._voiceClient.state === "ready") {
       return this._voiceClient.action({
         service: this._service,
@@ -140,11 +140,16 @@ export class LLMHelper extends VoiceClientHelper {
             value: interrupt,
           },
         ],
-      } as ActionData);
+      } as ActionData) as Promise<VoiceClientConfigOption[]>;
     } else {
-      return this._voiceClient.updateConfig(
-        newConfig as VoiceClientConfigOption[]
-      );
+      const newConfig: VoiceClientConfigOption[] =
+        this._voiceClient.setServiceOptionInConfig(this._service, {
+          name: messages_key,
+          value: context.messages,
+        });
+      this._voiceClient.updateConfig(newConfig);
+
+      return newConfig;
     }
   }
 
@@ -158,9 +163,7 @@ export class LLMHelper extends VoiceClientHelper {
   public async appendToMessages(
     context: LLMContextMessage,
     runImmediately: boolean = false
-  ): Promise<unknown> {
-    this._voiceClient.getServiceOptionsFromConfig(this._service);
-
+  ): Promise<VoiceClientConfigOption[]> {
     const messages_key = this._getMessagesKey();
 
     if (this._voiceClient.state === "ready") {
@@ -177,9 +180,21 @@ export class LLMHelper extends VoiceClientHelper {
             value: runImmediately,
           },
         ],
-      } as ActionData);
+      } as ActionData) as Promise<VoiceClientConfigOption[]>;
     } else {
-      // @TODO: Update initial messages config
+      const currentMessages = this._voiceClient.getServiceOptionValueFromConfig(
+        this._service,
+        messages_key
+      ) as LLMContextMessage[];
+
+      const newConfig: VoiceClientConfigOption[] =
+        this._voiceClient.setServiceOptionInConfig(this._service, {
+          name: messages_key,
+          value: [...currentMessages, context],
+        });
+      this._voiceClient.updateConfig(newConfig);
+
+      return newConfig;
     }
   }
 

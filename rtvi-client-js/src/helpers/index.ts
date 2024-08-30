@@ -1,4 +1,4 @@
-import { VoiceClient, VoiceMessage } from "..";
+import { Client, VoiceMessage } from "..";
 
 export type VoiceClientHelpers = Partial<Record<string, VoiceClientHelper>>;
 
@@ -13,7 +13,7 @@ export interface VoiceClientHelperOptions {
 
 export abstract class VoiceClientHelper {
   protected _options: VoiceClientHelperOptions;
-  protected declare _voiceClient: VoiceClient;
+  protected declare _voiceClient: Client;
   protected declare _service: string;
 
   constructor(options: VoiceClientHelperOptions) {
@@ -22,7 +22,7 @@ export abstract class VoiceClientHelper {
 
   public abstract handleMessage(ev: VoiceMessage): void;
   public abstract getMessageTypes(): string[];
-  public set voiceClient(voiceClient: VoiceClient) {
+  public set voiceClient(voiceClient: Client) {
     this._voiceClient = voiceClient;
   }
   public set service(service: string) {
