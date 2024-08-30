@@ -166,13 +166,13 @@ export const VoiceVisualizer: React.FC<Props> = React.memo(
         });
 
         if (!isActive) {
-          drawInactiveCircles(adjustedCircleRadius);
+          drawInactiveCircles(adjustedCircleRadius, barColor);
         }
 
         requestAnimationFrame(drawSpectrum);
       }
 
-      function drawInactiveCircles(circleRadius: number) {
+      function drawInactiveCircles(circleRadius: number, color: string) {
         const totalBarsWidth =
           bands.length * barWidth + (bands.length - 1) * barGap;
         const startX = (canvas.width / scaleFactor - totalBarsWidth) / 2;
@@ -183,7 +183,7 @@ export const VoiceVisualizer: React.FC<Props> = React.memo(
 
           canvasCtx.beginPath();
           canvasCtx.arc(x + barWidth / 2, y, circleRadius, 0, 2 * Math.PI);
-          canvasCtx.fillStyle = "white";
+          canvasCtx.fillStyle = color;
           canvasCtx.fill();
           canvasCtx.closePath();
         });
