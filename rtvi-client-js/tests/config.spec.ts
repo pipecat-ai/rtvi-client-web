@@ -2,6 +2,7 @@ import { describe, expect, test } from "@jest/globals";
 
 import {
   ConfigOption,
+  LLMContextMessage,
   VoiceClient,
   type VoiceClientConfigOption,
   VoiceClientServices,
@@ -105,6 +106,48 @@ describe("Voice Client Config Getter Helper Methods", () => {
     expect(
       voiceClient.getServiceOptionValueFromConfig("llm", "test")
     ).toBeUndefined();
+  });
+
+  test("getServiceOptionsFromConfig should return a new instance of service config", () => {
+    let value: VoiceClientConfigOption =
+      voiceClient.getServiceOptionsFromConfig("llm") as VoiceClientConfigOption;
+
+    const messages = value.options[1].value as LLMContextMessage[];
+    messages[0].content = "test";
+
+    expect(
+      voiceClient.getServiceOptionValueFromConfig("llm", "initial_messages")
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          role: "system",
+          content:
+            "You are a assistant called ExampleBot. You can ask me anything.",
+        },
+      ])
+    );
+  });
+
+  test("getServiceOptionFromConfig should return a new instance of config option", () => {
+    let value: LLMContextMessage[] =
+      voiceClient.getServiceOptionValueFromConfig(
+        "llm",
+        "initial_messages"
+      ) as LLMContextMessage[];
+
+    value[0].content = "test";
+
+    expect(
+      voiceClient.getServiceOptionValueFromConfig("llm", "initial_messages")
+    ).toEqual(
+      expect.arrayContaining([
+        {
+          role: "system",
+          content:
+            "You are a assistant called ExampleBot. You can ask me anything.",
+        },
+      ])
+    );
   });
 });
 

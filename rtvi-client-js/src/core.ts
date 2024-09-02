@@ -599,10 +599,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
 
     // Find matching option key in the service config
-    const optionValue: ConfigOption | undefined = cloneDeep(
-      configServiceKey.options.find((o: ConfigOption) => o.name === option)
+    const optionValue: ConfigOption | undefined = configServiceKey.options.find(
+      (o: ConfigOption) => o.name === option
     );
-
     return ({ ...optionValue } as ConfigOption).value;
   }
 
