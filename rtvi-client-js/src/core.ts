@@ -309,6 +309,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         const customAuthHandler = this._options.customAuthHandler;
 
         console.debug("[RTVI Client] Connecting to baseUrl", this._baseUrl);
+        console.debug("[RTVI Client] Config", config);
 
         try {
           if (customAuthHandler) {
@@ -526,6 +527,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       );
     } else {
       this._options.config = config;
+      this._options.callbacks?.onConfigUpdated?.(config);
     }
   }
 
@@ -569,7 +571,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
 
     // Return a new object, as to not mutate existing state
-    return { ...configServiceKey };
+    return cloneDeep(configServiceKey);
   }
 
   /**
@@ -597,8 +599,8 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
 
     // Find matching option key in the service config
-    const optionValue: ConfigOption | undefined = configServiceKey.options.find(
-      (o: ConfigOption) => o.name === option
+    const optionValue: ConfigOption | undefined = cloneDeep(
+      configServiceKey.options.find((o: ConfigOption) => o.name === option)
     );
 
     return ({ ...optionValue } as ConfigOption).value;

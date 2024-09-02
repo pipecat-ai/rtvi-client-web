@@ -92,10 +92,13 @@ export class LLMHelper extends VoiceClientHelper {
         action: "get_context",
       } as ActionData) as Promise<LLMContextMessage[]>;
     } else {
-      return this._voiceClient.getServiceOptionValueFromConfig(
-        this._service,
-        this._getMessagesKey()
-      ) as LLMContextMessage[];
+      const currentContext: LLMContextMessage[] =
+        this._voiceClient.getServiceOptionValueFromConfig(
+          this._service,
+          this._getMessagesKey()
+        ) as LLMContextMessage[];
+
+      return [...currentContext];
     }
   }
 

@@ -5,6 +5,7 @@ import {
   VoiceClient,
   type VoiceClientConfigOption,
   VoiceClientServices,
+  VoiceEvent,
 } from "../src/";
 import { TransportStub } from "./transport.stub";
 
@@ -258,12 +259,43 @@ describe("updateConfig method", () => {
   });
 
   test("updateConfig method should update the config", () => {
-    const newConfig = voiceClient.setServiceOptionInConfig("test", {
+    const newConfig = voiceClient.setServiceOptionInConfig("tts", {
       name: "test",
       value: "test",
     } as ConfigOption);
 
     voiceClient.updateConfig(newConfig);
-    expect(voiceClient.config).toEqual(newConfig);
+
+    expect(newConfig).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          service: "tts",
+          options: expect.arrayContaining([{ name: "test", value: "test" }]),
+        }),
+      ])
+    );
+  });
+
+  test("updateConfig should trigger onConfigUpdate event", async () => {
+    const newConfig = voiceClient.setServiceOptionInConfig("tts", {
+      name: "test",
+      value: "test2",
+    } as ConfigOption);
+
+    const handleConfigUpdate = (updatedConfig: VoiceClientConfigOption[]) => {
+      expect(updatedConfig).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            service: "tts",
+            options: expect.arrayContaining([{ name: "test", value: "test2" }]),
+          }),
+        ])
+      );
+    };
+    voiceClient.on(VoiceEvent.ConfigUpdated, handleConfigUpdate);
+
+    await voiceClient.updateConfig(newConfig);
+
+    voiceClient.off(VoiceEvent.ConfigUpdated, handleConfigUpdate);
   });
 });
