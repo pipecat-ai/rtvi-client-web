@@ -176,7 +176,7 @@ export class LLMHelper extends VoiceClientHelper {
     const messages_key = this._getMessagesKey();
 
     if (this._voiceClient.state === "ready") {
-      const result = await this._voiceClient.action({
+      const actionResponse = (await this._voiceClient.action({
         service: this._service,
         action: "append_to_messages",
         arguments: [
@@ -189,8 +189,8 @@ export class LLMHelper extends VoiceClientHelper {
             value: runImmediately,
           },
         ],
-      } as ActionData);
-      return (result.data as { result: boolean }).result;
+      } as ActionData)) as VoiceMessageActionResponse;
+      return !!actionResponse.data.result;
     } else {
       const currentMessages = this._voiceClient.getServiceOptionValueFromConfig(
         this._service,

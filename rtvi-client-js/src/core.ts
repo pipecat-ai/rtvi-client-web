@@ -316,7 +316,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           if (customAuthHandler) {
             authBundle = await customAuthHandler(
               this._baseUrl,
-              this._options.timeout,
+              this._handshakeTimeout,
               this._abortController!
             );
           } else {

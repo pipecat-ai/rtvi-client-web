@@ -9,8 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `voiceClient.action()` now returns a new type `VoiceMessageActionResponse` that aligns to RTVI's action response shape. Dispatching an action is the same as dispatching a `VoiceMessage` except the messageDispatcher will type the response according to the message type. `action-response` will resolve or reject as a `VoiceMessageActionResponse`, whereas any other message type is typed as a `VoiceMessage`. This change makes it less verbose to handle action responses, where the `data` blob will always contain a `result` property.
+- `voiceClient.action()` now returns a new type `VoiceMessageActionResponse` that aligns to RTVI's action response shape. Dispatching an action is the same as dispatching a `VoiceMessage` except the messageDispatcher will type the response accordingly. `action-response` will resolve or reject as a `VoiceMessageActionResponse`, whereas any other message type is typed as a `VoiceMessage`. This change makes it less verbose to handle action responses, where the `data` blob will always contain a `result` property.
+- LLM Helper `getContext` returns a valid promise return type (`Promise<LLMContext>`).
+- LLMHelper `getContext` resolves with the action result (not the data object).
+- LLMHelper `setContext` returns a valid promise return type (`Promise<boolean>`).
+- LLMHelper `setContext` resolves with the action result boolean (not the data object).
+- LLMHelper `appendToMessages` returns a valid promise return type (`Promise<boolean>`).
+- LLMHelper `appendToMessages` resolves with the action result boolean (not the data object).
 
+### Fixed
+
+- `customAuthHandler` is now provided with the timeout object, allowing developers to manually clear it (if set) in response to their custom auth logic.
+- `getServiceOptionsFromConfig` returns `unknown | undefined` when a service option is not found in the config definition.
+- `getServiceOptionsValueFromConfig` returns `unknown | undefined` when a service option or value is not found in the config definition.
+- `getServiceOptionValueFromConfig` returns a deep clone of the value, to avoid nested references.
+- `VoiceMessageType.CONFIG_AVAILABLE` resolves the dispatched action, allowing `describeConfig()` to be awaited.
+- `VoiceMessageType.ACTIONS_AVAILABLE` resolves the dispatched action, allowing `describeActions()` to be awaited.
+
+### Added
+
+- Action dispatch tests
 
 ## [0.1.8] - 2024-09-02
 
