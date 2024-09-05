@@ -64,6 +64,13 @@ export type Transcript = {
   user_id: string;
 };
 
+export type VoiceMessageActionResponse = {
+  id: string;
+  label: string;
+  type: string;
+  data: { result: unknown };
+};
+
 export class VoiceMessage {
   id: string;
   label: string = "rtvi-ai";
@@ -78,14 +85,6 @@ export class VoiceMessage {
     } else {
       this.id = nanoid(8);
     }
-  }
-
-  public serialize(): string {
-    return JSON.stringify({
-      type: this.type,
-      label: this.label,
-      data: this.data,
-    });
   }
 
   // Outbound message types
@@ -134,7 +133,6 @@ interface QueuedVoiceMessage {
   timestamp: number;
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
-  shouldReject: boolean;
 }
 
 export class MessageDispatcher {
@@ -149,24 +147,23 @@ export class MessageDispatcher {
   }
 
   public dispatch(
-    message: VoiceMessage,
-    shouldReject: boolean = false
-  ): Promise<unknown> {
+    message: VoiceMessage
+  ): Promise<VoiceMessage | VoiceMessageActionResponse> {
     const promise = new Promise((resolve, reject) => {
       this._queue.push({
         message,
         timestamp: Date.now(),
         resolve,
         reject,
-        shouldReject,
       });
     });
 
+    console.debug("[MessageDispatcher] dispatch", message);
     this._transport.sendMessage(message);
 
     this._gc();
 
-    return promise;
+    return promise as Promise<VoiceMessage | VoiceMessageActionResponse>;
   }
 
   private _resolveReject(
@@ -179,14 +176,19 @@ export class MessageDispatcher {
 
     if (queuedMessage) {
       if (resolve) {
-        queuedMessage.resolve(message as VoiceMessage);
+        console.debug("[MessageDispatcher] Resolve", message);
+        queuedMessage.resolve(
+          message.type === VoiceMessageType.ACTION_RESPONSE
+            ? (message as VoiceMessageActionResponse)
+            : (message as VoiceMessage)
+        );
       } else {
-        if (queuedMessage.shouldReject) {
-          queuedMessage.reject(message as VoiceMessage);
-        }
+        console.debug("[MessageDispatcher] Reject", message);
+        queuedMessage.reject(message as VoiceMessage);
       }
       // Remove message from queue
       this._queue = this._queue.filter((msg) => msg.message.id !== message.id);
+      console.debug("[MessageDispatcher] Queue", this._queue);
     }
 
     return message;
@@ -204,5 +206,6 @@ export class MessageDispatcher {
     this._queue = this._queue.filter((msg) => {
       return Date.now() - msg.timestamp < this._gcTime;
     });
+    console.debug("[MessageDispatcher] GC", this._queue);
   }
 }

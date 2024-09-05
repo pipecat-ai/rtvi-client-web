@@ -73,7 +73,7 @@ export interface VoiceClientOptions {
    */
   customAuthHandler?: (
     baseUrl: string,
-    timeout: number | undefined,
+    timeout: ReturnType<typeof setTimeout> | undefined,
     abortController: AbortController
   ) => Promise<void>;
 }

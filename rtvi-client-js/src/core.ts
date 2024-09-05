@@ -16,6 +16,7 @@ import {
   VoiceClientOptions,
   VoiceClientServices,
   VoiceMessage,
+  VoiceMessageActionResponse,
   VoiceMessageMetrics,
   VoiceMessageType,
 } from ".";
@@ -315,7 +316,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           if (customAuthHandler) {
             authBundle = await customAuthHandler(
               this._baseUrl,
-              this._options.timeout,
+              this._handshakeTimeout,
               this._abortController!
             );
           } else {
@@ -522,8 +523,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     // potential racing conditions whilst pipeline is instantiating
     if (this._transport.state === "ready") {
       return this._messageDispatcher.dispatch(
-        VoiceMessage.updateConfig(config, interrupt),
-        true
+        VoiceMessage.updateConfig(config, interrupt)
       );
     } else {
       this._options.config = config;
@@ -548,7 +548,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   /**
    * Returns configuration options for specified service key
    * @param serviceKey - Service name to get options for (e.g. "llm")
-   * @returns VoiceClientConfigOption - Configuration options array for the service with specified key
+   * @returns VoiceClientConfigOption | undefined - Configuration options array for the service with specified key or undefined
    */
   public getServiceOptionsFromConfig(
     serviceKey: string
@@ -578,18 +578,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Returns configuration option value (unknown) for specified service key and option name
    * @param serviceKey - Service name to get options for (e.g. "llm")
    * @optional option Name of option return from the config (e.g. "model")
-   * @returns unknown - Service configuration option value
+   * @returns unknown | undefined - Service configuration option value or undefined
    */
   public getServiceOptionValueFromConfig(
     serviceKey: string,
     option: string
   ): unknown | undefined {
-    // Check if we have registered service with name service
-    if (!serviceKey || !option) {
-      console.debug("Target service name and option name is required");
-      return undefined;
-    }
-
     const configServiceKey: VoiceClientConfigOption | undefined =
       this.getServiceOptionsFromConfig(serviceKey);
 
@@ -602,7 +596,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     const optionValue: ConfigOption | undefined = configServiceKey.options.find(
       (o: ConfigOption) => o.name === option
     );
-    return ({ ...optionValue } as ConfigOption).value;
+
+    return optionValue
+      ? cloneDeep(optionValue as ConfigOption).value
+      : undefined;
   }
 
   private _updateOrAddOption(
@@ -728,12 +725,16 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * Dispatch an action message to the bot
-   * @param action - ActionData object with the action to dispatch
-   * @returns Promise<unknown> - Promise that resolves with the action response
+   * @param actionData - ActionData object with the action to dispatch
+   * @returns Promise<VoiceMessageActionResponse> - Promise that resolves with the action response
    */
-  public async action(action: ActionData): Promise<unknown> {
+  public async action(
+    actionData: ActionData
+  ): Promise<VoiceMessageActionResponse> {
     if (this._transport.state === "ready") {
-      return this._messageDispatcher.dispatch(VoiceMessage.action(action));
+      return this._messageDispatcher.dispatch(
+        VoiceMessage.action(actionData)
+      ) as Promise<VoiceMessageActionResponse>;
     } else {
       throw new VoiceErrors.BotNotReadyError();
     }
@@ -802,6 +803,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._options.callbacks?.onBotReady?.(ev.data as BotReadyData);
         break;
       case VoiceMessageType.CONFIG_AVAILABLE: {
+        this._messageDispatcher.resolve(ev);
         this._options.callbacks?.onConfigDescribe?.(ev.data);
         break;
       }
@@ -811,6 +813,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         break;
       }
       case VoiceMessageType.ACTIONS_AVAILABLE: {
+        this._messageDispatcher.resolve(ev);
         this._options.callbacks?.onActionsAvailable?.(ev.data);
         break;
       }

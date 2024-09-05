@@ -51,8 +51,15 @@ Wrap your app with `<VoiceClientProvider>` and pass it a `voiceClient` instance.
 
 ### `VoiceClientAudio`
 
-This component wires up the bot's audio track to the DOM.
+Creates a new `<audio>` element that mounts the bot's audio track. 
 
+### `VoiceClientVideo`
+
+Creates a new `<video participant="local | bot">` element that renders either the bot or local participant's video track. 
+
+### `VoiceVisualizer`
+
+Creates a new canvas element that renders a customizable waveform effect for visualizing a audio track.
 ## Hooks
 
 ### `useVoiceClient()`

@@ -68,13 +68,17 @@ describe("LLM Helper", () => {
   test("getContext should return correct context", async () => {
     const context = await llmHelper.getContext();
 
-    expect(context).toEqual([
-      {
-        role: "system",
-        content:
-          "You are a assistant called ExampleBot. You can ask me anything.",
-      },
-    ]);
+    expect(context).toEqual(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          {
+            role: "system",
+            content:
+              "You are a assistant called ExampleBot. You can ask me anything.",
+          },
+        ]),
+      })
+    );
   });
 
   test("setContext should update the voice client config", async () => {
@@ -99,7 +103,7 @@ describe("LLM Helper", () => {
 
   test("getContext to return the updated context", async () => {
     const context = await llmHelper.getContext();
-    expect(context).toEqual(newMessages);
+    expect(context).toEqual({ messages: newMessages });
   });
 
   test("setContext should be able to set multiple messages", async () => {
@@ -145,22 +149,35 @@ describe("LLM Helper", () => {
 
   test("getContext should all return messages", async () => {
     const context = await llmHelper.getContext();
-    expect(context).toEqual([
+    expect(context).toEqual({
+      messages: [
+        {
+          role: "system",
+          content: "test",
+        },
+        {
+          role: "user",
+          content: "test",
+        },
+      ],
+    });
+  });
+
+  test("setContext should return a boolean", async () => {
+    const result = await llmHelper.setContext(
       {
-        role: "system",
-        content: "test",
+        messages: newMessages,
       },
-      {
-        role: "user",
-        content: "test",
-      },
-    ]);
+      false
+    );
+
+    expect(result).toBe(true);
   });
 });
 
 describe("LLM Helper appendContext", () => {
-  test("appendMessages should add messages to config", async () => {
-    await llmHelper.appendToMessages({
+  test("appendMessages should add messages to config and return true", async () => {
+    const result = await llmHelper.appendToMessages({
       role: "assistant",
       content: "Appended message",
     });
@@ -183,5 +200,7 @@ describe("LLM Helper appendContext", () => {
         }),
       ])
     );
+
+    expect(result).toBe(true);
   });
 });
