@@ -3,6 +3,7 @@ import {
   VoiceClientConfigOption,
   VoiceEvent,
   VoiceMessage,
+  VoiceMessageActionResponse,
 } from "..";
 import * as VoiceErrors from "./../errors";
 import { VoiceClientHelper, VoiceClientHelperOptions } from ".";
@@ -23,6 +24,7 @@ export type LLMContextMessage = {
 
 export type LLMContext = {
   messages?: LLMContextMessage[];
+  tools?: [];
 };
 
 export type FunctionCallParams = {
@@ -82,23 +84,25 @@ export class LLMHelper extends VoiceClientHelper {
   // --- Actions
 
   /**
-   * Bot's current LLM context.
-   * @returns Promise<LLMContextMessage[]>
+   * Retrieve the bot's current LLM context.
+   * Note: returns `messages` array when the transport is not in the ready state vs. full config
+   * @returns Promise<LLMContext>
    */
-  public async getContext(): Promise<LLMContextMessage[]> {
+  public async getContext(): Promise<LLMContext> {
     if (this._voiceClient.state === "ready") {
-      return this._voiceClient.action({
-        service: this._service,
-        action: "get_context",
-      } as ActionData) as Promise<LLMContextMessage[]>;
+      const actionResponseMsg: VoiceMessageActionResponse =
+        await this._voiceClient.action({
+          service: this._service,
+          action: "get_context",
+        } as ActionData);
+      return actionResponseMsg.data.result as LLMContext;
     } else {
       const currentContext: LLMContextMessage[] =
         this._voiceClient.getServiceOptionValueFromConfig(
           this._service,
           this._getMessagesKey()
         ) as LLMContextMessage[];
-
-      return [...currentContext];
+      return { messages: currentContext } as LLMContext;
     }
   }
 
@@ -107,12 +111,12 @@ export class LLMHelper extends VoiceClientHelper {
    * If this is called while the transport is not in the ready state, the local context will be updated
    * @param context LLMContext - The new context
    * @param interrupt boolean - Whether to interrupt the bot, or wait until it has finished speaking
-   * @returns Promise<unknown>
+   * @returns Promise<boolean>
    */
   public async setContext(
     context: LLMContext,
     interrupt: boolean = false
-  ): Promise<VoiceClientConfigOption[]> {
+  ): Promise<boolean> {
     const currentContext = this._voiceClient.getServiceOptionsFromConfig(
       this._service
     ) as VoiceClientConfigOption;
@@ -130,20 +134,22 @@ export class LLMHelper extends VoiceClientHelper {
     ];
 
     if (this._voiceClient.state === "ready") {
-      return this._voiceClient.action({
-        service: this._service,
-        action: "set_context",
-        arguments: [
-          {
-            name: messages_key,
-            value: context.messages,
-          },
-          {
-            name: "interrupt",
-            value: interrupt,
-          },
-        ],
-      } as ActionData) as Promise<VoiceClientConfigOption[]>;
+      const actionResponse: VoiceMessageActionResponse =
+        (await this._voiceClient.action({
+          service: this._service,
+          action: "set_context",
+          arguments: [
+            {
+              name: messages_key,
+              value: context.messages,
+            },
+            {
+              name: "interrupt",
+              value: interrupt,
+            },
+          ],
+        } as ActionData)) as VoiceMessageActionResponse;
+      return !!actionResponse.data.result;
     } else {
       const newConfig: VoiceClientConfigOption[] =
         this._voiceClient.setServiceOptionInConfig(this._service, {
@@ -152,7 +158,7 @@ export class LLMHelper extends VoiceClientHelper {
         });
       this._voiceClient.updateConfig(newConfig);
 
-      return newConfig;
+      return true;
     }
   }
 
@@ -161,16 +167,16 @@ export class LLMHelper extends VoiceClientHelper {
    * If this is called while the transport is not in the ready state, the local context will be updated
    * @param context LLMContextMessage
    * @param runImmediately boolean - wait until pipeline is idle before running
-   * @returns
+   * @returns boolean
    */
   public async appendToMessages(
     context: LLMContextMessage,
     runImmediately: boolean = false
-  ): Promise<VoiceClientConfigOption[]> {
+  ): Promise<boolean> {
     const messages_key = this._getMessagesKey();
 
     if (this._voiceClient.state === "ready") {
-      return this._voiceClient.action({
+      const result = await this._voiceClient.action({
         service: this._service,
         action: "append_to_messages",
         arguments: [
@@ -183,7 +189,8 @@ export class LLMHelper extends VoiceClientHelper {
             value: runImmediately,
           },
         ],
-      } as ActionData) as Promise<VoiceClientConfigOption[]>;
+      } as ActionData);
+      return (result.data as { result: boolean }).result;
     } else {
       const currentMessages = this._voiceClient.getServiceOptionValueFromConfig(
         this._service,
@@ -197,7 +204,7 @@ export class LLMHelper extends VoiceClientHelper {
         });
       this._voiceClient.updateConfig(newConfig);
 
-      return newConfig;
+      return true;
     }
   }
 

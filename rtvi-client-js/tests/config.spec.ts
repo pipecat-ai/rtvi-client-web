@@ -128,7 +128,7 @@ describe("Voice Client Config Getter Helper Methods", () => {
     );
   });
 
-  test("getServiceOptionFromConfig should return a new instance of config option", () => {
+  test("getServiceOptionValueFromConfig should return a new instance of config option", () => {
     let value: LLMContextMessage[] =
       voiceClient.getServiceOptionValueFromConfig(
         "llm",

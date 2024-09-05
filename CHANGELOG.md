@@ -5,6 +5,13 @@ All notable changes to **RTVI Client Web** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9] - 2024-09-04
+
+### Changed
+
+- `voiceClient.action()` now returns a new type `VoiceMessageActionResponse` that aligns to RTVI's action response shape. Dispatching an action is the same as dispatching a `VoiceMessage` except the messageDispatcher will type the response according to the message type. `action-response` will resolve or reject as a `VoiceMessageActionResponse`, whereas any other message type is typed as a `VoiceMessage`. This change makes it less verbose to handle action responses, where the `data` blob will always contain a `result` property.
+
+
 ## [0.1.8] - 2024-09-02
 
 ### Fixed
