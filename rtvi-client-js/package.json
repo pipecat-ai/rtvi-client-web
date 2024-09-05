@@ -44,7 +44,6 @@
     "clone-deep": "^4.0.1",
     "events": "^3.3.0",
     "nanoid": "^5.0.7",
-    "typed-emitter": "^2.1.0",
-    "winston": "^3.14.2"
+    "typed-emitter": "^2.1.0"
   }
 }
