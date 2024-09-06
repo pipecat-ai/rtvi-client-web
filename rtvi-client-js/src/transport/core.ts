@@ -21,6 +21,8 @@ export type Participant = {
 export type Tracks = {
   local: {
     audio?: MediaStreamTrack;
+    screenAudio?: MediaStreamTrack;
+    screenVideo?: MediaStreamTrack;
     video?: MediaStreamTrack;
   };
   bot?: {
@@ -81,4 +83,8 @@ export abstract class Transport {
   }
 
   abstract tracks(): Tracks;
+
+  abstract startScreenShare(): void;
+  abstract stopScreenShare(): void;
+  abstract isSharingScreen(): boolean;
 }
