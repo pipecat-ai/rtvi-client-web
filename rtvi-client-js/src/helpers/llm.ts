@@ -19,7 +19,7 @@ export type LLMFunctionCallData = {
 
 export type LLMContextMessage = {
   role: string;
-  content: string;
+  content: unknown;
 };
 
 export type LLMContext = {
