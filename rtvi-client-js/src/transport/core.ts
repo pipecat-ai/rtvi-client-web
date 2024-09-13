@@ -1,4 +1,4 @@
-import { VoiceClientConfigOption, VoiceClientOptions, VoiceMessage } from "..";
+import { VoiceClientOptions, VoiceMessage } from "..";
 import { VoiceEventCallbacks } from "../core";
 
 export type TransportState =
@@ -32,7 +32,6 @@ export type Tracks = {
 export abstract class Transport {
   protected _options: VoiceClientOptions;
   protected _callbacks: VoiceEventCallbacks;
-  protected _config: VoiceClientConfigOption[];
   protected _onMessage: (ev: VoiceMessage) => void;
   protected _state: TransportState = "idle";
   protected _expiry?: number = undefined;
@@ -43,7 +42,6 @@ export abstract class Transport {
   ) {
     this._options = options;
     this._callbacks = options.callbacks ?? {};
-    this._config = options.config ?? [];
     this._onMessage = onMessage;
   }
 

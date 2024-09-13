@@ -68,41 +68,24 @@ export class LLMHelper extends VoiceClientHelper {
     return Object.values(LLMMessageType) as string[];
   }
 
-  /**
-   * LLM context messages key
-   * If the transport is in the ready state, the key is "messages"
-   * Otherwise, the key is "initial_messages"
-   * @returns string
-   */
-  private _getMessagesKey(): string {
-    return this._voiceClient.state === "ready"
-      ? "messages"
-      : "initial_messages";
-  }
-
   // --- Actions
 
   /**
    * Retrieve the bot's current LLM context.
-   * Note: returns `messages` array when the transport is not in the ready state vs. full config
    * @returns Promise<LLMContext>
    */
   public async getContext(): Promise<LLMContext> {
-    if (this._voiceClient.state === "ready") {
-      const actionResponseMsg: VoiceMessageActionResponse =
-        await this._voiceClient.action({
-          service: this._service,
-          action: "get_context",
-        } as ActionData);
-      return actionResponseMsg.data.result as LLMContext;
-    } else {
-      const currentContext: LLMContextMessage[] =
-        (await this._voiceClient.getServiceOptionValueFromConfig(
-          this._service,
-          this._getMessagesKey()
-        )) as LLMContextMessage[];
-      return { messages: currentContext } as LLMContext;
+    if (this._voiceClient.state !== "ready") {
+      throw new VoiceErrors.BotNotReadyError(
+        "getContext called while transport not in ready state"
+      );
     }
+    const actionResponseMsg: VoiceMessageActionResponse =
+      await this._voiceClient.action({
+        service: this._name,
+        action: "get_context",
+      } as ActionData);
+    return actionResponseMsg.data.result as LLMContext;
   }
 
   /**
@@ -112,55 +95,35 @@ export class LLMHelper extends VoiceClientHelper {
    * @param interrupt boolean - Whether to interrupt the bot, or wait until it has finished speaking
    * @returns Promise<boolean>
    */
-  /*
+
   public async setContext(
     context: LLMContext,
     interrupt: boolean = false
   ): Promise<boolean> {
-    const currentContext = (await this._voiceClient.getServiceOptionsFromConfig(
-      this._service
-    )) as VoiceClientConfigOption;
-
-    const messages_key = this._getMessagesKey();
-
-    currentContext.options = [
-      ...currentContext.options.filter(
-        (option) => option.name !== messages_key
-      ),
-      {
-        name: messages_key,
-        value: context.messages,
-      },
-    ];
-
-    if (this._voiceClient.state === "ready") {
-      const actionResponse: VoiceMessageActionResponse =
-        (await this._voiceClient.action({
-          service: this._service,
-          action: "set_context",
-          arguments: [
-            {
-              name: messages_key,
-              value: context.messages,
-            },
-            {
-              name: "interrupt",
-              value: interrupt,
-            },
-          ],
-        } as ActionData)) as VoiceMessageActionResponse;
-      return !!actionResponse.data.result;
-    } else {
-      const newConfig: VoiceClientConfigOption[] =
-        await this._voiceClient.setServiceOptionInConfig(this._service, {
-          name: messages_key,
-          value: context.messages,
-        });
-      this._voiceClient.updateConfig(newConfig);
-
-      return true;
+    if (this._voiceClient.state !== "ready") {
+      throw new VoiceErrors.BotNotReadyError(
+        "setContext called while transport not in ready state"
+      );
     }
-  }*/
+
+    const actionResponse: VoiceMessageActionResponse =
+      (await this._voiceClient.action({
+        service: this.name,
+        action: "set_context",
+        arguments: [
+          {
+            name: "messages",
+            value: context.messages,
+          },
+          {
+            name: "interrupt",
+            value: interrupt,
+          },
+        ],
+      } as ActionData)) as VoiceMessageActionResponse;
+
+    return !!actionResponse.data.result;
+  }
 
   /**
    * Append a new message to the LLM context.
@@ -223,7 +186,7 @@ export class LLMHelper extends VoiceClientHelper {
     }
 
     return this._voiceClient.action({
-      service: this._service,
+      service: this._name,
       action: "run",
       arguments: [
         {

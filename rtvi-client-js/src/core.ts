@@ -2,8 +2,8 @@ import cloneDeep from "clone-deep";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
+import type { ActionData } from "./messages";
 import {
-  ActionData,
   BotReadyData,
   ConfigData,
   ConfigOption,
@@ -20,10 +20,11 @@ import {
   VoiceMessageMetrics,
   VoiceMessageType,
 } from ".";
+
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { Participant, Transport, TransportState } from "./transport";
-import { transportReady } from "./decorators";
+import { getIfTransportInState, transportReady } from "./decorators";
 
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
@@ -215,24 +216,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Register a new helper to the client
    * This (optionally) provides a way to reference the helper directly
    * from the client and use the event dispatcher
-   * @param service - Targer service for this helper
+   * @param name - Targer service for this helper
    * @param helper - Helper instance
    */
   public registerHelper(
-    service: string,
+    name: string,
     helper: VoiceClientHelper
   ): VoiceClientHelper {
-    if (this._helpers[service]) {
-      throw new Error(
-        `Helper targeting service '${service}' already registered`
-      );
-    }
-
-    // Check service exists in config
-    if (!this._options.services[service]) {
-      throw new Error(
-        `Service with name '${service}' not found in the provided services object`
-      );
+    if (this._helpers[name]) {
+      throw new Error(`Helper with name '${name}' already registered`);
     }
 
     // Check helper is instance of VoiceClientHelper
@@ -240,28 +232,30 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       throw new Error(`Helper must be an instance of VoiceClientHelper`);
     }
 
+    helper.name = name;
+
     // Attach voice client to helper
     helper.voiceClient = this;
-    helper.service = service;
 
-    this._helpers[service] = helper;
+    this._helpers[name] = helper;
 
-    return this._helpers[service];
+    return this._helpers[name];
   }
 
-  public getHelper<T extends VoiceClientHelper>(service: string): T {
-    const helper = this._helpers[service];
+  public getHelper<T extends VoiceClientHelper>(name: string): T | undefined {
+    const helper = this._helpers[name];
     if (!helper) {
-      throw new Error(`Helper targeting service '${service}' not found`);
+      console.debug(`Helper targeting service '${name}' not found`);
+      return undefined;
     }
     return helper as T;
   }
 
-  public unregisterHelper(service: string) {
-    if (!this._helpers[service]) {
-      throw new Error(`Helper targerting service '${service}' not registered`);
+  public unregisterHelper(name: string) {
+    if (!this._helpers[name]) {
+      return;
     }
-    delete this._helpers[service];
+    delete this._helpers[name];
   }
 
   // ------ Transport methods
@@ -675,37 +669,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
     return accumulator;
   }
-  /**
-   * Returns a full config array by merging partial config with existing config
-   * @param config - Service name to get options for (e.g. "llm")
-   * @returns VoiceClientConfigOption[] - Configuration options
-   */
-  public partialToConfig(
-    config: VoiceClientConfigOption[]
-  ): VoiceClientConfigOption[] {
-    // Merge partial config with existing config
-    return config.map((partial) => {
-      const existing = this.config.find(
-        (item) => item.service === partial.service
-      );
-      if (existing) {
-        return {
-          service: partial.service,
-          options: existing.options.map((option) => {
-            const newOption = partial.options.find(
-              (o) => o.name === option.name
-            );
-            return newOption ? newOption : option;
-          }),
-        };
-      } else {
-        console.debug(
-          "Service with name " + partial.service + " not found in config"
-        );
-        return partial;
-      }
-    });
-  }
 
   // ------ Actions
 
@@ -714,28 +677,22 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param actionData - ActionData object with the action to dispatch
    * @returns Promise<VoiceMessageActionResponse> - Promise that resolves with the action response
    */
+  @transportReady
   public async action(
     actionData: ActionData
   ): Promise<VoiceMessageActionResponse> {
-    if (this._transport.state === "ready") {
-      return this._messageDispatcher.dispatch(
-        VoiceMessage.action(actionData)
-      ) as Promise<VoiceMessageActionResponse>;
-    } else {
-      throw new VoiceErrors.BotNotReadyError();
-    }
+    return this._messageDispatcher.dispatch(
+      VoiceMessage.action(actionData)
+    ) as Promise<VoiceMessageActionResponse>;
   }
 
   /**
    * Describe available / registered actions the bot has
    * @returns Promise<unknown> - Promise that resolves with the bot's actions
    */
+  @transportReady
   public async describeActions(): Promise<unknown> {
-    if (this._transport.state === "ready") {
-      return this._messageDispatcher.dispatch(VoiceMessage.describeActions());
-    } else {
-      throw new VoiceErrors.BotNotReadyError();
-    }
+    return this._messageDispatcher.dispatch(VoiceMessage.describeActions());
   }
 
   // ------ Transport methods
@@ -744,14 +701,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Get the session expiry time for the transport session (if applicable)
    * @returns number - Expiry time in milliseconds
    */
+  @getIfTransportInState("connected", "ready")
   public get transportExpiry(): number | undefined {
-    if (["connected", "ready"].includes(this._transport.state)) {
-      return this._transport.expiry;
-    } else {
-      throw new VoiceErrors.BotNotReadyError(
-        "Attempted to get transport expiry time when transport not in connected or ready state"
-      );
-    }
+    return this._transport.expiry;
   }
 
   // ------ Messages
@@ -893,7 +845,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    */
   public get services(): VoiceClientServices {
     console.warn("VoiceClient.services is deprecated.");
-    return this._options.services;
+    return this._options.services!;
   }
 
   /**

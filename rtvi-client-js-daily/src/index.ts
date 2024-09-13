@@ -10,8 +10,6 @@ export class DailyVoiceClient extends VoiceClient {
     const options: VoiceClientOptions = {
       ...opts,
       transport: DailyTransport,
-      services: opts.services,
-      config: opts.config || [],
     };
 
     super(options);

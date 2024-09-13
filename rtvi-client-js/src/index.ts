@@ -19,20 +19,21 @@ export interface VoiceClientOptions {
   ) => Transport;
 
   /**
+   * Parameters passed as JSON stringified body params to the baseUrl
+   */
+  startParams?: Partial<{
+    config?: VoiceClientConfigOption[];
+  }>;
+
+  /**
+   * HTTP headers to be send with the POST request to baseUrl
+   */
+  startHeaders?: { [key: string]: string };
+
+  /**
    * Optional callback methods for voice events
    */
   callbacks?: VoiceEventCallbacks;
-
-  /**
-   * Service key value pairs (e.g. {llm: "openai"} )
-   * A client must have at least one service to connect to a voice server
-   */
-  services: VoiceClientServices;
-
-  /**
-   * Service configuration options for services and further customization
-   */
-  config?: VoiceClientConfigOption[];
 
   /**
    * Handshake timeout
@@ -57,12 +58,27 @@ export interface VoiceClientOptions {
   enableCam?: boolean;
 
   /**
+   * Service key value pairs (e.g. {llm: "openai"} )
+   * A client must have at least one service to connect to a voice server
+   * @deprecated Use startParams.services instead
+   */
+  services?: VoiceClientServices;
+
+  /**
+   * Service configuration options for services and further customization
+   * @deprecated Use startParams.config instead
+   */
+  config?: VoiceClientConfigOption[];
+
+  /**
    * Custom HTTP headers to be send with the POST request to baseUrl
+   * @deprecated Use startHeaders instead
    */
   customHeaders?: { [key: string]: string };
 
   /**
    * Custom request parameters to send with the POST request to baseUrl
+   * @deprecated Use startParams instead
    */
   customBodyParams?: object;
 
@@ -99,7 +115,6 @@ export class VoiceClient extends Client {
       ...opts,
       transport: opts.transport,
       enableMic: opts.enableMic ?? true,
-      config: opts.config || [],
     };
 
     super(options);

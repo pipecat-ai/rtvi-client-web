@@ -14,7 +14,7 @@ export interface VoiceClientHelperOptions {
 export abstract class VoiceClientHelper {
   protected _options: VoiceClientHelperOptions;
   protected declare _voiceClient: Client;
-  protected declare _service: string;
+  protected declare _name: string;
 
   constructor(options: VoiceClientHelperOptions) {
     this._options = options;
@@ -25,7 +25,7 @@ export abstract class VoiceClientHelper {
   public set voiceClient(voiceClient: Client) {
     this._voiceClient = voiceClient;
   }
-  public set service(service: string) {
-    this._service = service;
+  public set name(name: string) {
+    this._name = name;
   }
 }

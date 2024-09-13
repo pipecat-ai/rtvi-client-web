@@ -19,3 +19,27 @@ export function transportReady<T extends Client>(
 
   return descriptor;
 }
+
+export function getIfTransportInState<T extends Client>(...states: string[]) {
+  states = ["ready", ...states];
+
+  return function (
+    _target: T,
+    propertyKey: string | Symbol,
+    descriptor: PropertyDescriptor
+  ): PropertyDescriptor | void {
+    const originalGetter = descriptor.get;
+
+    descriptor.get = function (this: T) {
+      if (states.includes(this.state)) {
+        return originalGetter?.apply(this);
+      } else {
+        throw new BotNotReadyError(
+          `Attempt to call ${propertyKey.toString()} when transport not in ${states}. Await start() first.`
+        );
+      }
+    };
+
+    return descriptor;
+  };
+}

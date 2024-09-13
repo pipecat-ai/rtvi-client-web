@@ -18,11 +18,17 @@ This change enforces a key design principle of the RTVI standard: the bot should
 - `getBotConfig` has renamed to match the action `getConfig` for consistency.
 - Config jest tests updated to reflect changes.
 - `services` getter and setter methods have been deprecated.
-- `getServiceOptionsFromConfig` and `getServiceOptionValueFromConfig` are now async and accept an optional `config` param for working with local config arrays.
+- `getServiceOptionsFromConfig` and `getServiceOptionValueFromConfig` are now async to support `getConfig` at runtime and now accept an optional `config` param for working with local config arrays.
+- `setConfigOptions` and `setServiceOptionInConfig` are now async to support `getConfig` at runtime.
+- `registerHelper` no longer checks for a registered service and instead relies on string matching.
+- `registerHelper` service param renamed to "name".
+- LLM Helper `getContext()` now accepts optional `config` param for working with local configs
 
 ### Added
 
+- `startParams` client constructor param. This is a partial object that will be sent as JSON stringified body params in `start()` to your hosted endpoint. If you want to declare initial configuration in your client, you can declare it here.
 - `onConfig` and `VoiceEvents.Config` callback & event added, triggered by `getConfig` voice message.
+- @transportReady decorator added to methods that should only be called at runtime. Note: decorator support required several Parcel configuration changes and additional dev dependencies.
 
 ### Fixed
 
@@ -31,10 +37,14 @@ This change enforces a key design principle of the RTVI standard: the bot should
 ### Deprecated 
 
 - voiceClient.config getter is deprecated.
+- `config` and `services` constructor params should now be set inside of `startParams` and are optional. 
+- `customBodyParams` and `customHeaders` have been marked as deprecated. Use `startParams` instead.
 
-### Added
+### Removed
 
-- @transportReady decorator added to methods that should only be called at runtime. Note: decorator support required several Parcel configuration changes and additional dev dependencies.
+- `voiceClient.partialToConfig` removed (unused)
+
+
 
 ## [0.1.10] - 2024-09-06
 
