@@ -35,7 +35,6 @@ export type VoiceEventCallbacks = Partial<{
   onTransportStateChanged: (state: TransportState) => void;
 
   onConfig: (config: VoiceClientConfigOption[]) => void;
-  onConfigUpdated: (config: VoiceClientConfigOption[]) => void;
   onConfigDescribe: (configDescription: unknown) => void;
   onActionsAvailable: (actions: unknown) => void;
   onBotConnected: (participant: Participant) => void;
@@ -107,10 +106,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onConfig: (config: VoiceClientConfigOption[]) => {
         options?.callbacks?.onConfig?.(config);
         this.emit(VoiceEvent.Config, config);
-      },
-      onConfigUpdated: (config: VoiceClientConfigOption[]) => {
-        options?.callbacks?.onConfigUpdated?.(config);
-        this.emit(VoiceEvent.ConfigUpdated, config);
       },
       onConfigDescribe: (configDescription: unknown) => {
         options?.callbacks?.onConfigDescribe?.(configDescription);
@@ -216,15 +211,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Register a new helper to the client
    * This (optionally) provides a way to reference the helper directly
    * from the client and use the event dispatcher
-   * @param name - Targer service for this helper
+   * @param service - Target service for this helper
    * @param helper - Helper instance
    */
   public registerHelper(
-    name: string,
+    service: string,
     helper: VoiceClientHelper
   ): VoiceClientHelper {
-    if (this._helpers[name]) {
-      throw new Error(`Helper with name '${name}' already registered`);
+    if (this._helpers[service]) {
+      throw new Error(`Helper with name '${service}' already registered`);
     }
 
     // Check helper is instance of VoiceClientHelper
@@ -232,28 +227,30 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       throw new Error(`Helper must be an instance of VoiceClientHelper`);
     }
 
-    helper.name = name;
+    helper.service = service;
     helper.voiceClient = this;
 
-    this._helpers[name] = helper;
+    this._helpers[service] = helper;
 
-    return this._helpers[name];
+    return this._helpers[service];
   }
 
-  public getHelper<T extends VoiceClientHelper>(name: string): T | undefined {
-    const helper = this._helpers[name];
+  public getHelper<T extends VoiceClientHelper>(
+    service: string
+  ): T | undefined {
+    const helper = this._helpers[service];
     if (!helper) {
-      console.debug(`Helper targeting service '${name}' not found`);
+      console.debug(`Helper targeting service '${service}' not found`);
       return undefined;
     }
     return helper as T;
   }
 
-  public unregisterHelper(name: string) {
-    if (!this._helpers[name]) {
+  public unregisterHelper(service: string) {
+    if (!this._helpers[service]) {
       return;
     }
-    delete this._helpers[name];
+    delete this._helpers[service];
   }
 
   // ------ Transport methods
@@ -464,12 +461,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   // ------ Config methods
 
   /**
-   * Request the bot to send its current configuration
-   * @returns Promise<unknown> - Promise that resolves with the bot's configuration
+   * Request the bot to send the current configuration
+   * @returns Promise<VoiceClientConfigOption[]> - Promise that resolves with the bot's configuration
    */
   @transportReady
-  public async getConfig(): Promise<VoiceMessage> {
-    return this._messageDispatcher.dispatch(VoiceMessage.getBotConfig());
+  public async getConfig(): Promise<VoiceClientConfigOption[]> {
+    const configMsg = await this._messageDispatcher.dispatch(
+      VoiceMessage.getBotConfig()
+    );
+    return (configMsg.data as ConfigData).config as VoiceClientConfigOption[];
   }
 
   /**
@@ -496,7 +496,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @returns Promise<unknown> - Promise that resolves with the bot's configuration description
    */
   @transportReady
-  public describeConfig(): Promise<unknown> {
+  public async describeConfig(): Promise<unknown> {
     return this._messageDispatcher.dispatch(VoiceMessage.describeConfig());
   }
 
@@ -524,7 +524,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       }
 
       const passedConfig: VoiceClientConfigOption[] =
-        config ?? ((await this.getConfig()).data as ConfigData).config;
+        config ?? (await this.getConfig());
 
       // Find matching service name in the config and update the messages
       const configServiceKey = passedConfig.find(
@@ -607,7 +607,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     config?: VoiceClientConfigOption[]
   ): Promise<VoiceClientConfigOption[] | undefined> {
     const newConfig: VoiceClientConfigOption[] = cloneDeep(
-      config ?? ((await this.getConfig()).data as ConfigData).config
+      config ?? (await this.getConfig())
     );
 
     const serviceOptions = await this.getServiceOptionsFromConfig(
@@ -653,7 +653,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     config?: VoiceClientConfigOption[]
   ): Promise<VoiceClientConfigOption[]> {
     let accumulator: VoiceClientConfigOption[] = cloneDeep(
-      config ?? ((await this.getConfig()).data as ConfigData).config
+      config ?? (await this.getConfig())
     );
 
     for (const configOption of configOptions) {
@@ -742,13 +742,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._options.callbacks?.onConfig?.((resp.data as ConfigData).config);
         break;
       }
-      case VoiceMessageType.CONFIG_UPDATED: {
-        const resp = this._messageDispatcher.resolve(ev);
-        this._options.callbacks?.onConfigUpdated?.(
-          (resp.data as ConfigData).config
-        );
-        break;
-      }
       case VoiceMessageType.ACTIONS_AVAILABLE: {
         this._messageDispatcher.resolve(ev);
         this._options.callbacks?.onActionsAvailable?.(ev.data);
@@ -818,7 +811,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @returns Promise<unknown> - Promise that resolves with the bot's configuration
    */
   @transportReady
-  public async getBotConfig(): Promise<VoiceMessage> {
+  public async getBotConfig(): Promise<VoiceClientConfigOption[]> {
     console.warn(
       "VoiceClient.getBotConfig is deprecated. Use getConfig instead."
     );

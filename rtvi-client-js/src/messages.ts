@@ -14,11 +14,10 @@ export enum VoiceMessageType {
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
   TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
-  CONFIG = "config", // Bot configuration
   ERROR = "error", // Bot initialization error
   ERROR_RESPONSE = "error-response", // Error response from the bot in response to an action
+  CONFIG = "config", // Bot configuration
   CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
-  CONFIG_UPDATED = "config-updated", // Configuration options have changed successfully
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   ACTIONS_AVAILABLE = "actions-available", // Actions available on the bot
   ACTION_RESPONSE = "action-response",

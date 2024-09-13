@@ -21,10 +21,10 @@ export type LLMContextMessage = {
   content: unknown;
 };
 
-export type LLMContext = {
+export type LLMContext = Partial<{
   messages?: LLMContextMessage[];
   tools?: [];
-};
+}>;
 
 export type FunctionCallParams = {
   functionName: string;
@@ -82,7 +82,7 @@ export class LLMHelper extends VoiceClientHelper {
     }
     const actionResponseMsg: VoiceMessageActionResponse =
       await this._voiceClient.action({
-        service: this._name,
+        service: this._service,
         action: "get_context",
       } as ActionData);
     return actionResponseMsg.data.result as LLMContext;
@@ -108,7 +108,7 @@ export class LLMHelper extends VoiceClientHelper {
 
     const actionResponse: VoiceMessageActionResponse =
       (await this._voiceClient.action({
-        service: this.name,
+        service: this._service,
         action: "set_context",
         arguments: [
           {
@@ -132,46 +132,33 @@ export class LLMHelper extends VoiceClientHelper {
    * @param runImmediately boolean - wait until pipeline is idle before running
    * @returns boolean
    */
-  /*
+
   public async appendToMessages(
     context: LLMContextMessage,
     runImmediately: boolean = false
   ): Promise<boolean> {
-    const messages_key = this._getMessagesKey();
-
-    if (this._voiceClient.state === "ready") {
-      const actionResponse = (await this._voiceClient.action({
-        service: this._service,
-        action: "append_to_messages",
-        arguments: [
-          {
-            name: messages_key,
-            value: [context],
-          },
-          {
-            name: "run_immediately",
-            value: runImmediately,
-          },
-        ],
-      } as ActionData)) as VoiceMessageActionResponse;
-      return !!actionResponse.data.result;
-    } else {
-      const currentMessages =
-        (await this._voiceClient.getServiceOptionValueFromConfig(
-          this._service,
-          messages_key
-        )) as LLMContextMessage[];
-
-      const newConfig: VoiceClientConfigOption[] =
-        this._voiceClient.setServiceOptionInConfig(this._service, {
-          name: messages_key,
-          value: [...currentMessages, context],
-        });
-      this._voiceClient.updateConfig(newConfig);
-
-      return true;
+    if (this._voiceClient.state !== "ready") {
+      throw new VoiceErrors.BotNotReadyError(
+        "setContext called while transport not in ready state"
+      );
     }
-  }*/
+
+    const actionResponse = (await this._voiceClient.action({
+      service: this._service,
+      action: "append_to_messages",
+      arguments: [
+        {
+          name: "messages",
+          value: [context],
+        },
+        {
+          name: "run_immediately",
+          value: runImmediately,
+        },
+      ],
+    } as ActionData)) as VoiceMessageActionResponse;
+    return !!actionResponse.data.result;
+  }
 
   /**
    * Run the bot's current LLM context.
@@ -186,7 +173,7 @@ export class LLMHelper extends VoiceClientHelper {
     }
 
     return this._voiceClient.action({
-      service: this._name,
+      service: this._service,
       action: "run",
       arguments: [
         {

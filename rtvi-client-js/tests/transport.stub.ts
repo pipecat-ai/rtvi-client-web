@@ -102,7 +102,7 @@ export class TransportStub extends Transport {
         case VoiceMessageType.UPDATE_CONFIG:
           this._onMessage({
             ...message,
-            type: VoiceMessageType.CONFIG_UPDATED,
+            type: VoiceMessageType.CONFIG,
           });
           break;
         case VoiceMessageType.GET_CONFIG:

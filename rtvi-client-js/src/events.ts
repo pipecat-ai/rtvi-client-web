@@ -17,7 +17,6 @@ export enum VoiceEvent {
   TransportStateChanged = "transportStateChanged",
 
   Config = "config",
-  ConfigUpdated = "configUpdated",
   ConfigDescribe = "configDescribe",
   ActionsAvailable = "actionsAvailable",
 

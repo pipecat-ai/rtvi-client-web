@@ -113,12 +113,12 @@ describe("Voice Client Config Methods", () => {
       );
     });
 
-    test("updateConfig should call the onConfigUpdated callback", async () => {
+    test("updateConfig should call the onConfig callback", async () => {
       const onConfigUpdatedMock = jest.fn();
       const voiceClientWithCallback = new VoiceClient({
         ...voiceClientArgs,
         callbacks: {
-          onConfigUpdated: onConfigUpdatedMock,
+          onConfig: onConfigUpdatedMock,
         },
       });
       await voiceClientWithCallback.start();
@@ -130,14 +130,14 @@ describe("Voice Client Config Methods", () => {
     test("updateConfig should call the VoiceEvents.ConfigUpdated event", async () => {
       const onMessageMock = jest.fn();
 
-      voiceClient.on(VoiceEvent.ConfigUpdated, onMessageMock);
+      voiceClient.on(VoiceEvent.Config, onMessageMock);
 
       await voiceClient.start();
       await voiceClient.updateConfig(exampleConfig);
 
       expect(onMessageMock).toHaveBeenCalled();
 
-      voiceClient.off(VoiceEvent.ConfigUpdated, onMessageMock);
+      voiceClient.off(VoiceEvent.Config, onMessageMock);
     });
   });
 
@@ -150,13 +150,7 @@ describe("Voice Client Config Methods", () => {
     test("getConfig should return config when awaited", async () => {
       await voiceClient.start();
 
-      await expect(voiceClient.getConfig()).resolves.toEqual(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            config: expect.arrayContaining(exampleConfig),
-          }),
-        })
-      );
+      await expect(voiceClient.getConfig()).resolves.toEqual(exampleConfig);
     });
 
     test("getConfig should call the onConfig callback", async () => {

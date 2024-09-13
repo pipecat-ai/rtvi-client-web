@@ -26,13 +26,12 @@ This change enforces a key design principle of the RTVI standard: the bot should
 - `services` getter and setter methods have been deprecated.
 - `getServiceOptionsFromConfig`, `getServiceOptionValueFromConfig`, `setConfigOptions` and `setServiceOptionInConfig` are now async to support `getConfig` at runtime and accept an optional `config` param for working with local config arrays.
 - `registerHelper` no longer checks for a registered service and instead relies on string matching.
-- `registerHelper` service param renamed to "name".
 - LLM Helper `getContext()` now accepts optional `config` param for working with local configs
 - jest tests updated to reflect changes.
 
 ### Fixed
 
-- `VoiceMessageType.CONFIG` message now correctly calls `onConfigUpdated`.
+- `VoiceMessageType.CONFIG` message now correctly calls `onConfig` and `VoiceEvents.Config`.
 
 ### Deprecated 
 
