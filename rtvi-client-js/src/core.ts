@@ -233,8 +233,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     }
 
     helper.name = name;
-
-    // Attach voice client to helper
     helper.voiceClient = this;
 
     this._helpers[name] = helper;
