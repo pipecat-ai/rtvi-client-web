@@ -13,9 +13,10 @@ This change enforces a key design principle of the RTVI standard: the bot should
 
 ### Added
 
-- `startParams` client constructor param. This is a partial object that will be sent as JSON stringified body params in `start()` to your hosted endpoint. If you want to declare initial configuration in your client, you can declare it here.
+- `startParams` client constructor param, a partial object that will be sent as JSON stringified body params at `start()` to your hosted endpoint. If you want to declare initial configuration in your client, or specify start services on the client, you can declare them here.
 - `onConfig` and `VoiceEvents.Config` callback & event added, triggered by `getConfig` voice message.
-- @transportReady decorator added to methods that should only be called at runtime. Note: decorator support required several Parcel configuration changes and additional dev dependencies.
+- `@transportReady` decorator added to methods that should only be called at runtime. Note: decorator support required several Parcel configuration changes and additional dev dependencies.
+- `@getIfTransportInState` getter decorator added to getter methods that should only be called in a specified transport state.
 
 ### Changed
 
