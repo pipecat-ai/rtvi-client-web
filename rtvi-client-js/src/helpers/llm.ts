@@ -1,6 +1,5 @@
 import {
   ActionData,
-  VoiceClientConfigOption,
   VoiceEvent,
   VoiceMessage,
   VoiceMessageActionResponse,
@@ -19,7 +18,7 @@ export type LLMFunctionCallData = {
 
 export type LLMContextMessage = {
   role: string;
-  content: string;
+  content: unknown;
 };
 
 export type LLMContext = {
@@ -98,10 +97,10 @@ export class LLMHelper extends VoiceClientHelper {
       return actionResponseMsg.data.result as LLMContext;
     } else {
       const currentContext: LLMContextMessage[] =
-        this._voiceClient.getServiceOptionValueFromConfig(
+        (await this._voiceClient.getServiceOptionValueFromConfig(
           this._service,
           this._getMessagesKey()
-        ) as LLMContextMessage[];
+        )) as LLMContextMessage[];
       return { messages: currentContext } as LLMContext;
     }
   }
@@ -113,13 +112,14 @@ export class LLMHelper extends VoiceClientHelper {
    * @param interrupt boolean - Whether to interrupt the bot, or wait until it has finished speaking
    * @returns Promise<boolean>
    */
+  /*
   public async setContext(
     context: LLMContext,
     interrupt: boolean = false
   ): Promise<boolean> {
-    const currentContext = this._voiceClient.getServiceOptionsFromConfig(
+    const currentContext = (await this._voiceClient.getServiceOptionsFromConfig(
       this._service
-    ) as VoiceClientConfigOption;
+    )) as VoiceClientConfigOption;
 
     const messages_key = this._getMessagesKey();
 
@@ -152,7 +152,7 @@ export class LLMHelper extends VoiceClientHelper {
       return !!actionResponse.data.result;
     } else {
       const newConfig: VoiceClientConfigOption[] =
-        this._voiceClient.setServiceOptionInConfig(this._service, {
+        await this._voiceClient.setServiceOptionInConfig(this._service, {
           name: messages_key,
           value: context.messages,
         });
@@ -160,7 +160,7 @@ export class LLMHelper extends VoiceClientHelper {
 
       return true;
     }
-  }
+  }*/
 
   /**
    * Append a new message to the LLM context.
@@ -169,6 +169,7 @@ export class LLMHelper extends VoiceClientHelper {
    * @param runImmediately boolean - wait until pipeline is idle before running
    * @returns boolean
    */
+  /*
   public async appendToMessages(
     context: LLMContextMessage,
     runImmediately: boolean = false
@@ -192,10 +193,11 @@ export class LLMHelper extends VoiceClientHelper {
       } as ActionData)) as VoiceMessageActionResponse;
       return !!actionResponse.data.result;
     } else {
-      const currentMessages = this._voiceClient.getServiceOptionValueFromConfig(
-        this._service,
-        messages_key
-      ) as LLMContextMessage[];
+      const currentMessages =
+        (await this._voiceClient.getServiceOptionValueFromConfig(
+          this._service,
+          messages_key
+        )) as LLMContextMessage[];
 
       const newConfig: VoiceClientConfigOption[] =
         this._voiceClient.setServiceOptionInConfig(this._service, {
@@ -206,7 +208,7 @@ export class LLMHelper extends VoiceClientHelper {
 
       return true;
     }
-  }
+  }*/
 
   /**
    * Run the bot's current LLM context.

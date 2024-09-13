@@ -16,6 +16,7 @@ export enum VoiceEvent {
   Disconnected = "disconnected",
   TransportStateChanged = "transportStateChanged",
 
+  Config = "config",
   ConfigUpdated = "configUpdated",
   ConfigDescribe = "configDescribe",
   ActionsAvailable = "actionsAvailable",
@@ -55,6 +56,7 @@ export type VoiceEvents = Partial<{
   disconnected: () => void;
   transportStateChanged: (state: TransportState) => void;
 
+  config: (config: VoiceClientConfigOption[]) => void;
   configUpdated: (config: VoiceClientConfigOption[]) => void;
   configDescribe: (configDescription: unknown) => void;
   actionsAvailable: (actions: unknown) => void;

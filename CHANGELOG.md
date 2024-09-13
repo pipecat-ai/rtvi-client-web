@@ -5,6 +5,41 @@ All notable changes to **RTVI Client Web** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2024-09-13
+
+### Changed
+
+RTVI 0.2.0 removes client-side configuration to ensure state management is handled exclusively by the bot. Clients no longer maintain an internal config array that can be altered outside of a ready state. Developers needing stateful configuration before a session starts should implement it independently.
+
+This change enforces a key design principle of the RTVI standard: the bot should always be the single source of truth for configuration, and clients should remain stateless.
+
+- Config getter and setter methods (`getConfig` and `updateConfig`) are only supported at runtime. 
+- `updateConfig` and `getConfig` promise is typed to `Promise<VoiceMessage>`
+- `getBotConfig` has renamed to match the action `getConfig` for consistency.
+- Config jest tests updated to reflect changes.
+- `services` getter and setter methods have been deprecated.
+- `getServiceOptionsFromConfig` and `getServiceOptionValueFromConfig` are now async and accept an optional `config` param for working with local config arrays.
+
+### Added
+
+- `onConfig` and `VoiceEvents.Config` callback & event added, triggered by `getConfig` voice message.
+
+### Fixed
+
+- `VoiceMessageType.CONFIG` message now correctly calls `onConfigUpdated`.
+
+### Deprecated 
+
+- voiceClient.config getter is deprecated.
+
+### Added
+
+- @transportReady decorator added to methods that should only be called at runtime. Note: decorator support required several Parcel configuration changes and additional dev dependencies.
+
+## [0.1.10] - 2024-09-06
+
+- LLMContextMessage content not types to `unknown` to support broader LLM use-cases.
+
 ## [0.1.9] - 2024-09-04
 
 ### Changed

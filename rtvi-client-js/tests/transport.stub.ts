@@ -95,12 +95,26 @@ export class TransportStub extends Transport {
         },
       });
     } else {
-      this._onMessage({
-        type: VoiceMessageType.ACTIONS_AVAILABLE,
-        id: "123",
-        label: "rtvi-ai",
-        data: "test",
-      });
+      // Mock the response from the server
+      console.log("[STUB] message.type:", message.type);
+
+      switch (message.type) {
+        case VoiceMessageType.UPDATE_CONFIG:
+          this._onMessage({
+            ...message,
+            type: VoiceMessageType.CONFIG_UPDATED,
+          });
+          break;
+        case VoiceMessageType.GET_CONFIG:
+          this._onMessage({
+            ...message,
+            data: { config: this._options.config },
+            type: VoiceMessageType.CONFIG,
+          });
+          break;
+        default:
+          this._onMessage(message);
+      }
     }
     return true;
   }

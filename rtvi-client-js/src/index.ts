@@ -106,6 +106,11 @@ export class VoiceClient extends Client {
   }
 }
 
+/**
+ * RTVI Text Client
+ */
+// ...
+
 export * from "./core";
 export * from "./errors";
 export * from "./events";

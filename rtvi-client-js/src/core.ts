@@ -23,6 +23,7 @@ import {
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { Participant, Transport, TransportState } from "./transport";
+import { transportReady } from "./decorators";
 
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
@@ -31,6 +32,8 @@ export type VoiceEventCallbacks = Partial<{
   onConnected: () => void;
   onDisconnected: () => void;
   onTransportStateChanged: (state: TransportState) => void;
+
+  onConfig: (config: VoiceClientConfigOption[]) => void;
   onConfigUpdated: (config: VoiceClientConfigOption[]) => void;
   onConfigDescribe: (configDescription: unknown) => void;
   onActionsAvailable: (actions: unknown) => void;
@@ -99,6 +102,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       onTransportStateChanged: (state: TransportState) => {
         options?.callbacks?.onTransportStateChanged?.(state);
         this.emit(VoiceEvent.TransportStateChanged, state);
+      },
+      onConfig: (config: VoiceClientConfigOption[]) => {
+        options?.callbacks?.onConfig?.(config);
+        this.emit(VoiceEvent.Config, config);
       },
       onConfigUpdated: (config: VoiceClientConfigOption[]) => {
         options?.callbacks?.onConfigUpdated?.(config);
@@ -417,27 +424,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     return this._transport.state;
   }
 
-  /**
-   * Get registered services from voice client constructor options
-   */
-  public get services(): VoiceClientServices {
-    return this._options.services;
-  }
-
-  public set services(services: VoiceClientServices) {
-    if (
-      !["authenticating", "connecting", "connected", "ready"].includes(
-        this._transport.state
-      )
-    ) {
-      this._options.services = services;
-    } else {
-      throw new VoiceErrors.VoiceError(
-        "Cannot set services while transport is connected"
-      );
-    }
-  }
-
   // ------ Device methods
 
   public async getAllMics() {
@@ -487,26 +473,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   // ------ Config methods
 
   /**
-   * Current client configuration
-   * For the most up-to-date configuration, use getBotConfig method
-   * @returns VoiceClientConfigOption[] - Array of configuration options
-   */
-  public get config(): VoiceClientConfigOption[] {
-    return this._options.config!;
-  }
-
-  /**
    * Request the bot to send its current configuration
    * @returns Promise<unknown> - Promise that resolves with the bot's configuration
    */
-  public async getBotConfig(): Promise<unknown> {
-    if (this._transport.state === "ready") {
-      return this._messageDispatcher.dispatch(VoiceMessage.getBotConfig());
-    } else {
-      throw new VoiceErrors.BotNotReadyError(
-        "Attempted to get config from bot while transport not in ready state"
-      );
-    }
+  @transportReady
+  public async getConfig(): Promise<VoiceMessage> {
+    return this._messageDispatcher.dispatch(VoiceMessage.getBotConfig());
   }
 
   /**
@@ -515,63 +487,69 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param interrupt - boolean flag to interrupt the current pipeline, or wait until the next turn
    * @returns Promise<unknown> - Promise that resolves with the updated configuration
    */
+  @transportReady
   public async updateConfig(
     config: VoiceClientConfigOption[],
     interrupt: boolean = false
-  ): Promise<unknown> {
+  ): Promise<VoiceMessage> {
+    console.debug("[RTVI Client] Updating config", config);
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
-    if (this._transport.state === "ready") {
-      return this._messageDispatcher.dispatch(
-        VoiceMessage.updateConfig(config, interrupt)
-      );
-    } else {
-      this._options.config = config;
-      this._options.callbacks?.onConfigUpdated?.(config);
-    }
+    return this._messageDispatcher.dispatch(
+      VoiceMessage.updateConfig(config, interrupt)
+    );
   }
 
   /**
    * Request bot describe the current configuration options
    * @returns Promise<unknown> - Promise that resolves with the bot's configuration description
    */
+  @transportReady
   public describeConfig(): Promise<unknown> {
-    if (this._transport.state === "ready") {
-      return this._messageDispatcher.dispatch(VoiceMessage.describeConfig());
-    } else {
-      throw new VoiceErrors.BotNotReadyError(
-        "Attempted to get config description while transport not in ready state"
-      );
-    }
+    return this._messageDispatcher.dispatch(VoiceMessage.describeConfig());
   }
 
   /**
    * Returns configuration options for specified service key
    * @param serviceKey - Service name to get options for (e.g. "llm")
+   * @param config? - Optional VoiceClientConfigOption[] to update (vs. using remote config)
    * @returns VoiceClientConfigOption | undefined - Configuration options array for the service with specified key or undefined
    */
-  public getServiceOptionsFromConfig(
-    serviceKey: string
-  ): VoiceClientConfigOption | undefined {
-    // Check if we have registered service with name service
-    if (!serviceKey) {
-      console.debug("Target service name is required");
-      return undefined;
-    }
-    // Find matching service name in the config and update the messages
-    const configServiceKey = this.config.find(
-      (config: VoiceClientConfigOption) => config.service === serviceKey
-    );
-
-    if (!configServiceKey) {
-      console.debug(
-        "No service with name " + serviceKey + " not found in config"
+  public async getServiceOptionsFromConfig(
+    serviceKey: string,
+    config?: VoiceClientConfigOption[]
+  ): Promise<VoiceClientConfigOption | undefined> {
+    if (!config && this.state !== "ready") {
+      throw new VoiceErrors.BotNotReadyError(
+        "getServiceOptionsFromConfig called without config array before bot is ready"
       );
-      return undefined;
     }
 
-    // Return a new object, as to not mutate existing state
-    return cloneDeep(configServiceKey);
+    return Promise.resolve().then(async () => {
+      // Check if we have registered service with name service
+      if (!serviceKey) {
+        console.debug("Target service name is required");
+        return undefined;
+      }
+
+      const passedConfig: VoiceClientConfigOption[] =
+        config ?? ((await this.getConfig()).data as ConfigData).config;
+
+      // Find matching service name in the config and update the messages
+      const configServiceKey = passedConfig.find(
+        (config: VoiceClientConfigOption) => config.service === serviceKey
+      );
+
+      if (!configServiceKey) {
+        console.debug(
+          "No service with name " + serviceKey + " not found in config"
+        );
+        return undefined;
+      }
+
+      // Return a new object, as to not mutate existing state
+      return configServiceKey;
+    });
   }
 
   /**
@@ -580,12 +558,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @optional option Name of option return from the config (e.g. "model")
    * @returns unknown | undefined - Service configuration option value or undefined
    */
-  public getServiceOptionValueFromConfig(
+  public async getServiceOptionValueFromConfig(
     serviceKey: string,
-    option: string
-  ): unknown | undefined {
+    option: string,
+    config?: VoiceClientConfigOption[]
+  ): Promise<unknown | undefined> {
     const configServiceKey: VoiceClientConfigOption | undefined =
-      this.getServiceOptionsFromConfig(serviceKey);
+      await this.getServiceOptionsFromConfig(serviceKey, config);
 
     if (!configServiceKey) {
       console.debug("Service with name " + serviceKey + " not found in config");
@@ -597,9 +576,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       (o: ConfigOption) => o.name === option
     );
 
-    return optionValue
-      ? cloneDeep(optionValue as ConfigOption).value
-      : undefined;
+    return optionValue ? (optionValue as ConfigOption).value : undefined;
   }
 
   private _updateOrAddOption(
@@ -630,26 +607,31 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Note: does not update current config, only returns a new object (call updateConfig to apply changes)
    * @param serviceKey - Service name to get options for (e.g. "llm")
    * @param option - Service name to get options for (e.g. "model")
-   * @param config? - Optional VoiceClientConfigOption[] to update (vs. using current config)
+   * @param config - Optional VoiceClientConfigOption[] to update (vs. using current config)
    * @returns VoiceClientConfigOption[] - Configuration options
    */
-  public setServiceOptionInConfig(
+  public async setServiceOptionInConfig(
     serviceKey: string,
     option: ConfigOption | ConfigOption[],
     config?: VoiceClientConfigOption[]
-  ): VoiceClientConfigOption[] {
-    const serviceOptions = this.getServiceOptionsFromConfig(serviceKey);
+  ): Promise<VoiceClientConfigOption[] | undefined> {
+    const newConfig: VoiceClientConfigOption[] = cloneDeep(
+      config ?? ((await this.getConfig()).data as ConfigData).config
+    );
+
+    const serviceOptions = await this.getServiceOptionsFromConfig(
+      serviceKey,
+      newConfig
+    );
 
     if (!serviceOptions) {
       console.debug(
         "Service with name '" + serviceKey + "' not found in config"
       );
-      return config ?? cloneDeep(this.config);
+      return newConfig;
     }
 
     const optionsArray = Array.isArray(option) ? option : [option];
-    const newConfig: VoiceClientConfigOption[] =
-      config ?? cloneDeep(this.config);
 
     for (const opt of optionsArray) {
       const existingItem = newConfig.find(
@@ -675,19 +657,23 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param config? - Optional VoiceClientConfigOption[] to update (vs. using current config)
    * @returns VoiceClientConfigOption[] - Configuration options
    */
-  public setConfigOptions(
+  public async setConfigOptions(
     configOptions: VoiceClientConfigOption[],
     config?: VoiceClientConfigOption[]
-  ): VoiceClientConfigOption[] {
-    let newConfig = config ?? cloneDeep(this.config);
+  ): Promise<VoiceClientConfigOption[]> {
+    let accumulator: VoiceClientConfigOption[] = cloneDeep(
+      config ?? ((await this.getConfig()).data as ConfigData).config
+    );
+
     for (const configOption of configOptions) {
-      newConfig = this.setServiceOptionInConfig(
-        configOption.service,
-        configOption.options,
-        newConfig
-      );
+      accumulator =
+        (await this.setServiceOptionInConfig(
+          configOption.service,
+          configOption.options,
+          accumulator
+        )) || accumulator;
     }
-    return newConfig;
+    return accumulator;
   }
   /**
    * Returns a full config array by merging partial config with existing config
@@ -698,7 +684,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     config: VoiceClientConfigOption[]
   ): VoiceClientConfigOption[] {
     // Merge partial config with existing config
-    return cloneDeep(config).map((partial) => {
+    return config.map((partial) => {
       const existing = this.config.find(
         (item) => item.service === partial.service
       );
@@ -774,14 +760,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Directly send a message to the bot via the transport
    * @param message - VoiceMessage object to send
    */
+  @transportReady
   public sendMessage(message: VoiceMessage): void {
-    if (this._transport.state === "ready") {
-      this._transport.sendMessage(message);
-    } else {
-      throw new VoiceErrors.BotNotReadyError(
-        "Attempted to send message when transport not in ready state"
-      );
-    }
+    this._transport.sendMessage(message);
   }
 
   protected handleMessage(ev: VoiceMessage): void {
@@ -809,7 +790,14 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       }
       case VoiceMessageType.CONFIG: {
         const resp = this._messageDispatcher.resolve(ev);
-        this._options.config = (resp.data as ConfigData).config;
+        this._options.callbacks?.onConfig?.((resp.data as ConfigData).config);
+        break;
+      }
+      case VoiceMessageType.CONFIG_UPDATED: {
+        const resp = this._messageDispatcher.resolve(ev);
+        this._options.callbacks?.onConfigUpdated?.(
+          (resp.data as ConfigData).config
+        );
         break;
       }
       case VoiceMessageType.ACTIONS_AVAILABLE: {
@@ -871,6 +859,58 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           this._options.callbacks?.onGenericMessage?.(ev.data);
         }
       }
+    }
+  }
+
+  // ------ Deprecated
+
+  /**
+   * @deprecated use getConfig instead
+   * @returns Promise<unknown> - Promise that resolves with the bot's configuration
+   */
+  @transportReady
+  public async getBotConfig(): Promise<VoiceMessage> {
+    console.warn(
+      "VoiceClient.getBotConfig is deprecated. Use getConfig instead."
+    );
+    return this.getConfig();
+  }
+
+  /**
+   * @deprecated This getter is deprecated and will be removed in future versions. Use getConfig instead.
+   * Current client configuration
+   * For the most up-to-date configuration, use getBotConfig method
+   * @returns VoiceClientConfigOption[] - Array of configuration options
+   */
+  public get config(): VoiceClientConfigOption[] {
+    console.warn("VoiceClient.config is deprecated. Use getConfig instead.");
+    return this._options.config!;
+  }
+
+  /**
+   * Get registered services from voice client constructor options
+   * @deprecated Services not accessible via the client instance
+   */
+  public get services(): VoiceClientServices {
+    console.warn("VoiceClient.services is deprecated.");
+    return this._options.services;
+  }
+
+  /**
+   * @deprecated Services not accessible via the client instance
+   */
+  public set services(services: VoiceClientServices) {
+    console.warn("VoiceClient.services is deprecated.");
+    if (
+      !["authenticating", "connecting", "connected", "ready"].includes(
+        this._transport.state
+      )
+    ) {
+      this._options.services = services;
+    } else {
+      throw new VoiceErrors.VoiceError(
+        "Cannot set services while transport is connected"
+      );
     }
   }
 }

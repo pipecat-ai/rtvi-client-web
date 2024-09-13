@@ -1,8 +1,8 @@
 import { describe, expect, test } from "@jest/globals";
 
 import {
+  BotNotReadyError,
   ConfigOption,
-  LLMContextMessage,
   VoiceClient,
   type VoiceClientConfigOption,
   VoiceClientServices,
@@ -12,7 +12,7 @@ import { TransportStub } from "./transport.stub";
 
 jest.mock("nanoid", () => {
   return {
-    nanoid: 123,
+    nanoid: () => "123",
   };
 });
 
@@ -47,13 +47,6 @@ const exampleConfig: VoiceClientConfigOption[] = [
   },
 ];
 
-const voiceClient = new VoiceClient({
-  baseUrl: "",
-  transport: TransportStub,
-  services: exampleServices,
-  config: exampleConfig,
-});
-
 describe("Config typing", () => {
   test("exampleConfig should be of type VoiceClientConfigOption[]", () => {
     expect(exampleConfig).toBeInstanceOf(Array);
@@ -74,271 +67,381 @@ describe("Config typing", () => {
   });
 });
 
-describe("Voice Client Config Getter Helper Methods", () => {
-  test("getServiceOptionsFromConfig should return options for a given service", () => {
-    expect(voiceClient.getServiceOptionsFromConfig("vad")).toEqual({
-      service: "vad",
-      options: [{ name: "params", value: { stop_secs: 0.8 } }],
+describe("Voice Client Config Methods", () => {
+  let voiceClient: VoiceClient;
+  let voiceClientArgs = {
+    baseUrl: "",
+    transport: TransportStub,
+    services: exampleServices,
+    config: exampleConfig,
+    customAuthHandler: () => Promise.resolve(),
+  };
+
+  beforeEach(() => {
+    voiceClient = new VoiceClient(voiceClientArgs);
+  });
+
+  test("updateConfig should throw an error outside of runtime", () => {
+    expect(() => voiceClient.updateConfig(exampleConfig)).toThrowError(
+      BotNotReadyError
+    );
+  });
+
+  test("getConfig should throw an error outside of runtime", () => {
+    expect(() => voiceClient.getConfig()).toThrowError(BotNotReadyError);
+  });
+
+  test("describeConfig should throw an error outside of runtime", () => {
+    expect(() => voiceClient.describeConfig()).toThrowError(BotNotReadyError);
+  });
+
+  describe("Runtime updateConfig Methods", () => {
+    test("updateConfig should return a promise at runtime", async () => {
+      await voiceClient.start();
+      expect(voiceClient.updateConfig(exampleConfig)).toBeInstanceOf(Promise);
     });
 
-    expect(
-      voiceClient.getServiceOptionsFromConfig("llm") as VoiceClientConfigOption
-    ).toHaveProperty("options");
-  });
+    test("updateConfig should return updated config when awaited", async () => {
+      await voiceClient.start();
 
-  test("getServiceOptionsFromConfig to return undefined with invalid key", () => {
-    expect(voiceClient.getServiceOptionsFromConfig("test")).toBeUndefined();
-  });
-
-  test("getServiceOptionFromConfig returns a single option for a given service", () => {
-    expect(voiceClient.getServiceOptionValueFromConfig("llm", "model")).toEqual(
-      "ModelABC"
-    );
-  });
-
-  test("getServiceOptionFromConfig returns undefined with unknown service", () => {
-    expect(
-      voiceClient.getServiceOptionValueFromConfig("test", "model")
-    ).toBeUndefined();
-  });
-
-  test("getServiceOptionFromConfig returns undefined with unknown option name", () => {
-    expect(
-      voiceClient.getServiceOptionValueFromConfig("llm", "test")
-    ).toBeUndefined();
-  });
-
-  test("getServiceOptionsFromConfig should return a new instance of service config", () => {
-    let value: VoiceClientConfigOption =
-      voiceClient.getServiceOptionsFromConfig("llm") as VoiceClientConfigOption;
-
-    const messages = value.options[1].value as LLMContextMessage[];
-    messages[0].content = "test";
-
-    expect(
-      voiceClient.getServiceOptionValueFromConfig("llm", "initial_messages")
-    ).toEqual(
-      expect.arrayContaining([
-        {
-          role: "system",
-          content:
-            "You are a assistant called ExampleBot. You can ask me anything.",
-        },
-      ])
-    );
-  });
-
-  test("getServiceOptionValueFromConfig should return a new instance of config option", () => {
-    let value: LLMContextMessage[] =
-      voiceClient.getServiceOptionValueFromConfig(
-        "llm",
-        "initial_messages"
-      ) as LLMContextMessage[];
-
-    value[0].content = "test";
-
-    expect(
-      voiceClient.getServiceOptionValueFromConfig("llm", "initial_messages")
-    ).toEqual(
-      expect.arrayContaining([
-        {
-          role: "system",
-          content:
-            "You are a assistant called ExampleBot. You can ask me anything.",
-        },
-      ])
-    );
-  });
-});
-
-describe("Voice Client Config Setter Helper Methods", () => {
-  test("setServiceOptionInConfig should not mutate client config", () => {
-    expect(
-      voiceClient.setServiceOptionInConfig("llm", {
-        name: "model",
-        value: "NewModel",
-      } as ConfigOption)
-    ).not.toEqual(voiceClient.config);
-  });
-
-  test("setServiceOptionInConfig should create a new service option key when it is not found", () => {
-    const updatedConfig = voiceClient.setServiceOptionInConfig("tts", {
-      name: "test",
-      value: "test",
-    } as ConfigOption);
-
-    expect(updatedConfig).toEqual(
-      expect.arrayContaining([
+      await expect(voiceClient.updateConfig(exampleConfig)).resolves.toEqual(
         expect.objectContaining({
-          service: "tts",
-          options: expect.arrayContaining([
-            { name: "voice", value: "VoiceABC" },
-            { name: "test", value: "test" },
-          ]),
-        }),
-      ])
-    );
+          data: expect.objectContaining({
+            config: expect.arrayContaining(exampleConfig),
+          }),
+        })
+      );
+    });
 
-    expect(
-      voiceClient.setServiceOptionInConfig("llm", {
-        name: "model",
-        value: "NewModel",
-      } as ConfigOption)
-    ).not.toEqual(voiceClient.config);
+    test("updateConfig should call the onConfigUpdated callback", async () => {
+      const onConfigUpdatedMock = jest.fn();
+      const voiceClientWithCallback = new VoiceClient({
+        ...voiceClientArgs,
+        callbacks: {
+          onConfigUpdated: onConfigUpdatedMock,
+        },
+      });
+      await voiceClientWithCallback.start();
+      await voiceClientWithCallback.updateConfig(exampleConfig);
+
+      expect(onConfigUpdatedMock).toHaveBeenCalledWith(exampleConfig);
+    });
+
+    test("updateConfig should call the VoiceEvents.ConfigUpdated event", async () => {
+      const onMessageMock = jest.fn();
+
+      voiceClient.on(VoiceEvent.ConfigUpdated, onMessageMock);
+
+      await voiceClient.start();
+      await voiceClient.updateConfig(exampleConfig);
+
+      expect(onMessageMock).toHaveBeenCalled();
+
+      voiceClient.off(VoiceEvent.ConfigUpdated, onMessageMock);
+    });
   });
 
-  test("setServiceOptionInConfig should return client config with invalid service key", () => {
-    expect(
-      voiceClient.setServiceOptionInConfig("test", {
+  describe("Runtime getConfig Methods", () => {
+    test("getConfig should return a promise at runtime", async () => {
+      await voiceClient.start();
+      expect(voiceClient.getConfig()).toBeInstanceOf(Promise);
+    });
+
+    test("getConfig should return config when awaited", async () => {
+      await voiceClient.start();
+
+      await expect(voiceClient.getConfig()).resolves.toEqual(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            config: expect.arrayContaining(exampleConfig),
+          }),
+        })
+      );
+    });
+
+    test("getConfig should call the onConfig callback", async () => {
+      const onConfigMock = jest.fn();
+      const voiceClientWithCallback = new VoiceClient({
+        ...voiceClientArgs,
+        callbacks: {
+          onConfig: onConfigMock,
+        },
+      });
+      await voiceClientWithCallback.start();
+      await voiceClientWithCallback.getConfig();
+
+      expect(onConfigMock).toHaveBeenCalledWith(exampleConfig);
+    });
+
+    test("getConfig should call the VoiceEvents.Config event", async () => {
+      const onMessageMock = jest.fn();
+
+      voiceClient.on(VoiceEvent.Config, onMessageMock);
+
+      await voiceClient.start();
+      await voiceClient.getConfig();
+
+      expect(onMessageMock).toHaveBeenCalled();
+
+      voiceClient.off(VoiceEvent.Config, onMessageMock);
+    });
+  });
+
+  describe("getServiceOptionsFromConfig helper method", () => {
+    test("should throw error without passed config when offline", async () => {
+      await expect(
+        voiceClient.getServiceOptionsFromConfig("vad")
+      ).rejects.toThrow(BotNotReadyError);
+    });
+
+    test("should return undefined if serviceKey is not provided", async () => {
+      const result = await voiceClient.getServiceOptionsFromConfig(
+        "",
+        exampleConfig
+      );
+      expect(result).toBeUndefined();
+    });
+
+    test("should return options for a given service with passed config", async () => {
+      expect(
+        await voiceClient.getServiceOptionsFromConfig("vad", exampleConfig)
+      ).toEqual({
+        service: "vad",
+        options: [{ name: "params", value: { stop_secs: 0.8 } }],
+      });
+    });
+
+    test("should return undefined with invalid key with passed config", async () => {
+      expect(
+        await voiceClient.getServiceOptionsFromConfig("test", exampleConfig)
+      ).toBeUndefined();
+    });
+
+    test("should return options for a given service at runtime", async () => {
+      await voiceClient.start();
+      expect(await voiceClient.getServiceOptionsFromConfig("vad")).toEqual({
+        service: "vad",
+        options: [{ name: "params", value: { stop_secs: 0.8 } }],
+      });
+      expect(
+        await voiceClient.getServiceOptionsFromConfig("test")
+      ).toBeUndefined();
+    });
+  });
+
+  describe("getServiceOptionValueFromConfig helper method", () => {
+    test("should throw error without passed config when offline", async () => {
+      await expect(
+        voiceClient.getServiceOptionValueFromConfig("llm", "model")
+      ).rejects.toThrow(BotNotReadyError);
+    });
+
+    test("should a single option for a given service with passed config", async () => {
+      expect(
+        await voiceClient.getServiceOptionValueFromConfig(
+          "llm",
+          "model",
+          exampleConfig
+        )
+      ).toEqual("ModelABC");
+    });
+
+    test("should undefined with unknown service with passed config", async () => {
+      expect(
+        await voiceClient.getServiceOptionValueFromConfig(
+          "test",
+          "model",
+          exampleConfig
+        )
+      ).toBeUndefined();
+    });
+
+    test("should returns undefined with unknown option name with passed config", async () => {
+      expect(
+        await voiceClient.getServiceOptionValueFromConfig(
+          "llm",
+          "test",
+          exampleConfig
+        )
+      ).toBeUndefined();
+    });
+
+    test("should pass same tests at runtime (without config)", async () => {
+      await voiceClient.start();
+      expect(
+        await voiceClient.getServiceOptionValueFromConfig("llm", "model")
+      ).toEqual("ModelABC");
+      expect(
+        await voiceClient.getServiceOptionValueFromConfig("llm", "test")
+      ).toBeUndefined();
+      expect(
+        await voiceClient.getServiceOptionValueFromConfig("test", "test")
+      ).toBeUndefined();
+    });
+  });
+
+  describe("setServiceOptionInConfig config setter helper method", () => {
+    test("should throw error without passed config when offline", async () => {
+      await expect(
+        voiceClient.setServiceOptionInConfig("llm", {
+          name: "test",
+          value: "test",
+        } as ConfigOption)
+      ).rejects.toThrow(BotNotReadyError);
+    });
+
+    test("should return initial config with unknown service key", async () => {
+      expect(
+        await voiceClient.setServiceOptionInConfig(
+          "test",
+          {
+            name: "test",
+            value: "test",
+          } as ConfigOption,
+          exampleConfig
+        )
+      ).toEqual(exampleConfig);
+    });
+
+    test("should create a new service option key when it is not found", async () => {
+      await voiceClient.start();
+
+      const updatedConfig = await voiceClient.setServiceOptionInConfig("tts", {
         name: "test",
         value: "test",
-      } as ConfigOption)
-    ).toEqual(voiceClient.config);
-  });
+      } as ConfigOption);
 
-  test("setServiceOptionInConfig should set or update multiple items", () => {
-    const newConfig = voiceClient.setServiceOptionInConfig("llm", [
-      {
-        name: "model",
-        value: "newModel",
-      } as ConfigOption,
-      {
-        name: "test2",
-        value: "test2",
-      } as ConfigOption,
-    ]);
-    expect(newConfig).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          service: "llm",
-          options: expect.arrayContaining([
-            { name: "model", value: "newModel" },
-            { name: "test2", value: "test2" },
-          ]),
-        }),
-      ])
-    );
-  });
+      expect(updatedConfig).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            service: "tts",
+            options: expect.arrayContaining([
+              { name: "voice", value: "VoiceABC" },
+              { name: "test", value: "test" },
+            ]),
+          }),
+        ])
+      );
+    });
 
-  test("setServiceOptionInConfig should not mutate client config when passed array", () => {
-    expect(
-      voiceClient.setServiceOptionInConfig("llm", [
+    test("should return new instance of passed config with changes", async () => {
+      const updatedConfig = await voiceClient.setServiceOptionInConfig(
+        "tts",
         {
-          name: "test1",
-          value: "test1",
+          name: "test",
+          value: "test",
+        } as ConfigOption,
+        exampleConfig
+      );
+
+      expect(updatedConfig).not.toEqual(exampleConfig);
+    });
+
+    test("should set or update multiple items (runtime and passed config)", async () => {
+      // Passed config
+      const passedConfig = await voiceClient.setServiceOptionInConfig(
+        "llm",
+        [
+          {
+            name: "model",
+            value: "newModel",
+          } as ConfigOption,
+          {
+            name: "test2",
+            value: "test2",
+          } as ConfigOption,
+        ],
+        exampleConfig
+      );
+      expect(passedConfig).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            service: "llm",
+            options: expect.arrayContaining([
+              { name: "model", value: "newModel" },
+              { name: "test2", value: "test2" },
+            ]),
+          }),
+        ])
+      );
+
+      await voiceClient.start();
+
+      // Runtime config
+      const runtimeConfig = await voiceClient.setServiceOptionInConfig("llm", [
+        {
+          name: "model",
+          value: "newModel",
         } as ConfigOption,
         {
           name: "test2",
           value: "test2",
         } as ConfigOption,
-      ])
-    ).not.toEqual(voiceClient.config);
-  });
-
-  test("setServiceOptionInConfig should update the passed config when provided", () => {
-    const testConfig: VoiceClientConfigOption[] = [
-      { service: "llm", options: [{ name: "test", value: "test" }] },
-      {
-        service: "tts",
-        options: [{ name: "test2", value: "test2" }],
-      },
-    ];
-    const mutatedConfig = voiceClient.setServiceOptionInConfig(
-      "llm",
-      {
-        name: "test",
-        value: "newTest",
-      } as ConfigOption,
-      testConfig
-    );
-
-    expect(mutatedConfig).toEqual([
-      {
-        service: "llm",
-        options: [{ name: "test", value: "newTest" }],
-      },
-      {
-        service: "tts",
-        options: [{ name: "test2", value: "test2" }],
-      },
-    ]);
-
-    expect(mutatedConfig).not.toEqual(voiceClient.config);
-  });
-
-  test("setConfigOptions update multiple service options and returns mutated object", () => {
-    const newConfig = voiceClient.setConfigOptions([
-      { service: "llm", options: [{ name: "model", value: "NewModel" }] },
-      { service: "tts", options: [{ name: "test", value: "test" }] },
-    ]);
-
-    expect(newConfig).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          service: "llm",
-          options: expect.arrayContaining([
-            { name: "model", value: "NewModel" },
-            { name: "run_on_config", value: true },
-          ]),
-        }),
-        expect.objectContaining({
-          service: "tts",
-          options: expect.arrayContaining([{ name: "test", value: "test" }]),
-        }),
-      ])
-    );
-  });
-});
-
-describe("updateConfig method", () => {
-  test("Config cannot be set as a property", () => {
-    // Check if voiceClient has the config property
-    expect("config" in voiceClient).toBe(true);
-
-    expect(() => {
-      //@ts-expect-error config is protected
-      voiceClient.config = [];
-    }).toThrowError();
-  });
-
-  test("updateConfig method should update the config", () => {
-    const newConfig = voiceClient.setServiceOptionInConfig("tts", {
-      name: "test",
-      value: "test",
-    } as ConfigOption);
-
-    voiceClient.updateConfig(newConfig);
-
-    expect(newConfig).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          service: "tts",
-          options: expect.arrayContaining([{ name: "test", value: "test" }]),
-        }),
-      ])
-    );
-  });
-
-  test("updateConfig should trigger onConfigUpdate event", async () => {
-    const newConfig = voiceClient.setServiceOptionInConfig("tts", {
-      name: "test",
-      value: "test2",
-    } as ConfigOption);
-
-    const handleConfigUpdate = (updatedConfig: VoiceClientConfigOption[]) => {
-      expect(updatedConfig).toEqual(
+      ]);
+      expect(runtimeConfig).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            service: "tts",
-            options: expect.arrayContaining([{ name: "test", value: "test2" }]),
+            service: "llm",
+            options: expect.arrayContaining([
+              { name: "model", value: "newModel" },
+              { name: "test2", value: "test2" },
+            ]),
           }),
         ])
       );
-    };
-    voiceClient.on(VoiceEvent.ConfigUpdated, handleConfigUpdate);
+    });
+  });
 
-    await voiceClient.updateConfig(newConfig);
+  describe("setConfigOptions config setter helper method", () => {
+    test("should update multiple service options and return mutated object with passed config", async () => {
+      const newConfig = await voiceClient.setConfigOptions(
+        [
+          { service: "llm", options: [{ name: "model", value: "NewModel" }] },
+          { service: "tts", options: [{ name: "test", value: "test" }] },
+        ],
+        exampleConfig
+      );
 
-    voiceClient.off(VoiceEvent.ConfigUpdated, handleConfigUpdate);
+      expect(newConfig).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            service: "llm",
+            options: expect.arrayContaining([
+              { name: "model", value: "NewModel" },
+              { name: "run_on_config", value: true },
+            ]),
+          }),
+          expect.objectContaining({
+            service: "tts",
+            options: expect.arrayContaining([{ name: "test", value: "test" }]),
+          }),
+        ])
+      );
+    });
+
+    test("should update multiple service options and return mutated object at runtime", async () => {
+      await voiceClient.start();
+
+      const newConfig = await voiceClient.setConfigOptions([
+        { service: "llm", options: [{ name: "model", value: "NewModel" }] },
+        { service: "tts", options: [{ name: "test", value: "test" }] },
+      ]);
+
+      expect(newConfig).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            service: "llm",
+            options: expect.arrayContaining([
+              { name: "model", value: "NewModel" },
+              { name: "run_on_config", value: true },
+            ]),
+          }),
+          expect.objectContaining({
+            service: "tts",
+            options: expect.arrayContaining([{ name: "test", value: "test" }]),
+          }),
+        ])
+      );
+    });
   });
 });
