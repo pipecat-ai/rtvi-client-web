@@ -293,8 +293,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
         this._transport.state = "authenticating";
 
-        const config: VoiceClientConfigOption[] = this._options.config!;
-
         // Set a timer for the bot to enter a ready state, otherwise abort the attempt
         if (this._options.timeout) {
           this._handshakeTimeout = setTimeout(() => {
@@ -309,7 +307,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         const customAuthHandler = this._options.customAuthHandler;
 
         console.debug("[RTVI Client] Connecting to baseUrl", this._baseUrl);
-        console.debug("[RTVI Client] Config", config);
+        console.debug("[RTVI Client] Start params", this._options.startParams);
 
         try {
           if (customAuthHandler) {
@@ -327,9 +325,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
                 ...this._options.customHeaders,
               },
               body: JSON.stringify({
-                services: this._options.services,
-                config,
-                ...this._options.customBodyParams,
+                services: this._options.services, // @deprecated
+                config: this._options.config!, // @deprecated
+                ...this._options.customBodyParams, // @deprecated
+                ...this._options.startParams,
               }),
               signal: this._abortController?.signal,
             }).then((res) => {
