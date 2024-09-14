@@ -24,11 +24,7 @@ import {
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { Participant, Transport, TransportState } from "./transport";
-import {
-  getIfTransportInState,
-  transportInState,
-  transportReady,
-} from "./decorators";
+import { getIfTransportInState, transportReady } from "./decorators";
 
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
@@ -504,7 +500,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Returns configuration option value (unknown) for specified service key and option name
    * @param serviceKey - Service name to get options for (e.g. "llm")
    * @optional option Name of option return from the config (e.g. "model")
-   * @returns unknown | undefined - Service configuration option value or undefined
+   * @returns Promise<unknown | undefined> - Service configuration option value or undefined
    */
   public async getServiceOptionValueFromConfig(
     serviceKey: string,
@@ -556,7 +552,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @param serviceKey - Service name to get options for (e.g. "llm")
    * @param option - Service name to get options for (e.g. "model")
    * @param config - Optional VoiceClientConfigOption[] to update (vs. using current config)
-   * @returns VoiceClientConfigOption[] - Configuration options
+   * @returns Promise<VoiceClientConfigOption[] | undefined> - Configuration options array with updated option(s) or undefined
    */
   public async setServiceOptionInConfig(
     serviceKey: string,
@@ -603,7 +599,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Returns config object with update properties from passed array
    * @param configOptions - Array of VoiceClientConfigOption[] to update
    * @param config? - Optional VoiceClientConfigOption[] to update (vs. using current config)
-   * @returns VoiceClientConfigOption[] - Configuration options
+   * @returns Promise<VoiceClientConfigOption[]> - Configuration options
    */
   public async setConfigOptions(
     configOptions: VoiceClientConfigOption[],
@@ -767,6 +763,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * from the client and use the event dispatcher
    * @param service - Target service for this helper
    * @param helper - Helper instance
+   * @returns VoiceClientHelper - Registered helper instance
    */
   public registerHelper(
     service: string,
@@ -811,7 +808,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * @deprecated use getConfig instead
-   * @returns Promise<unknown> - Promise that resolves with the bot's configuration
+   * @returns Promise<VoiceClientConfigOption[]> - Promise that resolves with the bot's configuration
    */
   @transportReady
   public async getBotConfig(): Promise<VoiceClientConfigOption[]> {
