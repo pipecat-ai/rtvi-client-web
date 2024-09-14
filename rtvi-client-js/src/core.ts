@@ -24,7 +24,11 @@ import {
 import * as VoiceErrors from "./errors";
 import { VoiceEvent, VoiceEvents } from "./events";
 import { Participant, Transport, TransportState } from "./transport";
-import { getIfTransportInState, transportReady } from "./decorators";
+import {
+  getIfTransportInState,
+  transportInState,
+  transportReady,
+} from "./decorators";
 
 export type VoiceEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
@@ -64,14 +68,14 @@ export type VoiceEventCallbacks = Partial<{
 }>;
 
 export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
-  protected _options: VoiceClientOptions;
-  private _transport: Transport;
-  private _messageDispatcher: MessageDispatcher;
   private readonly _baseUrl: string;
-  private _startResolve: ((value: unknown) => void) | undefined;
+  protected _options: VoiceClientOptions;
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
   private _helpers: VoiceClientHelpers;
+  private _messageDispatcher: MessageDispatcher;
+  private _startResolve: ((value: unknown) => void) | undefined;
+  private _transport: Transport;
 
   constructor(options: VoiceClientOptions) {
     super();
@@ -195,68 +199,20 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
       callbacks: wrappedCallbacks,
     };
 
-    // Instantiate the transport class
+    // Instantiate the transport class and bind message handler
     const cls = this._options.transport!;
     this._transport = new cls(this._options, this.handleMessage.bind(this))!;
 
-    // Create a new message dispatch queue for async message handling
+    // Create a new message dispatch queue for async message / action handling
     this._messageDispatcher = new MessageDispatcher(this._transport);
 
     console.debug("[RTVI Client] Initialized");
   }
 
-  // ------ Helpers
-
-  /**
-   * Register a new helper to the client
-   * This (optionally) provides a way to reference the helper directly
-   * from the client and use the event dispatcher
-   * @param service - Target service for this helper
-   * @param helper - Helper instance
-   */
-  public registerHelper(
-    service: string,
-    helper: VoiceClientHelper
-  ): VoiceClientHelper {
-    if (this._helpers[service]) {
-      throw new Error(`Helper with name '${service}' already registered`);
-    }
-
-    // Check helper is instance of VoiceClientHelper
-    if (!(helper instanceof VoiceClientHelper)) {
-      throw new Error(`Helper must be an instance of VoiceClientHelper`);
-    }
-
-    helper.service = service;
-    helper.voiceClient = this;
-
-    this._helpers[service] = helper;
-
-    return this._helpers[service];
-  }
-
-  public getHelper<T extends VoiceClientHelper>(
-    service: string
-  ): T | undefined {
-    const helper = this._helpers[service];
-    if (!helper) {
-      console.debug(`Helper targeting service '${service}' not found`);
-      return undefined;
-    }
-    return helper as T;
-  }
-
-  public unregisterHelper(service: string) {
-    if (!this._helpers[service]) {
-      return;
-    }
-    delete this._helpers[service];
-  }
-
   // ------ Transport methods
 
   /**
-   * Initialize the local media devices
+   * Initialize local media devices
    */
   public async initDevices() {
     await this._transport.initDevices();
@@ -310,6 +266,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
           if (customAuthHandler) {
             authBundle = await customAuthHandler(
               this._baseUrl,
+              this._options.startParams ?? {},
               this._handshakeTimeout,
               this._abortController!
             );
@@ -319,7 +276,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
               mode: "cors",
               headers: {
                 "Content-Type": "application/json",
-                ...this._options.customHeaders,
+                ...(this._options.startHeaders ?? this._options.customHeaders), // @deprecated
               },
               body: JSON.stringify({
                 services: this._options.services, // @deprecated
@@ -476,7 +433,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Update pipeline and services
    * @param config - VoiceClientConfigOption[] partial object with the new configuration
    * @param interrupt - boolean flag to interrupt the current pipeline, or wait until the next turn
-   * @returns Promise<unknown> - Promise that resolves with the updated configuration
+   * @returns Promise<VoiceMessage> - Promise that resolves with the updated configuration
    */
   @transportReady
   public async updateConfig(
@@ -726,8 +683,6 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     switch (ev.type) {
       case VoiceMessageType.BOT_READY:
         clearTimeout(this._handshakeTimeout);
-        // Hydrate config with the bot's config
-        this._options.config = (ev.data as BotReadyData).config;
         this._transport.state = "ready";
         this._startResolve?.(ev.data as BotReadyData);
         this._options.callbacks?.onBotReady?.(ev.data as BotReadyData);
@@ -802,6 +757,54 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         }
       }
     }
+  }
+
+  // ------ Helpers
+
+  /**
+   * Register a new helper to the client
+   * This (optionally) provides a way to reference helpers directly
+   * from the client and use the event dispatcher
+   * @param service - Target service for this helper
+   * @param helper - Helper instance
+   */
+  public registerHelper(
+    service: string,
+    helper: VoiceClientHelper
+  ): VoiceClientHelper {
+    if (this._helpers[service]) {
+      throw new Error(`Helper with name '${service}' already registered`);
+    }
+
+    // Check helper is instance of VoiceClientHelper
+    if (!(helper instanceof VoiceClientHelper)) {
+      throw new Error(`Helper must be an instance of VoiceClientHelper`);
+    }
+
+    helper.service = service;
+    helper.voiceClient = this;
+
+    this._helpers[service] = helper;
+
+    return this._helpers[service];
+  }
+
+  public getHelper<T extends VoiceClientHelper>(
+    service: string
+  ): T | undefined {
+    const helper = this._helpers[service];
+    if (!helper) {
+      console.debug(`Helper targeting service '${service}' not found`);
+      return undefined;
+    }
+    return helper as T;
+  }
+
+  public unregisterHelper(service: string) {
+    if (!this._helpers[service]) {
+      return;
+    }
+    delete this._helpers[service];
   }
 
   // ------ Deprecated

@@ -22,11 +22,13 @@ This change enforces a key design principle of the RTVI standard: the bot should
 
 - Client no longer expects a `services` map as a constructor param (note: remains in place but flagged as deprecated.) If you want to pass a services map to your endpoint, please use `startParams`.
 - Config getter and setter methods (`getConfig` and `updateConfig`) are only supported at runtime. 
-- `updateConfig` and `getConfig` promise is typed to `Promise<VoiceMessage>` (previously `unknown` to support offline updates.)
+- `updateConfig` promise is typed to `Promise<VoiceMessage>` (previously `unknown` to support offline updates.)
+- `getConfig` promise is typed to `Promise<VoiceClientOptions[]>` (previously `unknown` to support offline updates.)
 - `services` getter and setter methods have been deprecated.
 - `getServiceOptionsFromConfig`, `getServiceOptionValueFromConfig`, `setConfigOptions` and `setServiceOptionInConfig` are now async to support `getConfig` at runtime and accept an optional `config` param for working with local config arrays.
 - `registerHelper` no longer checks for a registered service and instead relies on string matching.
-- LLM Helper `getContext()` now accepts optional `config` param for working with local configs
+- LLM Helper `getContext()` now accepts optional `config` param for working with local configs.
+- `customAuthHandler` updated to receive `startParams` as second dependency.
 - jest tests updated to reflect changes.
 
 ### Fixed

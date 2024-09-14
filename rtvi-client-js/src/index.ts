@@ -58,6 +58,23 @@ export interface VoiceClientOptions {
   enableCam?: boolean;
 
   /**
+   * Custom start method handler for retrieving auth bundle for transport
+   * @param baseUrl
+   * @param startParams
+   * @param timeout
+   * @param abortController
+   * @returns Promise<void>
+   */
+  customAuthHandler?: (
+    baseUrl: string,
+    startParams: object,
+    timeout: ReturnType<typeof setTimeout> | undefined,
+    abortController: AbortController
+  ) => Promise<void>;
+
+  // ----- deprecated options
+
+  /**
    * Service key value pairs (e.g. {llm: "openai"} )
    * A client must have at least one service to connect to a voice server
    * @deprecated Use startParams.services instead
@@ -81,17 +98,6 @@ export interface VoiceClientOptions {
    * @deprecated Use startParams instead
    */
   customBodyParams?: object;
-
-  /**
-   * Custom start method handler for retrieving auth bundle for transport
-   * @param abortController
-   * @returns Promise<void>
-   */
-  customAuthHandler?: (
-    baseUrl: string,
-    timeout: ReturnType<typeof setTimeout> | undefined,
-    abortController: AbortController
-  ) => Promise<void>;
 }
 
 export type ConfigOption = {
