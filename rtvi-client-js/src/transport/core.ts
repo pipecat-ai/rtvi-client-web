@@ -1,5 +1,5 @@
-import { VoiceClientOptions, VoiceMessage } from "..";
-import { VoiceEventCallbacks } from "../core";
+import { RTVIClientOptions, RTVIMessage } from "..";
+import { RTVIEventCallbacks } from "../clients";
 
 export type TransportState =
   | "idle"
@@ -30,15 +30,15 @@ export type Tracks = {
 };
 
 export abstract class Transport {
-  protected _options: VoiceClientOptions;
-  protected _callbacks: VoiceEventCallbacks;
-  protected _onMessage: (ev: VoiceMessage) => void;
+  protected _options: RTVIClientOptions;
+  protected _callbacks: RTVIEventCallbacks;
+  protected _onMessage: (ev: RTVIMessage) => void;
   protected _state: TransportState = "idle";
   protected _expiry?: number = undefined;
 
   constructor(
-    options: VoiceClientOptions,
-    onMessage: (ev: VoiceMessage) => void
+    options: RTVIClientOptions,
+    onMessage: (ev: RTVIMessage) => void
   ) {
     this._options = options;
     this._callbacks = options.callbacks ?? {};
@@ -69,7 +69,7 @@ export abstract class Transport {
   abstract get isCamEnabled(): boolean;
   abstract get isMicEnabled(): boolean;
 
-  abstract sendMessage(message: VoiceMessage): void;
+  abstract sendMessage(message: RTVIMessage): void;
 
   abstract get state(): TransportState;
   abstract set state(state: TransportState);

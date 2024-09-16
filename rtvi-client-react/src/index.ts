@@ -1,9 +1,9 @@
-export { VoiceClientAudio } from "./VoiceClientAudio";
-export { VoiceClientVideo } from "./VoiceClientVideo";
-export { VoiceClientProvider } from "./VoiceClientProvider";
+export { RTVIClientAudio } from "./RTVIClientAudio";
+export { RTVIClientVideo } from "./RTVIClientVideo";
 export { VoiceVisualizer } from "./VoiceVisualizer";
-export { useVoiceClient } from "./useVoiceClient";
-export { useVoiceClientEvent } from "./useVoiceClientEvent";
-export { useVoiceClientMediaDevices } from "./useVoiceClientMediaDevices";
-export { useVoiceClientMediaTrack } from "./useVoiceClientMediaTrack";
-export { useVoiceClientTransportState } from "./useVoiceClientTransportState";
+export { RTVIClientProvider } from "./RTVIClientProvider";
+export { useRTVIClient } from "./useRTVIClient";
+export { useRTVIClientEvent } from "./useRTVIClientEvent";
+export { useRTVIClientMediaDevices } from "./useRTVIClientMediaDevices";
+export { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
+export { useRTVIClientTransportState } from "./useRTVIClientTransportState";

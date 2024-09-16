@@ -1,8 +1,8 @@
 import React, { forwardRef, useEffect, useRef } from "react";
-import { useVoiceClientMediaTrack } from "./useVoiceClientMediaTrack";
+import { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
 import useMergedRef from "./useMergedRef";
 
-interface VoiceClientVideoInterface {
+interface RTVIClientVideoInterface {
   aspectRatio: number;
   height: number;
   width: number;
@@ -25,10 +25,10 @@ interface Props
    * Optional callback, which is triggered whenever the video's rendered width or height changes.
    * Returns the video's native width, height and aspectRatio.
    */
-  onResize?(dimensions: VoiceClientVideoInterface): void;
+  onResize?(dimensions: RTVIClientVideoInterface): void;
 }
 
-export const VoiceClientVideo = forwardRef<HTMLVideoElement, Props>(
+export const RTVIClientVideo = forwardRef<HTMLVideoElement, Props>(
   function VoiceClientVideo(
     {
       participant = "local",
@@ -40,7 +40,7 @@ export const VoiceClientVideo = forwardRef<HTMLVideoElement, Props>(
     },
     ref
   ) {
-    const videoTrack: MediaStreamTrack | null = useVoiceClientMediaTrack(
+    const videoTrack: MediaStreamTrack | null = useRTVIClientMediaTrack(
       "video",
       participant
     );
@@ -180,4 +180,4 @@ export const VoiceClientVideo = forwardRef<HTMLVideoElement, Props>(
     );
   }
 );
-VoiceClientVideo.displayName = "VoiceClientVideo";
+RTVIClientVideo.displayName = "VoiceClientVideo";

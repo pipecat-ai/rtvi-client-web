@@ -2,7 +2,7 @@ import cloneDeep from "clone-deep";
 import { EventEmitter } from "events";
 import type TypedEmitter from "typed-emitter";
 
-import type { ActionData } from "./messages";
+import type { ActionData } from "../messages";
 import {
   BotReadyData,
   ConfigData,
@@ -10,70 +10,88 @@ import {
   MessageDispatcher,
   PipecatMetrics,
   Transcript,
-  VoiceClientConfigOption,
-  VoiceClientHelper,
-  VoiceClientHelpers,
-  VoiceClientOptions,
-  VoiceClientServices,
-  VoiceMessage,
-  VoiceMessageActionResponse,
-  VoiceMessageMetrics,
-  VoiceMessageType,
-} from ".";
+  RTVIClientConfigOption,
+  RTVIClientHelper,
+  RTVIClientHelpers,
+  RTVIClientOptions,
+  RTVIMessage,
+  RTVIMessageActionResponse,
+  RTVIMessageMetrics,
+  RTVIMessageType,
+  RTVIEventCallbacks,
+  VoiceClientServices, // deprecated
+} from "..";
 
-import * as VoiceErrors from "./errors";
-import { VoiceEvent, VoiceEvents } from "./events";
-import { Participant, Transport, TransportState } from "./transport";
-import { getIfTransportInState, transportReady } from "./decorators";
+import * as RTVIErrors from "../errors";
+import { RTVIEvent, RTVIEvents } from "../events";
+import { Participant, Transport, TransportState } from "../transport";
+import { getIfTransportInState, transportReady } from "../decorators";
 
-export type VoiceEventCallbacks = Partial<{
-  onGenericMessage: (data: unknown) => void;
-  onMessageError: (message: VoiceMessage) => void;
-  onError: (message: VoiceMessage) => void;
-  onConnected: () => void;
-  onDisconnected: () => void;
-  onTransportStateChanged: (state: TransportState) => void;
+export interface RTVIVoiceClientOptions extends RTVIClientOptions {
+  /**
+   * Optional callback methods for voice events
+   */
+  callbacks?: RTVIVoiceEventCallbacks;
 
-  onConfig: (config: VoiceClientConfigOption[]) => void;
-  onConfigDescribe: (configDescription: unknown) => void;
-  onActionsAvailable: (actions: unknown) => void;
-  onBotConnected: (participant: Participant) => void;
-  onBotReady: (botReadyData: BotReadyData) => void;
-  onBotDisconnected: (participant: Participant) => void;
-  onParticipantJoined: (participant: Participant) => void;
-  onParticipantLeft: (participant: Participant) => void;
+  /**
+   * Set transport class for media streaming
+   */
+  transport?: new (
+    options: RTVIClientOptions,
+    onMessage: (ev: RTVIMessage) => void
+  ) => Transport;
 
-  onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
-  onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
-  onCamUpdated: (cam: MediaDeviceInfo) => void;
-  onMicUpdated: (mic: MediaDeviceInfo) => void;
+  /**
+   * Enable user mic input
+   *
+   * Default to true
+   */
+  enableMic?: boolean;
 
-  onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
-  onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
-  onLocalAudioLevel: (level: number) => void;
-  onRemoteAudioLevel: (level: number, participant: Participant) => void;
+  /**
+   * Enable user cam input
+   *
+   * Default to false
+   */
+  enableCam?: boolean;
+}
 
-  onBotStartedSpeaking: (participant: Participant) => void;
-  onBotStoppedSpeaking: (participant: Participant) => void;
-  onUserStartedSpeaking: () => void;
-  onUserStoppedSpeaking: () => void;
+export type RTVIVoiceEventCallbacks = Partial<
+  RTVIEventCallbacks & {
+    onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
+    onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
+    onCamUpdated: (cam: MediaDeviceInfo) => void;
+    onMicUpdated: (mic: MediaDeviceInfo) => void;
+    onTrackStarted: (
+      track: MediaStreamTrack,
+      participant?: Participant
+    ) => void;
+    onTrackStopped: (
+      track: MediaStreamTrack,
+      participant?: Participant
+    ) => void;
+    onLocalAudioLevel: (level: number) => void;
+    onRemoteAudioLevel: (level: number, participant: Participant) => void;
+    onBotStartedSpeaking: (participant: Participant) => void;
+    onBotStoppedSpeaking: (participant: Participant) => void;
+    onUserStartedSpeaking: () => void;
+    onUserStoppedSpeaking: () => void;
+    onUserTranscript: (data: Transcript) => void;
+    onBotTranscript: (data: string) => void;
+  }
+>;
 
-  onMetrics: (data: PipecatMetrics) => void;
-  onUserTranscript: (data: Transcript) => void;
-  onBotTranscript: (data: string) => void;
-}>;
-
-export abstract class Client extends (EventEmitter as new () => TypedEmitter<VoiceEvents>) {
+export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTVIEvents>) {
   private readonly _baseUrl: string;
-  protected _options: VoiceClientOptions;
+  protected _options: RTVIVoiceClientOptions;
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
-  private _helpers: VoiceClientHelpers;
+  private _helpers: RTVIClientHelpers;
   private _messageDispatcher: MessageDispatcher;
   private _startResolve: ((value: unknown) => void) | undefined;
   private _transport: Transport;
 
-  constructor(options: VoiceClientOptions) {
+  constructor(options: RTVIVoiceClientOptions) {
     super();
 
     this._baseUrl = options.baseUrl;
@@ -81,111 +99,111 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
-    const wrappedCallbacks: VoiceEventCallbacks = {
+    const wrappedCallbacks: RTVIVoiceEventCallbacks = {
       ...options.callbacks,
-      onMessageError: (message: VoiceMessage) => {
+      onMessageError: (message: RTVIMessage) => {
         options?.callbacks?.onMessageError?.(message);
-        this.emit(VoiceEvent.MessageError, message);
+        this.emit(RTVIEvent.MessageError, message);
       },
-      onError: (message: VoiceMessage) => {
+      onError: (message: RTVIMessage) => {
         options?.callbacks?.onError?.(message);
-        this.emit(VoiceEvent.Error, message);
+        this.emit(RTVIEvent.Error, message);
       },
       onConnected: () => {
         options?.callbacks?.onConnected?.();
-        this.emit(VoiceEvent.Connected);
+        this.emit(RTVIEvent.Connected);
       },
       onDisconnected: () => {
         options?.callbacks?.onDisconnected?.();
-        this.emit(VoiceEvent.Disconnected);
+        this.emit(RTVIEvent.Disconnected);
       },
       onTransportStateChanged: (state: TransportState) => {
         options?.callbacks?.onTransportStateChanged?.(state);
-        this.emit(VoiceEvent.TransportStateChanged, state);
+        this.emit(RTVIEvent.TransportStateChanged, state);
       },
-      onConfig: (config: VoiceClientConfigOption[]) => {
+      onConfig: (config: RTVIClientConfigOption[]) => {
         options?.callbacks?.onConfig?.(config);
-        this.emit(VoiceEvent.Config, config);
+        this.emit(RTVIEvent.Config, config);
       },
       onConfigDescribe: (configDescription: unknown) => {
         options?.callbacks?.onConfigDescribe?.(configDescription);
-        this.emit(VoiceEvent.ConfigDescribe, configDescription);
+        this.emit(RTVIEvent.ConfigDescribe, configDescription);
       },
       onActionsAvailable: (actionsAvailable: unknown) => {
         options?.callbacks?.onActionsAvailable?.(actionsAvailable);
-        this.emit(VoiceEvent.ActionsAvailable, actionsAvailable);
+        this.emit(RTVIEvent.ActionsAvailable, actionsAvailable);
       },
       onParticipantJoined: (p) => {
         options?.callbacks?.onParticipantJoined?.(p);
-        this.emit(VoiceEvent.ParticipantConnected, p);
+        this.emit(RTVIEvent.ParticipantConnected, p);
       },
       onParticipantLeft: (p) => {
         options?.callbacks?.onParticipantLeft?.(p);
-        this.emit(VoiceEvent.ParticipantLeft, p);
+        this.emit(RTVIEvent.ParticipantLeft, p);
       },
       onTrackStarted: (track, p) => {
         options?.callbacks?.onTrackStarted?.(track, p);
-        this.emit(VoiceEvent.TrackStarted, track, p);
+        this.emit(RTVIEvent.TrackStarted, track, p);
       },
       onTrackStopped: (track, p) => {
         options?.callbacks?.onTrackStopped?.(track, p);
-        this.emit(VoiceEvent.TrackedStopped, track, p);
+        this.emit(RTVIEvent.TrackedStopped, track, p);
       },
       onAvailableCamsUpdated: (cams) => {
         options?.callbacks?.onAvailableCamsUpdated?.(cams);
-        this.emit(VoiceEvent.AvailableCamsUpdated, cams);
+        this.emit(RTVIEvent.AvailableCamsUpdated, cams);
       },
       onAvailableMicsUpdated: (mics) => {
         options?.callbacks?.onAvailableMicsUpdated?.(mics);
-        this.emit(VoiceEvent.AvailableMicsUpdated, mics);
+        this.emit(RTVIEvent.AvailableMicsUpdated, mics);
       },
       onCamUpdated: (cam) => {
         options?.callbacks?.onCamUpdated?.(cam);
-        this.emit(VoiceEvent.CamUpdated, cam);
+        this.emit(RTVIEvent.CamUpdated, cam);
       },
       onMicUpdated: (mic) => {
         options?.callbacks?.onMicUpdated?.(mic);
-        this.emit(VoiceEvent.MicUpdated, mic);
+        this.emit(RTVIEvent.MicUpdated, mic);
       },
       onBotConnected: (p) => {
         options?.callbacks?.onBotConnected?.(p);
-        this.emit(VoiceEvent.BotConnected, p);
+        this.emit(RTVIEvent.BotConnected, p);
       },
       onBotReady: (botReadyData: BotReadyData) => {
         options?.callbacks?.onBotReady?.(botReadyData);
-        this.emit(VoiceEvent.BotReady, botReadyData);
+        this.emit(RTVIEvent.BotReady, botReadyData);
       },
       onBotDisconnected: (p) => {
         options?.callbacks?.onBotDisconnected?.(p);
-        this.emit(VoiceEvent.BotDisconnected, p);
+        this.emit(RTVIEvent.BotDisconnected, p);
       },
       onBotStartedSpeaking: (p) => {
         options?.callbacks?.onBotStartedSpeaking?.(p);
-        this.emit(VoiceEvent.BotStartedSpeaking, p);
+        this.emit(RTVIEvent.BotStartedSpeaking, p);
       },
       onBotStoppedSpeaking: (p) => {
         options?.callbacks?.onBotStoppedSpeaking?.(p);
-        this.emit(VoiceEvent.BotStoppedSpeaking, p);
+        this.emit(RTVIEvent.BotStoppedSpeaking, p);
       },
       onRemoteAudioLevel: (level, p) => {
         options?.callbacks?.onRemoteAudioLevel?.(level, p);
-        this.emit(VoiceEvent.RemoteAudioLevel, level, p);
+        this.emit(RTVIEvent.RemoteAudioLevel, level, p);
       },
       onUserStartedSpeaking: () => {
         options?.callbacks?.onUserStartedSpeaking?.();
-        this.emit(VoiceEvent.UserStartedSpeaking);
+        this.emit(RTVIEvent.UserStartedSpeaking);
       },
       onUserStoppedSpeaking: () => {
         options?.callbacks?.onUserStoppedSpeaking?.();
-        this.emit(VoiceEvent.UserStoppedSpeaking);
+        this.emit(RTVIEvent.UserStoppedSpeaking);
       },
       onLocalAudioLevel: (level) => {
         options?.callbacks?.onLocalAudioLevel?.(level);
-        this.emit(VoiceEvent.LocalAudioLevel, level);
+        this.emit(RTVIEvent.LocalAudioLevel, level);
       },
       onUserTranscript: (data) => {
         options?.callbacks?.onUserTranscript?.(data);
-        this.emit(VoiceEvent.UserTranscript, data);
+        this.emit(RTVIEvent.UserTranscript, data);
       },
     };
 
@@ -224,7 +242,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         this._transport.state
       )
     ) {
-      throw new VoiceErrors.VoiceError(
+      throw new RTVIErrors.RTVIError(
         "Voice client has already been started. Please call disconnect() before starting again."
       );
     }
@@ -248,7 +266,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
             this._abortController?.abort();
             this._transport.disconnect();
             this._transport.state = "error";
-            reject(new VoiceErrors.ConnectionTimeoutError());
+            reject(new RTVIErrors.ConnectionTimeoutError());
           }, this._options.timeout);
         }
 
@@ -297,7 +315,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
             if (e instanceof Response) {
               const errorResp = await e.json();
               reject(
-                new VoiceErrors.StartBotError(
+                new RTVIErrors.StartBotError(
                   errorResp.info,
                   e.status,
                   errorResp.error
@@ -306,7 +324,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
             }
           } catch (innerError) {
             reject(
-              new VoiceErrors.StartBotError(
+              new RTVIErrors.StartBotError(
                 `Failed to connect / invalid auth bundle from base url ${this._baseUrl}`
               )
             );
@@ -415,32 +433,32 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * Request the bot to send the current configuration
-   * @returns Promise<VoiceClientConfigOption[]> - Promise that resolves with the bot's configuration
+   * @returns Promise<RTVIClientConfigOption[]> - Promise that resolves with the bot's configuration
    */
   @transportReady
-  public async getConfig(): Promise<VoiceClientConfigOption[]> {
+  public async getConfig(): Promise<RTVIClientConfigOption[]> {
     const configMsg = await this._messageDispatcher.dispatch(
-      VoiceMessage.getBotConfig()
+      RTVIMessage.getBotConfig()
     );
-    return (configMsg.data as ConfigData).config as VoiceClientConfigOption[];
+    return (configMsg.data as ConfigData).config as RTVIClientConfigOption[];
   }
 
   /**
    * Update pipeline and services
-   * @param config - VoiceClientConfigOption[] partial object with the new configuration
+   * @param config - RTVIClientConfigOption[] partial object with the new configuration
    * @param interrupt - boolean flag to interrupt the current pipeline, or wait until the next turn
-   * @returns Promise<VoiceMessage> - Promise that resolves with the updated configuration
+   * @returns Promise<RTVIMessage> - Promise that resolves with the updated configuration
    */
   @transportReady
   public async updateConfig(
-    config: VoiceClientConfigOption[],
+    config: RTVIClientConfigOption[],
     interrupt: boolean = false
-  ): Promise<VoiceMessage> {
+  ): Promise<RTVIMessage> {
     console.debug("[RTVI Client] Updating config", config);
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
     return this._messageDispatcher.dispatch(
-      VoiceMessage.updateConfig(config, interrupt)
+      RTVIMessage.updateConfig(config, interrupt)
     );
   }
 
@@ -450,21 +468,21 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    */
   @transportReady
   public async describeConfig(): Promise<unknown> {
-    return this._messageDispatcher.dispatch(VoiceMessage.describeConfig());
+    return this._messageDispatcher.dispatch(RTVIMessage.describeConfig());
   }
 
   /**
    * Returns configuration options for specified service key
    * @param serviceKey - Service name to get options for (e.g. "llm")
-   * @param config? - Optional VoiceClientConfigOption[] to update (vs. using remote config)
-   * @returns VoiceClientConfigOption | undefined - Configuration options array for the service with specified key or undefined
+   * @param config? - Optional RTVIClientConfigOption[] to update (vs. using remote config)
+   * @returns RTVIClientConfigOption | undefined - Configuration options array for the service with specified key or undefined
    */
   public async getServiceOptionsFromConfig(
     serviceKey: string,
-    config?: VoiceClientConfigOption[]
-  ): Promise<VoiceClientConfigOption | undefined> {
+    config?: RTVIClientConfigOption[]
+  ): Promise<RTVIClientConfigOption | undefined> {
     if (!config && this.state !== "ready") {
-      throw new VoiceErrors.BotNotReadyError(
+      throw new RTVIErrors.BotNotReadyError(
         "getServiceOptionsFromConfig called without config array before bot is ready"
       );
     }
@@ -476,12 +494,12 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         return undefined;
       }
 
-      const passedConfig: VoiceClientConfigOption[] =
+      const passedConfig: RTVIClientConfigOption[] =
         config ?? (await this.getConfig());
 
       // Find matching service name in the config and update the messages
       const configServiceKey = passedConfig.find(
-        (config: VoiceClientConfigOption) => config.service === serviceKey
+        (config: RTVIClientConfigOption) => config.service === serviceKey
       );
 
       if (!configServiceKey) {
@@ -505,9 +523,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   public async getServiceOptionValueFromConfig(
     serviceKey: string,
     option: string,
-    config?: VoiceClientConfigOption[]
+    config?: RTVIClientConfigOption[]
   ): Promise<unknown | undefined> {
-    const configServiceKey: VoiceClientConfigOption | undefined =
+    const configServiceKey: RTVIClientConfigOption | undefined =
       await this.getServiceOptionsFromConfig(serviceKey, config);
 
     if (!configServiceKey) {
@@ -551,15 +569,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * Note: does not update current config, only returns a new object (call updateConfig to apply changes)
    * @param serviceKey - Service name to get options for (e.g. "llm")
    * @param option - Service name to get options for (e.g. "model")
-   * @param config - Optional VoiceClientConfigOption[] to update (vs. using current config)
-   * @returns Promise<VoiceClientConfigOption[] | undefined> - Configuration options array with updated option(s) or undefined
+   * @param config - Optional RTVIClientConfigOption[] to update (vs. using current config)
+   * @returns Promise<RTVIClientConfigOption[] | undefined> - Configuration options array with updated option(s) or undefined
    */
   public async setServiceOptionInConfig(
     serviceKey: string,
     option: ConfigOption | ConfigOption[],
-    config?: VoiceClientConfigOption[]
-  ): Promise<VoiceClientConfigOption[] | undefined> {
-    const newConfig: VoiceClientConfigOption[] = cloneDeep(
+    config?: RTVIClientConfigOption[]
+  ): Promise<RTVIClientConfigOption[] | undefined> {
+    const newConfig: RTVIClientConfigOption[] = cloneDeep(
       config ?? (await this.getConfig())
     );
 
@@ -597,15 +615,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * Returns config object with update properties from passed array
-   * @param configOptions - Array of VoiceClientConfigOption[] to update
-   * @param config? - Optional VoiceClientConfigOption[] to update (vs. using current config)
-   * @returns Promise<VoiceClientConfigOption[]> - Configuration options
+   * @param configOptions - Array of RTVIClientConfigOption[] to update
+   * @param config? - Optional RTVIClientConfigOption[] to update (vs. using current config)
+   * @returns Promise<RTVIClientConfigOption[]> - Configuration options
    */
   public async setConfigOptions(
-    configOptions: VoiceClientConfigOption[],
-    config?: VoiceClientConfigOption[]
-  ): Promise<VoiceClientConfigOption[]> {
-    let accumulator: VoiceClientConfigOption[] = cloneDeep(
+    configOptions: RTVIClientConfigOption[],
+    config?: RTVIClientConfigOption[]
+  ): Promise<RTVIClientConfigOption[]> {
+    let accumulator: RTVIClientConfigOption[] = cloneDeep(
       config ?? (await this.getConfig())
     );
 
@@ -625,15 +643,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
   /**
    * Dispatch an action message to the bot
    * @param actionData - ActionData object with the action to dispatch
-   * @returns Promise<VoiceMessageActionResponse> - Promise that resolves with the action response
+   * @returns Promise<RTVIMessageActionResponse> - Promise that resolves with the action response
    */
   @transportReady
   public async action(
     actionData: ActionData
-  ): Promise<VoiceMessageActionResponse> {
+  ): Promise<RTVIMessageActionResponse> {
     return this._messageDispatcher.dispatch(
-      VoiceMessage.action(actionData)
-    ) as Promise<VoiceMessageActionResponse>;
+      RTVIMessage.action(actionData)
+    ) as Promise<RTVIMessageActionResponse>;
   }
 
   /**
@@ -642,7 +660,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    */
   @transportReady
   public async describeActions(): Promise<unknown> {
-    return this._messageDispatcher.dispatch(VoiceMessage.describeActions());
+    return this._messageDispatcher.dispatch(RTVIMessage.describeActions());
   }
 
   // ------ Transport methods
@@ -660,81 +678,81 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * Directly send a message to the bot via the transport
-   * @param message - VoiceMessage object to send
+   * @param message - RTVIMessage object to send
    */
   @transportReady
-  public sendMessage(message: VoiceMessage): void {
+  public sendMessage(message: RTVIMessage): void {
     this._transport.sendMessage(message);
   }
 
-  protected handleMessage(ev: VoiceMessage): void {
-    console.debug("[Voice Message]", ev);
+  protected handleMessage(ev: RTVIMessage): void {
+    console.debug("[RTVI Message]", ev);
 
-    if (ev instanceof VoiceMessageMetrics) {
+    if (ev instanceof RTVIMessageMetrics) {
       //@TODO: add to wrapped metrics
-      this.emit(VoiceEvent.Metrics, ev.data as PipecatMetrics);
+      this.emit(RTVIEvent.Metrics, ev.data as PipecatMetrics);
       return this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
     }
 
     switch (ev.type) {
-      case VoiceMessageType.BOT_READY:
+      case RTVIMessageType.BOT_READY:
         clearTimeout(this._handshakeTimeout);
         this._transport.state = "ready";
         this._startResolve?.(ev.data as BotReadyData);
         this._options.callbacks?.onBotReady?.(ev.data as BotReadyData);
         break;
-      case VoiceMessageType.CONFIG_AVAILABLE: {
+      case RTVIMessageType.CONFIG_AVAILABLE: {
         this._messageDispatcher.resolve(ev);
         this._options.callbacks?.onConfigDescribe?.(ev.data);
         break;
       }
-      case VoiceMessageType.CONFIG: {
+      case RTVIMessageType.CONFIG: {
         const resp = this._messageDispatcher.resolve(ev);
         this._options.callbacks?.onConfig?.((resp.data as ConfigData).config);
         break;
       }
-      case VoiceMessageType.ACTIONS_AVAILABLE: {
+      case RTVIMessageType.ACTIONS_AVAILABLE: {
         this._messageDispatcher.resolve(ev);
         this._options.callbacks?.onActionsAvailable?.(ev.data);
         break;
       }
-      case VoiceMessageType.ACTION_RESPONSE: {
+      case RTVIMessageType.ACTION_RESPONSE: {
         this._messageDispatcher.resolve(ev);
         break;
       }
-      case VoiceMessageType.ERROR_RESPONSE: {
+      case RTVIMessageType.ERROR_RESPONSE: {
         const resp = this._messageDispatcher.reject(ev);
-        this._options.callbacks?.onMessageError?.(resp as VoiceMessage);
+        this._options.callbacks?.onMessageError?.(resp as RTVIMessage);
         break;
       }
-      case VoiceMessageType.ERROR:
+      case RTVIMessageType.ERROR:
         this._options.callbacks?.onError?.(ev);
         break;
-      case VoiceMessageType.USER_STARTED_SPEAKING:
+      case RTVIMessageType.USER_STARTED_SPEAKING:
         this._options.callbacks?.onUserStartedSpeaking?.();
         break;
-      case VoiceMessageType.USER_STOPPED_SPEAKING:
+      case RTVIMessageType.USER_STOPPED_SPEAKING:
         this._options.callbacks?.onUserStoppedSpeaking?.();
         break;
-      case VoiceMessageType.BOT_STARTED_SPEAKING:
+      case RTVIMessageType.BOT_STARTED_SPEAKING:
         this._options.callbacks?.onBotStartedSpeaking?.(ev.data as Participant);
         break;
-      case VoiceMessageType.BOT_STOPPED_SPEAKING:
+      case RTVIMessageType.BOT_STOPPED_SPEAKING:
         this._options.callbacks?.onBotStoppedSpeaking?.(ev.data as Participant);
         break;
-      case VoiceMessageType.USER_TRANSCRIPTION: {
+      case RTVIMessageType.USER_TRANSCRIPTION: {
         //@TODO add to wrapped callbacks
         const transcriptData = ev.data as Transcript;
         const transcript = transcriptData as Transcript;
         this._options.callbacks?.onUserTranscript?.(transcript);
-        this.emit(VoiceEvent.UserTranscript, transcript);
+        this.emit(RTVIEvent.UserTranscript, transcript);
         break;
       }
-      case VoiceMessageType.BOT_TRANSCRIPTION: {
+      case RTVIMessageType.BOT_TRANSCRIPTION: {
         //@TODO add to wrapped callbacks
         const botData = ev.data as Transcript;
         this._options.callbacks?.onBotTranscript?.(botData.text as string);
-        this.emit(VoiceEvent.BotTranscript, botData.text as string);
+        this.emit(RTVIEvent.BotTranscript, botData.text as string);
         break;
       }
       default: {
@@ -742,7 +760,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
         // Pass message to registered helpered
         for (const helper of Object.values(
           this._helpers
-        ) as VoiceClientHelper[]) {
+        ) as RTVIClientHelper[]) {
           if (helper.getMessageTypes().includes(ev.type)) {
             match = true;
             helper.handleMessage(ev);
@@ -763,32 +781,30 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * from the client and use the event dispatcher
    * @param service - Target service for this helper
    * @param helper - Helper instance
-   * @returns VoiceClientHelper - Registered helper instance
+   * @returns RTVIClientHelper - Registered helper instance
    */
   public registerHelper(
     service: string,
-    helper: VoiceClientHelper
-  ): VoiceClientHelper {
+    helper: RTVIClientHelper
+  ): RTVIClientHelper {
     if (this._helpers[service]) {
       throw new Error(`Helper with name '${service}' already registered`);
     }
 
-    // Check helper is instance of VoiceClientHelper
-    if (!(helper instanceof VoiceClientHelper)) {
-      throw new Error(`Helper must be an instance of VoiceClientHelper`);
+    // Check helper is instance of RTVIClientHelper
+    if (!(helper instanceof RTVIClientHelper)) {
+      throw new Error(`Helper must be an instance of RTVIClientHelper`);
     }
 
     helper.service = service;
-    helper.voiceClient = this;
+    helper.client = this;
 
     this._helpers[service] = helper;
 
     return this._helpers[service];
   }
 
-  public getHelper<T extends VoiceClientHelper>(
-    service: string
-  ): T | undefined {
+  public getHelper<T extends RTVIClientHelper>(service: string): T | undefined {
     const helper = this._helpers[service];
     if (!helper) {
       console.debug(`Helper targeting service '${service}' not found`);
@@ -808,10 +824,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
 
   /**
    * @deprecated use getConfig instead
-   * @returns Promise<VoiceClientConfigOption[]> - Promise that resolves with the bot's configuration
+   * @returns Promise<RTVIClientConfigOption[]> - Promise that resolves with the bot's configuration
    */
   @transportReady
-  public async getBotConfig(): Promise<VoiceClientConfigOption[]> {
+  public async getBotConfig(): Promise<RTVIClientConfigOption[]> {
     console.warn(
       "VoiceClient.getBotConfig is deprecated. Use getConfig instead."
     );
@@ -822,9 +838,9 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
    * @deprecated This getter is deprecated and will be removed in future versions. Use getConfig instead.
    * Current client configuration
    * For the most up-to-date configuration, use getBotConfig method
-   * @returns VoiceClientConfigOption[] - Array of configuration options
+   * @returns RTVIClientConfigOption[] - Array of configuration options
    */
-  public get config(): VoiceClientConfigOption[] {
+  public get config(): RTVIClientConfigOption[] {
     console.warn("VoiceClient.config is deprecated. Use getConfig instead.");
     return this._options.config!;
   }
@@ -850,9 +866,22 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<Voi
     ) {
       this._options.services = services;
     } else {
-      throw new VoiceErrors.VoiceError(
+      throw new RTVIErrors.RTVIError(
         "Cannot set services while transport is connected"
       );
     }
+  }
+}
+
+export class VoiceClient extends Client {
+  constructor({ ...opts }: RTVIVoiceClientOptions) {
+    const options: RTVIVoiceClientOptions = {
+      ...opts,
+      transport: opts.transport,
+      enableMic: opts.enableMic ?? true,
+      config: opts.config || [],
+    };
+
+    super(options);
   }
 }

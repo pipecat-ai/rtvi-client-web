@@ -2,15 +2,15 @@ import {
   Tracks,
   Transport,
   TransportState,
-  VoiceClientOptions,
-  VoiceMessage,
-  VoiceMessageType,
+  RTVIClientOptions,
+  RTVIMessage,
+  RTVIMessageType,
 } from "../src";
 
 export class TransportStub extends Transport {
   constructor(
-    options: VoiceClientOptions,
-    onMessage: (ev: VoiceMessage) => void
+    options: RTVIClientOptions,
+    onMessage: (ev: RTVIMessage) => void
   ) {
     super(options, onMessage);
   }
@@ -36,11 +36,11 @@ export class TransportStub extends Transport {
         this._onMessage({
           label: "rtvi-ai",
           id: "123",
-          type: VoiceMessageType.BOT_READY,
+          type: RTVIMessageType.BOT_READY,
           data: {
             config: this._options.config,
           },
-        } as VoiceMessage);
+        } as RTVIMessage);
       })();
     });
   }
@@ -84,10 +84,10 @@ export class TransportStub extends Transport {
     return true;
   }
 
-  public sendMessage(message: VoiceMessage) {
-    if (message.type === VoiceMessageType.ACTION) {
+  public sendMessage(message: RTVIMessage) {
+    if (message.type === RTVIMessageType.ACTION) {
       this._onMessage({
-        type: VoiceMessageType.ACTION_RESPONSE,
+        type: RTVIMessageType.ACTION_RESPONSE,
         id: "123",
         label: "rtvi-ai",
         data: {
@@ -99,17 +99,17 @@ export class TransportStub extends Transport {
       console.log("[STUB] message.type:", message.type);
 
       switch (message.type) {
-        case VoiceMessageType.UPDATE_CONFIG:
+        case RTVIMessageType.UPDATE_CONFIG:
           this._onMessage({
             ...message,
-            type: VoiceMessageType.CONFIG,
+            type: RTVIMessageType.CONFIG,
           });
           break;
-        case VoiceMessageType.GET_CONFIG:
+        case RTVIMessageType.GET_CONFIG:
           this._onMessage({
             ...message,
             data: { config: this._options.config },
-            type: VoiceMessageType.CONFIG,
+            type: RTVIMessageType.CONFIG,
           });
           break;
         default:

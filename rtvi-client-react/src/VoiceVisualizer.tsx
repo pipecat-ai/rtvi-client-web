@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
-import { useVoiceClientMediaTrack } from "./useVoiceClientMediaTrack";
+import { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
 
-type ParticipantType = Parameters<typeof useVoiceClientMediaTrack>[1];
+type ParticipantType = Parameters<typeof useRTVIClientMediaTrack>[1];
 
 interface Props {
   backgroundColor?: string;
@@ -23,7 +23,7 @@ export const VoiceVisualizer: React.FC<Props> = React.memo(
   }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const track: MediaStreamTrack | null = useVoiceClientMediaTrack(
+    const track: MediaStreamTrack | null = useRTVIClientMediaTrack(
       "audio",
       participantType
     );

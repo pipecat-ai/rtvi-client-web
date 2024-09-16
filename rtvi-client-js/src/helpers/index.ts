@@ -1,29 +1,29 @@
-import { Client, VoiceMessage } from "..";
+import { Client, RTVIMessage } from "..";
 
-export type VoiceClientHelpers = Partial<Record<string, VoiceClientHelper>>;
+export type RTVIClientHelpers = Partial<Record<string, RTVIClientHelper>>;
 
-export type VoiceClientHelperCallbacks = Partial<object>;
+export type RTVIClientHelperCallbacks = Partial<object>;
 
-export interface VoiceClientHelperOptions {
+export interface RTVIClientHelperOptions {
   /**
    * Callback methods for events / messages
    */
-  callbacks?: VoiceClientHelperCallbacks;
+  callbacks?: RTVIClientHelperCallbacks;
 }
 
-export abstract class VoiceClientHelper {
-  protected _options: VoiceClientHelperOptions;
-  protected declare _voiceClient: Client;
+export abstract class RTVIClientHelper {
+  protected _options: RTVIClientHelperOptions;
+  protected declare _client: Client;
   protected declare _service: string;
 
-  constructor(options: VoiceClientHelperOptions) {
+  constructor(options: RTVIClientHelperOptions) {
     this._options = options;
   }
 
-  public abstract handleMessage(ev: VoiceMessage): void;
+  public abstract handleMessage(ev: RTVIMessage): void;
   public abstract getMessageTypes(): string[];
-  public set voiceClient(voiceClient: Client) {
-    this._voiceClient = voiceClient;
+  public set client(client: Client) {
+    this._client = client;
   }
   public set service(service: string) {
     this._service = service;

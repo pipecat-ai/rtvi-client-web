@@ -49,29 +49,31 @@ const voiceClient = new DailyVoiceClient({
     baseUrl: "https://..." // POST endpoint to request a new bot
     enableMic: true,
     enableCam: false,
-    services: {
-        llm: "openai",
-        tts: "cartesia"
-    },
-    config: [
-        {
-            service: "tts",
-            options: [{ name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" }],
+    startParams: {
+        services: {
+            llm: "openai",
+            tts: "cartesia"
         },
-        {
-            service: "llm",
-            options: [
-                { name: "model", value: "GPT-4o" }
-                {
-                    name: "initial_messages",
-                    value: [{
-                        role: "system",
-                        content: "You are a assistant called ExampleBot. You can ask me anything. Keep responses brief and legible. Introduce yourself first."
-                    }]
-                }
-            ]
-        }
-    ]
+        config: [
+            {
+                service: "tts",
+                options: [{ name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" }],
+            },
+            {
+                service: "llm",
+                options: [
+                    { name: "model", value: "GPT-4o" }
+                    {
+                        name: "initial_messages",
+                        value: [{
+                            role: "system",
+                            content: "You are a assistant called ExampleBot. You can ask me anything. Keep responses brief and legible. Introduce yourself first."
+                        }]
+                    }
+                ]
+            }
+        ]
+    }
 });
 
 await voiceClient.start();

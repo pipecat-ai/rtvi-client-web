@@ -1,8 +1,8 @@
 import { nanoid } from "nanoid";
 
-import { Transport, VoiceClientConfigOption } from ".";
+import { Transport, RTVIClientConfigOption } from ".";
 
-export enum VoiceMessageType {
+export enum RTVIMessageType {
   // Outbound
   CLIENT_READY = "client-ready",
   UPDATE_CONFIG = "update-config",
@@ -31,11 +31,11 @@ export enum VoiceMessageType {
 }
 
 export type ConfigData = {
-  config: VoiceClientConfigOption[];
+  config: RTVIClientConfigOption[];
 };
 
 export type BotReadyData = {
-  config: VoiceClientConfigOption[];
+  config: RTVIClientConfigOption[];
   version: string;
 };
 
@@ -63,14 +63,14 @@ export type Transcript = {
   user_id: string;
 };
 
-export type VoiceMessageActionResponse = {
+export type RTVIMessageActionResponse = {
   id: string;
   label: string;
   type: string;
   data: { result: unknown };
 };
 
-export class VoiceMessage {
+export class RTVIMessage {
   id: string;
   label: string = "rtvi-ai";
   type: string;
@@ -87,48 +87,48 @@ export class VoiceMessage {
   }
 
   // Outbound message types
-  static clientReady(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.CLIENT_READY, {});
+  static clientReady(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.CLIENT_READY, {});
   }
 
   static updateConfig(
-    config: VoiceClientConfigOption[],
+    config: RTVIClientConfigOption[],
     interrupt: boolean = false
-  ): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.UPDATE_CONFIG, {
+  ): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.UPDATE_CONFIG, {
       config,
       interrupt,
     });
   }
 
-  static describeConfig(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.DESCRIBE_CONFIG, {});
+  static describeConfig(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.DESCRIBE_CONFIG, {});
   }
 
-  static getBotConfig(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.GET_CONFIG, {});
+  static getBotConfig(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.GET_CONFIG, {});
   }
 
-  static describeActions(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.DESCRIBE_ACTIONS, {});
+  static describeActions(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.DESCRIBE_ACTIONS, {});
   }
 
   // Actions (generic)
-  static action(data: ActionData): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.ACTION, data);
+  static action(data: ActionData): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.ACTION, data);
   }
 }
 
-export class VoiceMessageMetrics extends VoiceMessage {
+export class RTVIMessageMetrics extends RTVIMessage {
   constructor(data: PipecatMetrics) {
-    super(VoiceMessageType.METRICS, data, "0");
+    super(RTVIMessageType.METRICS, data, "0");
   }
 }
 
 // ----- Message Dispatcher
 
-interface QueuedVoiceMessage {
-  message: VoiceMessage;
+interface QueuedRTVIMessage {
+  message: RTVIMessage;
   timestamp: number;
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
@@ -137,7 +137,7 @@ interface QueuedVoiceMessage {
 export class MessageDispatcher {
   private _transport: Transport;
   private _gcTime: number;
-  private _queue = new Array<QueuedVoiceMessage>();
+  private _queue = new Array<QueuedRTVIMessage>();
 
   constructor(transport: Transport) {
     this._gcTime = 10000; // How long to wait before resolving the message
@@ -146,8 +146,8 @@ export class MessageDispatcher {
   }
 
   public dispatch(
-    message: VoiceMessage
-  ): Promise<VoiceMessage | VoiceMessageActionResponse> {
+    message: RTVIMessage
+  ): Promise<RTVIMessage | RTVIMessageActionResponse> {
     const promise = new Promise((resolve, reject) => {
       this._queue.push({
         message,
@@ -162,13 +162,13 @@ export class MessageDispatcher {
 
     this._gc();
 
-    return promise as Promise<VoiceMessage | VoiceMessageActionResponse>;
+    return promise as Promise<RTVIMessage | RTVIMessageActionResponse>;
   }
 
   private _resolveReject(
-    message: VoiceMessage,
+    message: RTVIMessage,
     resolve: boolean = true
-  ): VoiceMessage {
+  ): RTVIMessage {
     const queuedMessage = this._queue.find(
       (msg) => msg.message.id === message.id
     );
@@ -177,13 +177,13 @@ export class MessageDispatcher {
       if (resolve) {
         console.debug("[MessageDispatcher] Resolve", message);
         queuedMessage.resolve(
-          message.type === VoiceMessageType.ACTION_RESPONSE
-            ? (message as VoiceMessageActionResponse)
-            : (message as VoiceMessage)
+          message.type === RTVIMessageType.ACTION_RESPONSE
+            ? (message as RTVIMessageActionResponse)
+            : (message as RTVIMessage)
         );
       } else {
         console.debug("[MessageDispatcher] Reject", message);
-        queuedMessage.reject(message as VoiceMessage);
+        queuedMessage.reject(message as RTVIMessage);
       }
       // Remove message from queue
       this._queue = this._queue.filter((msg) => msg.message.id !== message.id);
@@ -193,11 +193,11 @@ export class MessageDispatcher {
     return message;
   }
 
-  public resolve(message: VoiceMessage): VoiceMessage {
+  public resolve(message: RTVIMessage): RTVIMessage {
     return this._resolveReject(message, true);
   }
 
-  public reject(message: VoiceMessage): VoiceMessage {
+  public reject(message: RTVIMessage): RTVIMessage {
     return this._resolveReject(message, false);
   }
 
@@ -208,3 +208,9 @@ export class MessageDispatcher {
     console.debug("[MessageDispatcher] GC", this._queue);
   }
 }
+
+// @deprecated
+export type VoiceMessageActionResponse = RTVIMessageActionResponse;
+export type VoiceMessageType = RTVIMessageType;
+export class VoiceMessage extends RTVIMessage {}
+export class VoiceMessageMetrics extends RTVIMessageMetrics {}

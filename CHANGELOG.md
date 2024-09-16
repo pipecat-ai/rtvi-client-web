@@ -11,6 +11,8 @@ RTVI 0.2.0 removes client-side configuration to ensure state management is handl
 
 This change enforces a key design principle of the RTVI standard: the bot should always be the single source of truth for configuration, and clients should remain stateless.
 
+This release also preludes the implementation of a `TextClient` by renaming classes and types away from `VoiceClientX` to `RTVIClientX`. Where possible, we have left aliased deprecations to support backwards compatibility. 
+
 ### Added
 
 - `startParams` client constructor param, a partial object that will be sent as JSON stringified body params at `start()` to your hosted endpoint. If you want to declare initial configuration in your client, or specify start services on the client, you can declare them here.
@@ -30,6 +32,8 @@ This change enforces a key design principle of the RTVI standard: the bot should
 - LLM Helper `getContext()` now accepts optional `config` param for working with local configs.
 - `customAuthHandler` updated to receive `startParams` as second dependency.
 - jest tests updated to reflect changes.
+- `VoiceClientOptions` is now `RTVIClientOptions`.
+- `VoiceClientConfigOption` is now `RTVICClientConfigOption`.
 
 ### Fixed
 

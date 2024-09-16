@@ -4,9 +4,8 @@ import {
   BotNotReadyError,
   ConfigOption,
   VoiceClient,
-  type VoiceClientConfigOption,
-  VoiceClientServices,
-  VoiceEvent,
+  type RTVIClientConfigOption,
+  RTVIEvent,
 } from "../src/";
 import { TransportStub } from "./transport.stub";
 
@@ -16,13 +15,13 @@ jest.mock("nanoid", () => {
   };
 });
 
-const exampleServices: VoiceClientServices = {
+const exampleServices = {
   tts: "tts",
   llm: "llm",
   vad: "vad",
 };
 
-const exampleConfig: VoiceClientConfigOption[] = [
+const exampleConfig: RTVIClientConfigOption[] = [
   { service: "vad", options: [{ name: "params", value: { stop_secs: 0.8 } }] },
   {
     service: "tts",
@@ -48,7 +47,7 @@ const exampleConfig: VoiceClientConfigOption[] = [
 ];
 
 describe("Config typing", () => {
-  test("exampleConfig should be of type VoiceClientConfigOption[]", () => {
+  test("exampleConfig should be of type RTVIClientConfigOption[]", () => {
     expect(exampleConfig).toBeInstanceOf(Array);
     expect(exampleConfig).toEqual(expect.arrayContaining([]));
     expect(exampleConfig).toEqual(
@@ -127,17 +126,17 @@ describe("Voice Client Config Methods", () => {
       expect(onConfigUpdatedMock).toHaveBeenCalledWith(exampleConfig);
     });
 
-    test("updateConfig should call the VoiceEvents.ConfigUpdated event", async () => {
+    test("updateConfig should call the RTVIEvents.ConfigUpdated event", async () => {
       const onMessageMock = jest.fn();
 
-      voiceClient.on(VoiceEvent.Config, onMessageMock);
+      voiceClient.on(RTVIEvent.Config, onMessageMock);
 
       await voiceClient.start();
       await voiceClient.updateConfig(exampleConfig);
 
       expect(onMessageMock).toHaveBeenCalled();
 
-      voiceClient.off(VoiceEvent.Config, onMessageMock);
+      voiceClient.off(RTVIEvent.Config, onMessageMock);
     });
   });
 
@@ -167,17 +166,17 @@ describe("Voice Client Config Methods", () => {
       expect(onConfigMock).toHaveBeenCalledWith(exampleConfig);
     });
 
-    test("getConfig should call the VoiceEvents.Config event", async () => {
+    test("getConfig should call the RTVIEvents.Config event", async () => {
       const onMessageMock = jest.fn();
 
-      voiceClient.on(VoiceEvent.Config, onMessageMock);
+      voiceClient.on(RTVIEvent.Config, onMessageMock);
 
       await voiceClient.start();
       await voiceClient.getConfig();
 
       expect(onMessageMock).toHaveBeenCalled();
 
-      voiceClient.off(VoiceEvent.Config, onMessageMock);
+      voiceClient.off(RTVIEvent.Config, onMessageMock);
     });
   });
 

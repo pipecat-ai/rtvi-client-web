@@ -4,8 +4,7 @@ import {
   BotNotReadyError,
   LLMHelper,
   VoiceClient,
-  type VoiceClientConfigOption,
-  VoiceClientServices,
+  type RTVIClientConfigOption,
 } from "../src/";
 import { TransportStub } from "./transport.stub";
 
@@ -15,13 +14,13 @@ jest.mock("nanoid", () => {
   };
 });
 
-const exampleServices: VoiceClientServices = {
+const exampleServices = {
   tts: "tts",
   llm: "llm",
   vad: "vad",
 };
 
-const exampleConfig: VoiceClientConfigOption[] = [
+const exampleConfig: RTVIClientConfigOption[] = [
   { service: "vad", options: [{ name: "params", value: { stop_secs: 0.8 } }] },
   {
     service: "tts",

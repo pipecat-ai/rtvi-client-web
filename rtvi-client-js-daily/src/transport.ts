@@ -17,9 +17,10 @@ import {
   Transport,
   TransportStartError,
   TransportState,
-  VoiceClientOptions,
-  VoiceMessage,
-  VoiceMessageMetrics,
+  RTVIVoiceClientOptions,
+  RTVIMessage,
+  RTVIMessageMetrics,
+  RTVIVoiceEventCallbacks,
 } from "realtime-ai";
 
 export interface DailyTransportAuthBundle {
@@ -30,13 +31,13 @@ export interface DailyTransportAuthBundle {
 export class DailyTransport extends Transport {
   private _daily: DailyCall;
   private _botId: string = "";
-
+  declare _callbacks: RTVIVoiceEventCallbacks;
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
 
   constructor(
-    options: VoiceClientOptions,
-    onMessage: (ev: VoiceMessage) => void
+    options: RTVIVoiceClientOptions,
+    onMessage: (ev: RTVIMessage) => void
   ) {
     super(options, onMessage);
 
@@ -203,7 +204,7 @@ export class DailyTransport extends Transport {
       (async () => {
         this._daily.on("track-started", (ev) => {
           if (!ev.participant?.local) {
-            this.sendMessage(VoiceMessage.clientReady());
+            this.sendMessage(RTVIMessage.clientReady());
             resolve();
           }
         });
@@ -245,7 +246,7 @@ export class DailyTransport extends Transport {
     await this._daily.destroy();
   }
 
-  public sendMessage(message: VoiceMessage) {
+  public sendMessage(message: RTVIMessage) {
     this._daily.sendAppMessage(message, "*");
   }
 
@@ -256,10 +257,10 @@ export class DailyTransport extends Transport {
         id: ev.data.id,
         type: ev.data.type,
         data: ev.data.data,
-      } as VoiceMessage);
+      } as RTVIMessage);
     } else if (ev.data.type === "pipecat-metrics") {
       // Bubble up pipecat metrics, which don't have the "rtvi-ai" label
-      const vmm = new VoiceMessageMetrics(ev.data.metrics as PipecatMetrics);
+      const vmm = new RTVIMessageMetrics(ev.data.metrics as PipecatMetrics);
       this._onMessage(vmm);
     }
   }

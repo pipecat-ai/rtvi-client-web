@@ -2,9 +2,9 @@ import { atom, useAtomValue } from "jotai";
 import { atomFamily, useAtomCallback } from "jotai/utils";
 import { PrimitiveAtom } from "jotai/vanilla";
 import { useCallback, useEffect } from "react";
-import { Participant, Tracks, VoiceEvent } from "realtime-ai";
-import { useVoiceClient } from "./useVoiceClient";
-import { useVoiceClientEvent } from "./useVoiceClientEvent";
+import { Participant, Tracks, RTVIEvent } from "realtime-ai";
+import { useRTVIClient } from "./useRTVIClient";
+import { useRTVIClientEvent } from "./useRTVIClientEvent";
 
 type ParticipantType = keyof Tracks;
 type TrackType = keyof Tracks["local"];
@@ -23,11 +23,11 @@ const trackAtom = atomFamily<
   return trackType === "audio" ? botAudioTrackAtom : botVideoTrackAtom;
 });
 
-export const useVoiceClientMediaTrack = (
+export const useRTVIClientMediaTrack = (
   trackType: TrackType,
   participantType: ParticipantType
 ) => {
-  const voiceClient = useVoiceClient();
+  const client = useRTVIClient();
   const track = useAtomValue(
     trackAtom({ local: participantType === "local", trackType })
   );
@@ -53,20 +53,20 @@ export const useVoiceClientMediaTrack = (
     )
   );
 
-  useVoiceClientEvent(
-    VoiceEvent.TrackStarted,
+  useRTVIClientEvent(
+    RTVIEvent.TrackStarted,
     useCallback((track: MediaStreamTrack, participant?: Participant) => {
       updateTrack(track, track.kind as TrackType, Boolean(participant?.local));
     }, [])
   );
 
   useEffect(() => {
-    if (!voiceClient) return;
-    const tracks = voiceClient.tracks();
+    if (!client) return;
+    const tracks = client.tracks();
     const track = tracks?.[participantType]?.[trackType];
     if (!track) return;
     updateTrack(track, trackType, participantType === "local");
-  }, [participantType, trackType, updateTrack, voiceClient]);
+  }, [participantType, trackType, updateTrack, client]);
 
   return track;
 };
