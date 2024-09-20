@@ -1,11 +1,11 @@
-import { VoiceClient, RTVIVoiceClientOptions } from "realtime-ai";
+import { RTVIVoiceClient, RTVIVoiceClientOptions } from "realtime-ai";
 
 import { DailyTransport } from "./transport";
 
 /**
  * Daily RTVI Voice Client
  */
-export class DailyVoiceClient extends VoiceClient {
+export class DailyVoiceClient extends RTVIVoiceClient {
   constructor({ ...opts }: RTVIVoiceClientOptions) {
     const options: RTVIVoiceClientOptions = {
       ...opts,

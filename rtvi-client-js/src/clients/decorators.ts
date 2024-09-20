@@ -1,33 +1,34 @@
-import { Client, BotNotReadyError } from ".";
+import { BotNotReadyError } from "../errors";
+import { RTVIClient } from ".";
 
-export function transportReady<T extends Client>(
+export function transportReady<T extends RTVIClient>(
   _target: T,
   propertyKey: string | symbol,
   descriptor: PropertyDescriptor
 ): PropertyDescriptor | void {
   const originalMethod = descriptor.value;
 
-  descriptor.value = function (this: T, ...args: any[]) {
+  descriptor.value = function (this: T, ...args: unknown[]) {
     if (this.state === "ready") {
       return originalMethod.apply(this, args);
     } else {
       throw new BotNotReadyError(
-        `Attempt to call ${propertyKey.toString()} when transport not in ready state. Await start() first.`
+        `Attempt to call ${propertyKey.toString()} when transport not in ready state. Await connect() first.`
       );
     }
   };
 
   return descriptor;
 }
-export function transportInState<T extends Client>(states: string[]) {
+export function transportInState<T extends RTVIClient>(states: string[]) {
   return function (
     _target: T,
-    propertyKey: string | Symbol,
+    propertyKey: string | symbol,
     descriptor: PropertyDescriptor
   ): PropertyDescriptor | void {
     const originalMethod = descriptor.value;
 
-    descriptor.get = function (this: T, ...args: any[]) {
+    descriptor.get = function (this: T, ...args: unknown[]) {
       if (states.includes(this.state)) {
         return originalMethod.apply(this, args);
       } else {
@@ -41,12 +42,14 @@ export function transportInState<T extends Client>(states: string[]) {
   };
 }
 
-export function getIfTransportInState<T extends Client>(...states: string[]) {
+export function getIfTransportInState<T extends RTVIClient>(
+  ...states: string[]
+) {
   states = ["ready", ...states];
 
   return function (
     _target: T,
-    propertyKey: string | Symbol,
+    propertyKey: string | symbol,
     descriptor: PropertyDescriptor
   ): PropertyDescriptor | void {
     const originalGetter = descriptor.get;
@@ -56,7 +59,7 @@ export function getIfTransportInState<T extends Client>(...states: string[]) {
         return originalGetter?.apply(this);
       } else {
         throw new BotNotReadyError(
-          `Attempt to call ${propertyKey.toString()} when transport not in ${states}. Await start() first.`
+          `Attempt to call ${propertyKey.toString()} when transport not in ${states}. Await connect() first.`
         );
       }
     };

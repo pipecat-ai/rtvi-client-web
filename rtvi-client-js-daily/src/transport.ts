@@ -12,7 +12,7 @@ import Daily, {
 } from "@daily-co/daily-js";
 import {
   Participant,
-  PipecatMetrics,
+  PipecatMetricsData,
   Tracks,
   Transport,
   TransportStartError,
@@ -260,7 +260,7 @@ export class DailyTransport extends Transport {
       } as RTVIMessage);
     } else if (ev.data.type === "pipecat-metrics") {
       // Bubble up pipecat metrics, which don't have the "rtvi-ai" label
-      const vmm = new RTVIMessageMetrics(ev.data.metrics as PipecatMetrics);
+      const vmm = new RTVIMessageMetrics(ev.data.metrics as PipecatMetricsData);
       this._onMessage(vmm);
     }
   }

@@ -1,6 +1,7 @@
 import { nanoid } from "nanoid";
 
-import { Transport, RTVIClientConfigOption } from ".";
+import { RTVIClientConfigOption } from "./clients";
+import { Transport } from "./transport";
 
 export enum RTVIMessageType {
   // Outbound
@@ -8,7 +9,6 @@ export enum RTVIMessageType {
   UPDATE_CONFIG = "update-config",
   GET_CONFIG = "get-config",
   DESCRIBE_CONFIG = "describe-config",
-  ACTION = "action",
   DESCRIBE_ACTIONS = "describe-actions",
 
   // Inbound
@@ -20,7 +20,7 @@ export enum RTVIMessageType {
   CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   ACTIONS_AVAILABLE = "actions-available", // Actions available on the bot
-  ACTION_RESPONSE = "action-response",
+  ACTION_RESPONSE = "action-response", // Action response from the bot
   METRICS = "metrics", // RTVI reporting metrics
   USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
   BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
@@ -29,6 +29,8 @@ export enum RTVIMessageType {
   BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
   BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
 }
+
+// ----- Message Data Types
 
 export type ConfigData = {
   config: RTVIClientConfigOption[];
@@ -39,29 +41,25 @@ export type BotReadyData = {
   version: string;
 };
 
-export type ActionData = {
-  service: string;
-  action: string;
-  arguments: { name: string; value: unknown }[];
-};
-
-export type PipecatMetricsData = {
+export type PipecatMetricData = {
   processor: string;
   value: number;
 };
 
-export type PipecatMetrics = {
-  processing?: PipecatMetricsData[];
-  ttfb?: PipecatMetricsData[];
-  characters?: PipecatMetricsData[];
+export type PipecatMetricsData = {
+  processing?: PipecatMetricData[];
+  ttfb?: PipecatMetricData[];
+  characters?: PipecatMetricData[];
 };
 
-export type Transcript = {
+export type TranscriptData = {
   text: string;
   final: boolean;
   timestamp: string;
   user_id: string;
 };
+
+// ----- Message Classes
 
 export type RTVIMessageActionResponse = {
   id: string;
@@ -112,15 +110,10 @@ export class RTVIMessage {
   static describeActions(): RTVIMessage {
     return new RTVIMessage(RTVIMessageType.DESCRIBE_ACTIONS, {});
   }
-
-  // Actions (generic)
-  static action(data: ActionData): RTVIMessage {
-    return new RTVIMessage(RTVIMessageType.ACTION, data);
-  }
 }
 
 export class RTVIMessageMetrics extends RTVIMessage {
-  constructor(data: PipecatMetrics) {
+  constructor(data: PipecatMetricsData) {
     super(RTVIMessageType.METRICS, data, "0");
   }
 }

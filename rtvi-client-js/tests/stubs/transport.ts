@@ -1,11 +1,12 @@
 import {
-  Tracks,
-  Transport,
-  TransportState,
+  RTVI_ACTION_TYPE,
   RTVIClientOptions,
   RTVIMessage,
   RTVIMessageType,
-} from "../src";
+  Tracks,
+  Transport,
+  TransportState,
+} from "../../src";
 
 export class TransportStub extends Transport {
   constructor(
@@ -19,13 +20,18 @@ export class TransportStub extends Transport {
     return Promise.resolve();
   }
 
-  public connect(): Promise<void> {
-    this.state = "connected";
-    return Promise.resolve();
+  public async connect(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.state = "connected";
+      resolve();
+    });
   }
 
-  public disconnect(): Promise<void> {
-    return Promise.resolve();
+  public async disconnect(): Promise<void> {
+    return new Promise<void>((resolve) => {
+      this.state = "disconnected";
+      resolve();
+    });
   }
 
   async sendReadyMessage(): Promise<void> {
@@ -85,7 +91,7 @@ export class TransportStub extends Transport {
   }
 
   public sendMessage(message: RTVIMessage) {
-    if (message.type === RTVIMessageType.ACTION) {
+    if (message.type === RTVI_ACTION_TYPE) {
       this._onMessage({
         type: RTVIMessageType.ACTION_RESPONSE,
         id: "123",

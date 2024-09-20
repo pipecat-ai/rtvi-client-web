@@ -1,10 +1,7 @@
-import {
-  ActionData,
-  RTVIEvent,
-  RTVIMessage,
-  RTVIMessageActionResponse,
-} from "..";
+import { RTVIActionRequestData, RTVIActionResponse } from "./../actions";
 import * as RTVIErrors from "./../errors";
+import { RTVIEvent } from "./../events";
+import { RTVIMessage } from "./../messages";
 import { RTVIClientHelper, RTVIClientHelperOptions } from ".";
 
 // --- Types
@@ -80,11 +77,10 @@ export class LLMHelper extends RTVIClientHelper {
         "getContext called while transport not in ready state"
       );
     }
-    const actionResponseMsg: RTVIMessageActionResponse =
-      await this._client.action({
-        service: this._service,
-        action: "get_context",
-      } as ActionData);
+    const actionResponseMsg: RTVIActionResponse = await this._client.action({
+      service: this._service,
+      action: "get_context",
+    } as RTVIActionRequestData);
     return actionResponseMsg.data.result as LLMContext;
   }
 
@@ -106,21 +102,20 @@ export class LLMHelper extends RTVIClientHelper {
       );
     }
 
-    const actionResponse: RTVIMessageActionResponse =
-      (await this._client.action({
-        service: this._service,
-        action: "set_context",
-        arguments: [
-          {
-            name: "messages",
-            value: context.messages,
-          },
-          {
-            name: "interrupt",
-            value: interrupt,
-          },
-        ],
-      } as ActionData)) as RTVIMessageActionResponse;
+    const actionResponse: RTVIActionResponse = (await this._client.action({
+      service: this._service,
+      action: "set_context",
+      arguments: [
+        {
+          name: "messages",
+          value: context.messages,
+        },
+        {
+          name: "interrupt",
+          value: interrupt,
+        },
+      ],
+    } as RTVIActionRequestData)) as RTVIActionResponse;
 
     return !!actionResponse.data.result;
   }
@@ -156,7 +151,7 @@ export class LLMHelper extends RTVIClientHelper {
           value: runImmediately,
         },
       ],
-    } as ActionData)) as RTVIMessageActionResponse;
+    } as RTVIActionRequestData)) as RTVIActionResponse;
     return !!actionResponse.data.result;
   }
 
@@ -181,7 +176,7 @@ export class LLMHelper extends RTVIClientHelper {
           value: interrupt,
         },
       ],
-    } as ActionData);
+    } as RTVIActionRequestData);
   }
 
   // --- Handlers

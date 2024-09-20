@@ -15,14 +15,16 @@ This release also preludes the implementation of a `TextClient` by renaming clas
 
 ### Added
 
-- `startParams` client constructor param, a partial object that will be sent as JSON stringified body params at `start()` to your hosted endpoint. If you want to declare initial configuration in your client, or specify start services on the client, you can declare them here.
+- `params` client constructor param, a partial object that will be sent as JSON stringified body params at `start()` to your hosted endpoint. If you want to declare initial configuration in your client, or specify start services on the client, you can declare them here.
 - `onConfig` and `VoiceEvents.Config` callback & event added, triggered by `getConfig` voice message.
 - `@transportReady` decorator added to methods that should only be called at runtime. Note: decorator support required several Parcel configuration changes and additional dev dependencies.
 - `@getIfTransportInState` getter decorator added to getter methods that should only be called in a specified transport state.
 
 ### Changed
 
-- Client no longer expects a `services` map as a constructor param (note: remains in place but flagged as deprecated.) If you want to pass a services map to your endpoint, please use `startParams`.
+- `start()` has been renamed to `connect()`.
+- Client no longer expects a `services` map as a constructor param (note: remains in place but flagged as deprecated.) If you want to pass a services map to your endpoint, please use `params`.
+- `customHeaders` has been renamed to `headers`.
 - Config getter and setter methods (`getConfig` and `updateConfig`) are only supported at runtime. 
 - `updateConfig` promise is typed to `Promise<VoiceMessage>` (previously `unknown` to support offline updates.)
 - `getConfig` promise is typed to `Promise<VoiceClientOptions[]>` (previously `unknown` to support offline updates.)

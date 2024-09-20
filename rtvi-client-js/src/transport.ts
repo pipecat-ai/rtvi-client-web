@@ -1,5 +1,6 @@
-import { RTVIClientOptions, RTVIMessage } from "..";
-import { RTVIEventCallbacks } from "../clients";
+import { RTVIClientOptions } from ".";
+import { RTVIEventCallbacks } from "./clients";
+import { RTVIMessage } from "./messages";
 
 export type TransportState =
   | "idle"

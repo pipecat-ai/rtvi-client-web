@@ -1,45 +1,41 @@
 import cloneDeep from "clone-deep";
-import { EventEmitter } from "events";
-import type TypedEmitter from "typed-emitter";
 
-import type { ActionData } from "../messages";
+import {
+  dispatchAction,
+  RTVIActionRequest,
+  RTVIActionRequestData,
+  RTVIActionResponse,
+} from "../actions";
+import * as RTVIErrors from "../errors";
+import { RTVIEvent } from "../events";
+import { RTVIClientHelper, RTVIClientHelpers } from "../helpers";
 import {
   BotReadyData,
   ConfigData,
-  ConfigOption,
   MessageDispatcher,
-  PipecatMetrics,
-  Transcript,
-  RTVIClientConfigOption,
-  RTVIClientHelper,
-  RTVIClientHelpers,
-  RTVIClientOptions,
+  PipecatMetricsData,
   RTVIMessage,
-  RTVIMessageActionResponse,
   RTVIMessageMetrics,
   RTVIMessageType,
+  TranscriptData,
+} from "../messages";
+import { Participant, Tracks, Transport, TransportState } from "../transport";
+import {
+  ConfigOption,
+  RTVIClient,
+  RTVIClientConfigOption,
+  RTVIClientOptions,
+  RTVIClientParams,
   RTVIEventCallbacks,
-  VoiceClientServices, // deprecated
-} from "..";
-
-import * as RTVIErrors from "../errors";
-import { RTVIEvent, RTVIEvents } from "../events";
-import { Participant, Transport, TransportState } from "../transport";
-import { getIfTransportInState, transportReady } from "../decorators";
+  VoiceClientServices,
+} from ".";
+import { getIfTransportInState, transportReady } from "./decorators";
 
 export interface RTVIVoiceClientOptions extends RTVIClientOptions {
   /**
    * Optional callback methods for voice events
    */
   callbacks?: RTVIVoiceEventCallbacks;
-
-  /**
-   * Set transport class for media streaming
-   */
-  transport?: new (
-    options: RTVIClientOptions,
-    onMessage: (ev: RTVIMessage) => void
-  ) => Transport;
 
   /**
    * Enable user mic input
@@ -76,25 +72,25 @@ export type RTVIVoiceEventCallbacks = Partial<
     onBotStoppedSpeaking: (participant: Participant) => void;
     onUserStartedSpeaking: () => void;
     onUserStoppedSpeaking: () => void;
-    onUserTranscript: (data: Transcript) => void;
-    onBotTranscript: (data: string) => void;
+    onUserTranscriptData: (data: TranscriptData) => void;
+    onBotTranscriptData: (data: TranscriptData) => void;
   }
 >;
 
-export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTVIEvents>) {
-  private readonly _baseUrl: string;
+export class RTVIVoiceClient extends RTVIClient {
+  public params: RTVIClientParams;
   protected _options: RTVIVoiceClientOptions;
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
   private _helpers: RTVIClientHelpers;
-  private _messageDispatcher: MessageDispatcher;
   private _startResolve: ((value: unknown) => void) | undefined;
-  private _transport: Transport;
+  protected declare _transport: Transport;
+  private declare _messageDispatcher: MessageDispatcher;
 
   constructor(options: RTVIVoiceClientOptions) {
     super();
 
-    this._baseUrl = options.baseUrl;
+    this.params = options.params;
     this._helpers = {};
 
     // Wrap transport callbacks with event triggers
@@ -201,24 +197,25 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
         options?.callbacks?.onLocalAudioLevel?.(level);
         this.emit(RTVIEvent.LocalAudioLevel, level);
       },
-      onUserTranscript: (data) => {
-        options?.callbacks?.onUserTranscript?.(data);
+      onUserTranscriptData: (data) => {
+        options?.callbacks?.onUserTranscriptData?.(data);
         this.emit(RTVIEvent.UserTranscript, data);
+      },
+      onBotTranscriptData: (data) => {
+        options?.callbacks?.onBotTranscriptData?.(data);
+        this.emit(RTVIEvent.BotTranscript, data);
       },
     };
 
-    // Update options to reference wrapped callbacks
+    // Update options to reference wrapped callbacks and config defaults
     this._options = {
       ...options,
       callbacks: wrappedCallbacks,
+      enableMic: options.enableMic ?? true,
     };
 
     // Instantiate the transport class and bind message handler
-    const cls = this._options.transport!;
-    this._transport = new cls(this._options, this.handleMessage.bind(this))!;
-
-    // Create a new message dispatch queue for async message / action handling
-    this._messageDispatcher = new MessageDispatcher(this._transport);
+    this._initialize();
 
     console.debug("[RTVI Client] Initialized");
   }
@@ -233,10 +230,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
   }
 
   /**
-   * Start the voice client session with chosen transport
+   * Connect the voice client session with chosen transport
    * Call async (await) to handle errors
    */
-  public async start() {
+  public async connect(): Promise<unknown> {
     if (
       ["authenticating", "connecting", "connected", "ready"].includes(
         this._transport.state
@@ -273,30 +270,32 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
         let authBundle: unknown;
         const customAuthHandler = this._options.customAuthHandler;
 
-        console.debug("[RTVI Client] Connecting to baseUrl", this._baseUrl);
-        console.debug("[RTVI Client] Start params", this._options.startParams);
+        console.debug(
+          "[RTVI Client] Connecting to baseUrl",
+          this.params.baseUrl
+        );
+        console.debug("[RTVI Client] Start params", this._options.params);
 
         try {
           if (customAuthHandler) {
             authBundle = await customAuthHandler(
-              this._baseUrl,
-              this._options.startParams ?? {},
+              this.params,
               this._handshakeTimeout,
               this._abortController!
             );
           } else {
-            authBundle = await fetch(`${this._baseUrl}`, {
+            authBundle = await fetch(`${this.params.baseUrl.toString()}`, {
               method: "POST",
               mode: "cors",
               headers: {
                 "Content-Type": "application/json",
-                ...(this._options.startHeaders ?? this._options.customHeaders), // @deprecated
+                ...(this.params.headers ?? this._options.customHeaders), // @deprecated
               },
               body: JSON.stringify({
                 services: this._options.services, // @deprecated
-                config: this._options.config!, // @deprecated
+                config: this._options.config, // @deprecated
                 ...this._options.customBodyParams, // @deprecated
-                ...this._options.startParams,
+                ...this._options.params,
               }),
               signal: this._abortController?.signal,
             }).then((res) => {
@@ -325,7 +324,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
           } catch (innerError) {
             reject(
               new RTVIErrors.StartBotError(
-                `Failed to connect / invalid auth bundle from base url ${this._baseUrl}`
+                `Failed to connect / invalid auth bundle from base url ${this.params.baseUrl}`
               )
             );
             return;
@@ -354,7 +353,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
    * Disconnect the voice client from the transport
    * Reset / reinitialize transport and abort any pending requests
    */
-  public async disconnect() {
+  public async disconnect(): Promise<void> {
     if (this._abortController) {
       this._abortController.abort();
     }
@@ -363,14 +362,15 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
 
     await this._transport.disconnect();
 
-    this._reset();
+    this._initialize();
   }
 
-  private _reset() {
-    this._transport = new this._options.transport!(
-      this._options,
-      this.handleMessage.bind(this)
-    )!;
+  private _initialize() {
+    const cls = this._options.transport;
+    if (!cls) {
+      throw new RTVIErrors.RTVIError("No transport class provided");
+    }
+    this._transport = new cls(this._options, this.handleMessage.bind(this));
 
     // Create a new message dispatch queue for async message handling
     this._messageDispatcher = new MessageDispatcher(this._transport);
@@ -379,17 +379,21 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
   /**
    * Get the current state of the transport
    */
+  public get connected(): boolean {
+    return ["connected", "ready"].includes(this._transport.state);
+  }
+
   public get state(): TransportState {
     return this._transport.state;
   }
 
   // ------ Device methods
 
-  public async getAllMics() {
+  public async getAllMics(): Promise<MediaDeviceInfo[]> {
     return await this._transport.getAllMics();
   }
 
-  public async getAllCams() {
+  public async getAllCams(): Promise<MediaDeviceInfo[]> {
     return await this._transport.getAllCams();
   }
 
@@ -425,7 +429,7 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
     return this._transport.isCamEnabled;
   }
 
-  public tracks() {
+  public tracks(): Tracks {
     return this._transport.tracks();
   }
 
@@ -642,16 +646,11 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
 
   /**
    * Dispatch an action message to the bot
-   * @param actionData - ActionData object with the action to dispatch
-   * @returns Promise<RTVIMessageActionResponse> - Promise that resolves with the action response
    */
-  @transportReady
   public async action(
-    actionData: ActionData
-  ): Promise<RTVIMessageActionResponse> {
-    return this._messageDispatcher.dispatch(
-      RTVIMessage.action(actionData)
-    ) as Promise<RTVIMessageActionResponse>;
+    action: RTVIActionRequestData
+  ): Promise<RTVIActionResponse> {
+    return dispatchAction.bind(this)(new RTVIActionRequest(action));
   }
 
   /**
@@ -690,8 +689,10 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
 
     if (ev instanceof RTVIMessageMetrics) {
       //@TODO: add to wrapped metrics
-      this.emit(RTVIEvent.Metrics, ev.data as PipecatMetrics);
-      return this._options.callbacks?.onMetrics?.(ev.data as PipecatMetrics);
+      this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);
+      return this._options.callbacks?.onMetrics?.(
+        ev.data as PipecatMetricsData
+      );
     }
 
     switch (ev.type) {
@@ -741,18 +742,13 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
         this._options.callbacks?.onBotStoppedSpeaking?.(ev.data as Participant);
         break;
       case RTVIMessageType.USER_TRANSCRIPTION: {
-        //@TODO add to wrapped callbacks
-        const transcriptData = ev.data as Transcript;
-        const transcript = transcriptData as Transcript;
-        this._options.callbacks?.onUserTranscript?.(transcript);
-        this.emit(RTVIEvent.UserTranscript, transcript);
+        const TranscriptData = ev.data as TranscriptData;
+        this._options.callbacks?.onUserTranscriptData?.(TranscriptData);
         break;
       }
       case RTVIMessageType.BOT_TRANSCRIPTION: {
-        //@TODO add to wrapped callbacks
-        const botData = ev.data as Transcript;
-        this._options.callbacks?.onBotTranscript?.(botData.text as string);
-        this.emit(RTVIEvent.BotTranscript, botData.text as string);
+        const TranscriptData = ev.data as TranscriptData;
+        this._options.callbacks?.onBotTranscriptData?.(TranscriptData);
         break;
       }
       default: {
@@ -870,18 +866,5 @@ export abstract class Client extends (EventEmitter as new () => TypedEmitter<RTV
         "Cannot set services while transport is connected"
       );
     }
-  }
-}
-
-export class VoiceClient extends Client {
-  constructor({ ...opts }: RTVIVoiceClientOptions) {
-    const options: RTVIVoiceClientOptions = {
-      ...opts,
-      transport: opts.transport,
-      enableMic: opts.enableMic ?? true,
-      config: opts.config || [],
-    };
-
-    super(options);
   }
 }

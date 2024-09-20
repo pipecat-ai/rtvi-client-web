@@ -1,11 +1,11 @@
+import { RTVIClientConfigOption } from ".";
+import { LLMFunctionCallData } from "./helpers/llm";
 import {
   BotReadyData,
-  LLMFunctionCallData,
-  PipecatMetrics,
-  Transcript,
-  RTVIClientConfigOption,
+  PipecatMetricsData,
   RTVIMessage,
-} from ".";
+  TranscriptData,
+} from "./messages";
 import { Participant, TransportState } from "./transport";
 
 export enum RTVIEvent {
@@ -81,9 +81,9 @@ export type RTVIEvents = Partial<{
   userStoppedSpeaking: () => void;
   localAudioLevel: (level: number) => void;
 
-  metrics: (data: PipecatMetrics) => void;
-  userTranscript: (data: Transcript) => void;
-  botTranscript: (text: string) => void;
+  metrics: (data: PipecatMetricsData) => void;
+  userTranscript: (data: TranscriptData) => void;
+  botTranscript: (text: TranscriptData) => void;
 
   error: (message: RTVIMessage) => void;
   messageError: (message: RTVIMessage) => void;
@@ -97,7 +97,6 @@ export type RTVIEventHandler<E extends RTVIEvent> = E extends keyof RTVIEvents
   ? RTVIEvents[E]
   : never;
 
-// deprecated
-export type VoiceEvent = RTVIEvent;
+// @deprecated
 export type VoiceEventHandler = RTVIEventHandler<RTVIEvent>;
 export type VoiceEvents = RTVIEvents;

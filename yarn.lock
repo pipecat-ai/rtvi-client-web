@@ -1264,7 +1264,7 @@
     "@parcel/source-map" "^2.1.1"
     "@parcel/ts-utils" "2.12.0"
 
-"@parcel/transformer-typescript-types@^2.12.0":
+"@parcel/transformer-typescript-types@2.12.0":
   version "2.12.0"
   resolved "https://registry.yarnpkg.com/@parcel/transformer-typescript-types/-/transformer-typescript-types-2.12.0.tgz#63e3fc4d1c5d61e1d3a2d56ff58454cf58b514ca"
   integrity sha512-uxF4UBMYvbjiV3zHTWMrZX8cFD92VUvD3ArcGi5WEtuVROUm9Sc47o0mOzxKfMFlJu2KOfZVHYlzK9f/UKA2kQ==
@@ -1309,6 +1309,17 @@
     "@parcel/source-map" "^2.1.1"
     chalk "^4.1.0"
     nullthrows "^1.1.1"
+
+"@parcel/validator-typescript@^2.12.0":
+  version "2.12.0"
+  resolved "https://registry.yarnpkg.com/@parcel/validator-typescript/-/validator-typescript-2.12.0.tgz#aad284f47bfa01b53790f1d3dea7311b28e786b6"
+  integrity sha512-oiAG/MA6Ycbv106KCAQAwwVKdDdpyvK8xWJ47wme726Nkc6YO/UCoHBqIFTld8+PC7QD3U0XY5Y4kavm3n+lMQ==
+  dependencies:
+    "@parcel/diagnostic" "2.12.0"
+    "@parcel/plugin" "2.12.0"
+    "@parcel/ts-utils" "2.12.0"
+    "@parcel/types" "2.12.0"
+    "@parcel/utils" "2.12.0"
 
 "@parcel/watcher-android-arm64@2.4.1":
   version "2.4.1"
