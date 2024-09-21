@@ -16,10 +16,10 @@
     "README.md"
   ],
   "scripts": {
-    "build": "parcel build --no-cache",
+    "build": "jest --silent && parcel build --no-cache",
     "dev": "parcel watch",
     "lint": "eslint src/ --report-unused-disable-directives --max-warnings 0",
-    "test": "jest --silent"
+    "test": "jest"
   },
   "jest": {
     "preset": "ts-jest",

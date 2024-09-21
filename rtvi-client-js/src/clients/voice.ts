@@ -21,7 +21,7 @@ import {
 import { Participant, Tracks, Transport, TransportState } from "../transport";
 import {
   ConfigOption,
-  RTVIClient,
+  RTVIClientBase,
   RTVIClientConfigOption,
   RTVIClientOptions,
   RTVIClientParams,
@@ -76,7 +76,7 @@ export type RTVIVoiceEventCallbacks = Partial<
   }
 >;
 
-export class RTVIVoiceClient extends RTVIClient {
+export class RTVIClient extends RTVIClientBase {
   public params: RTVIClientParams;
   protected _options: RTVIVoiceClientOptions;
   private _abortController: AbortController | undefined;
@@ -811,6 +811,13 @@ export class RTVIVoiceClient extends RTVIClient {
   }
 
   // ------ Deprecated
+
+  /**
+   * @deprecated use connect() instead
+   */
+  public async start(): Promise<unknown> {
+    return this.connect();
+  }
 
   /**
    * @deprecated use getConfig instead

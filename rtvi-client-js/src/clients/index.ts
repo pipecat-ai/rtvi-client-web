@@ -117,15 +117,17 @@ export type RTVIClientConfigOption = {
 };
 
 export type RTVIClientParams = {
-  baseUrl: URL;
+  baseUrl: URL | string;
 } & Partial<{
   headers?: Headers;
   config?: RTVIClientConfigOption[];
-}>;
+}> & {
+    [key: string]: unknown;
+  };
 
 // ----- Abstract base client
 
-export abstract class RTVIClient extends (EventEmitter as unknown as new () => TypedEmitter<RTVIEvents>) {
+export abstract class RTVIClientBase extends (EventEmitter as unknown as new () => TypedEmitter<RTVIEvents>) {
   abstract params: RTVIClientParams;
   protected abstract _transport: Transport;
 
@@ -175,6 +177,10 @@ export abstract class RTVIClient extends (EventEmitter as unknown as new () => T
     service: string
   ): T | undefined;
   abstract unregisterHelper(service: string): void;
+
+  // ----- Deprecated methods
+  // @deprecated - use connect()
+  abstract start(): Promise<unknown>;
 }
 
 // ----- Deprecated types

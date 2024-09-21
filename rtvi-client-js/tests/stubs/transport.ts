@@ -5,6 +5,7 @@ import {
   RTVIMessageType,
   Tracks,
   Transport,
+  TransportStartError,
   TransportState,
 } from "../../src";
 
@@ -17,13 +18,28 @@ export class TransportStub extends Transport {
   }
 
   public initDevices(): Promise<void> {
-    return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      this.state = "initializing";
+      setTimeout(() => {
+        this.state = "initialized";
+        resolve();
+      }, 100);
+    });
   }
 
   public async connect(): Promise<void> {
     return new Promise<void>((resolve) => {
-      this.state = "connected";
-      resolve();
+      this.state = "connecting";
+
+      if (this._options.params.baseUrl === "bad-url") {
+        this.state = "error";
+        throw new TransportStartError();
+      }
+
+      setTimeout(() => {
+        this.state = "connected";
+        resolve();
+      }, 100);
     });
   }
 
@@ -37,6 +53,8 @@ export class TransportStub extends Transport {
   async sendReadyMessage(): Promise<void> {
     return new Promise<void>((resolve) => {
       (async () => {
+        this.state = "ready";
+
         resolve();
 
         this._onMessage({
@@ -129,8 +147,11 @@ export class TransportStub extends Transport {
     return this._state;
   }
 
-  public set state(state: TransportState) {
+  private set state(state: TransportState) {
+    if (this._state === state) return;
+
     this._state = state;
+    this._callbacks.onTransportStateChanged?.(state);
   }
 
   get expiry(): number | undefined {

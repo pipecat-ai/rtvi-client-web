@@ -1,7 +1,7 @@
 import { BotNotReadyError } from "../errors";
-import { RTVIClient } from ".";
+import { RTVIClientBase } from ".";
 
-export function transportReady<T extends RTVIClient>(
+export function transportReady<T extends RTVIClientBase>(
   _target: T,
   propertyKey: string | symbol,
   descriptor: PropertyDescriptor
@@ -20,7 +20,7 @@ export function transportReady<T extends RTVIClient>(
 
   return descriptor;
 }
-export function transportInState<T extends RTVIClient>(states: string[]) {
+export function transportInState<T extends RTVIClientBase>(states: string[]) {
   return function (
     _target: T,
     propertyKey: string | symbol,
@@ -42,7 +42,7 @@ export function transportInState<T extends RTVIClient>(states: string[]) {
   };
 }
 
-export function getIfTransportInState<T extends RTVIClient>(
+export function getIfTransportInState<T extends RTVIClientBase>(
   ...states: string[]
 ) {
   states = ["ready", ...states];
