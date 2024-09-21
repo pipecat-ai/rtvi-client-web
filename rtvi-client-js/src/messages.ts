@@ -68,20 +68,18 @@ export type RTVIMessageActionResponse = {
   data: { result: unknown };
 };
 
+export const RTVI_MESSAGE_LABEL = "rtvi-ai";
+
 export class RTVIMessage {
   id: string;
-  label: string = "rtvi-ai";
+  label: string = RTVI_MESSAGE_LABEL;
   type: string;
   data: unknown;
 
   constructor(type: string, data: unknown, id?: string) {
     this.type = type;
     this.data = data;
-    if (id) {
-      this.id = id;
-    } else {
-      this.id = nanoid(8);
-    }
+    this.id = id || nanoid(8);
   }
 
   // Outbound message types
@@ -109,12 +107,6 @@ export class RTVIMessage {
 
   static describeActions(): RTVIMessage {
     return new RTVIMessage(RTVIMessageType.DESCRIBE_ACTIONS, {});
-  }
-}
-
-export class RTVIMessageMetrics extends RTVIMessage {
-  constructor(data: PipecatMetricsData) {
-    super(RTVIMessageType.METRICS, data, "0");
   }
 }
 
@@ -206,4 +198,3 @@ export class MessageDispatcher {
 export type VoiceMessageActionResponse = RTVIMessageActionResponse;
 export type VoiceMessageType = RTVIMessageType;
 export class VoiceMessage extends RTVIMessage {}
-export class VoiceMessageMetrics extends RTVIMessageMetrics {}

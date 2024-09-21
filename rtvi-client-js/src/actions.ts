@@ -14,14 +14,12 @@ export type RTVIActionRequestData = {
 
 export class RTVIActionRequest {
   id: string;
-  label: string;
-  type: string;
+  label: string = RTVI_ACTION_LABEL;
+  type: string = RTVI_ACTION_TYPE;
   data: RTVIActionRequestData;
 
   constructor(data: RTVIActionRequestData) {
     this.id = nanoid(8);
-    this.label = RTVI_ACTION_LABEL;
-    this.type = RTVI_ACTION_TYPE;
     this.data = data;
   }
 }
@@ -70,6 +68,7 @@ async function httpActionGenerator(
     }
 
     if (response.body && contentType?.includes("text/event-stream")) {
+      // Parse streamed responses
       const reader = response.body
         .pipeThrough(new TextDecoderStream())
         .getReader();
@@ -100,23 +99,22 @@ async function httpActionGenerator(
           try {
             const jsonData = atob(encodedData);
             const parsedData = JSON.parse(jsonData);
-            console.info(parsedData);
-            // handleResponse(parsedData);
+            handleResponse(parsedData);
           } catch (error) {
-            console.error("Failed to parse JSON:", error);
+            console.error("[RTVI] Failed to parse JSON:", error);
+            throw error;
           }
 
           boundary = buffer.indexOf("\n\n");
         }
       }
-      // @TODO: return result here (if necessary)
     } else {
       // For regular non-streamed responses, parse and handle the data as JSON
       const data = await response.json();
       handleResponse(data);
     }
   } catch (error) {
-    console.error("Error during fetch:", error);
+    console.error("[RTVI] Error during fetch:", error);
     throw error;
   }
 }
@@ -137,7 +135,7 @@ export async function dispatchAction(
             this.params,
             action,
             (response) => {
-              console.log("Response", response);
+              this.handleMessage(response);
             }
           );
           resolve(result);

@@ -15,7 +15,6 @@ import {
   MessageDispatcher,
   PipecatMetricsData,
   RTVIMessage,
-  RTVIMessageMetrics,
   RTVIMessageType,
   TranscriptData,
 } from "../messages";
@@ -687,18 +686,9 @@ export class RTVIVoiceClient extends RTVIClient {
   protected handleMessage(ev: RTVIMessage): void {
     console.debug("[RTVI Message]", ev);
 
-    if (ev instanceof RTVIMessageMetrics) {
-      //@TODO: add to wrapped metrics
-      this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);
-      return this._options.callbacks?.onMetrics?.(
-        ev.data as PipecatMetricsData
-      );
-    }
-
     switch (ev.type) {
       case RTVIMessageType.BOT_READY:
         clearTimeout(this._handshakeTimeout);
-        this._transport.state = "ready";
         this._startResolve?.(ev.data as BotReadyData);
         this._options.callbacks?.onBotReady?.(ev.data as BotReadyData);
         break;
@@ -751,6 +741,10 @@ export class RTVIVoiceClient extends RTVIClient {
         this._options.callbacks?.onBotTranscriptData?.(TranscriptData);
         break;
       }
+      case RTVIMessageType.METRICS:
+        this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);
+        this._options.callbacks?.onMetrics?.(ev.data as PipecatMetricsData);
+        break;
       default: {
         let match: boolean = false;
         // Pass message to registered helpered

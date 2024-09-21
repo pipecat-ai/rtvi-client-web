@@ -204,6 +204,7 @@ export class DailyTransport extends Transport {
       (async () => {
         this._daily.on("track-started", (ev) => {
           if (!ev.participant?.local) {
+            this.state = "ready";
             this.sendMessage(RTVIMessage.clientReady());
             resolve();
           }
