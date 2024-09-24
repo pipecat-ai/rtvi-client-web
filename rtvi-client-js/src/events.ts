@@ -97,6 +97,11 @@ export type RTVIEventHandler<E extends RTVIEvent> = E extends keyof RTVIEvents
   ? RTVIEvents[E]
   : never;
 
-// @deprecated
+/**
+ * @deprecated Use RTVIEventHandler instead.
+ */
 export type VoiceEventHandler = RTVIEventHandler<RTVIEvent>;
+/**
+ * @deprecated Use RTVIEvents instead.
+ */
 export type VoiceEvents = RTVIEvents;

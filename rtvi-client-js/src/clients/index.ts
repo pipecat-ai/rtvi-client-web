@@ -179,16 +179,22 @@ export abstract class RTVIClientBase extends (EventEmitter as unknown as new () 
   abstract unregisterHelper(service: string): void;
 
   // ----- Deprecated methods
-  // @deprecated - use connect()
+  /**
+   * @deprecated Use connect().
+   */
   abstract start(): Promise<unknown>;
 }
 
 // ----- Deprecated types
 
-// @deprecated - use RTVIClientConfigOption
+/**
+ * @deprecated Use RTVIClientConfigOption.
+ */
 export type VoiceClientConfigOption = RTVIClientConfigOption;
 
-// @deprecated - no longer used
+/**
+ * @deprecated No longer used.
+ */
 export type VoiceClientServices = { [key: string]: string };
 
 // ----- Exports
