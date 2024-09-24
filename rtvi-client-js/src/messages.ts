@@ -194,7 +194,15 @@ export class MessageDispatcher {
   }
 }
 
-// @deprecated
+/**
+ * @deprecated Use RTVIMessageActionResponse instead.
+ */
 export type VoiceMessageActionResponse = RTVIMessageActionResponse;
+/**
+ * @deprecated Use RTVIMessageType instead.
+ */
 export type VoiceMessageType = RTVIMessageType;
+/**
+ * @deprecated Use RTVIMessage instead.
+ */
 export class VoiceMessage extends RTVIMessage {}

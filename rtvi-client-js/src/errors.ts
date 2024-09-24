@@ -51,6 +51,7 @@ export class ConfigUpdateError extends RTVIError {
   }
 }
 
-// @deprecated
-
+/**
+ * @deprecated Use RTVIError instead.
+ */
 export class VoiceError extends RTVIError {}
