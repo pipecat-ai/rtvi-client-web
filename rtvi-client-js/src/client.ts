@@ -1,14 +1,17 @@
 import cloneDeep from "clone-deep";
+import EventEmitter from "events";
+import TypedEmitter from "typed-emitter";
 
 import {
   dispatchAction,
   RTVIActionRequest,
   RTVIActionRequestData,
   RTVIActionResponse,
-} from "../actions";
-import * as RTVIErrors from "../errors";
-import { RTVIEvent } from "../events";
-import { RTVIClientHelper, RTVIClientHelpers } from "../helpers";
+} from "./actions";
+import { getIfTransportInState, transportReady } from "./decorators";
+import * as RTVIErrors from "./errors";
+import { RTVIEvent, RTVIEvents } from "./events";
+import { RTVIClientHelper, RTVIClientHelpers } from "./helpers";
 import {
   BotReadyData,
   ConfigData,
@@ -17,24 +20,54 @@ import {
   RTVIMessage,
   RTVIMessageType,
   TranscriptData,
-} from "../messages";
-import { Participant, Tracks, Transport, TransportState } from "../transport";
-import {
-  ConfigOption,
-  RTVIBaseClientOptions,
-  RTVIBaseEventCallbacks,
-  RTVIClientBase,
-  RTVIClientConfigOption,
-  RTVIClientParams,
-  VoiceClientServices, // @deprecated
-} from ".";
-import { getIfTransportInState, transportReady } from "./decorators";
+} from "./messages";
+import { Participant, Tracks, Transport, TransportState } from "./transport";
 
-export interface RTVIClientOptions extends RTVIBaseClientOptions {
+export type ConfigOption = {
+  name: string;
+  value: unknown;
+};
+
+export type RTVIClientConfigOption = {
+  service: string;
+  options: ConfigOption[];
+};
+
+export type RTVIClientParams = {
+  baseUrl: URL | string;
+} & Partial<{
+  headers?: Headers;
+  config?: RTVIClientConfigOption[];
+}> & {
+    [key: string]: unknown;
+  };
+
+export interface RTVIClientOptions {
   /**
-   * Optional callback methods for voice events
+   * Parameters passed as JSON stringified body params to the baseUrl
+   */
+  params: RTVIClientParams;
+
+  /**
+   * Optional callback methods for rtvi events
    */
   callbacks?: RTVIEventCallbacks;
+
+  /**
+   * Set transport class for media streaming
+   */
+  transport?: new (
+    options: RTVIClientOptions,
+    onMessage: (ev: RTVIMessage) => void
+  ) => Transport;
+
+  /**
+   * Handshake timeout
+   *
+   * How long should the client wait for the bot ready event (when authenticating / requesting an agent)
+   * Defaults to no timeout (undefined)
+   */
+  timeout?: number;
 
   /**
    * Enable user mic input
@@ -49,34 +82,92 @@ export interface RTVIClientOptions extends RTVIBaseClientOptions {
    * Default to false
    */
   enableCam?: boolean;
+
+  /**
+   * Custom start method handler for retrieving auth bundle for transport
+   * @param baseUrl
+   * @param params
+   * @param timeout
+   * @param abortController
+   * @returns Promise<void>
+   */
+  customAuthHandler?: (
+    params: RTVIClientParams,
+    timeout: ReturnType<typeof setTimeout> | undefined,
+    abortController: AbortController
+  ) => Promise<void>;
+
+  // ----- deprecated options
+
+  /**
+   * Base URL for auth handlers and transport services
+   *
+   * Defaults to a POST request with a the config object as the body
+   * @deprecated Use params.baseUrl instead
+   */
+  baseUrl?: string;
+
+  /**
+   * Service key value pairs (e.g. {llm: "openai"} )
+   * @deprecated Use params.services instead
+   */
+  services?: VoiceClientServices;
+
+  /**
+   * Service configuration options for services and further customization
+   * @deprecated Use params.config instead
+   */
+  config?: VoiceClientConfigOption[];
+
+  /**
+   * Custom HTTP headers to be send with the POST request to baseUrl
+   * @deprecated Use startHeaders instead
+   */
+  customHeaders?: { [key: string]: string };
+
+  /**
+   * Custom request parameters to send with the POST request to baseUrl
+   * @deprecated Use params instead
+   */
+  customBodyParams?: object;
 }
 
-export type RTVIEventCallbacks = Partial<
-  RTVIBaseEventCallbacks & {
-    onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
-    onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
-    onCamUpdated: (cam: MediaDeviceInfo) => void;
-    onMicUpdated: (mic: MediaDeviceInfo) => void;
-    onTrackStarted: (
-      track: MediaStreamTrack,
-      participant?: Participant
-    ) => void;
-    onTrackStopped: (
-      track: MediaStreamTrack,
-      participant?: Participant
-    ) => void;
-    onLocalAudioLevel: (level: number) => void;
-    onRemoteAudioLevel: (level: number, participant: Participant) => void;
-    onBotStartedSpeaking: (participant: Participant) => void;
-    onBotStoppedSpeaking: (participant: Participant) => void;
-    onUserStartedSpeaking: () => void;
-    onUserStoppedSpeaking: () => void;
-    onUserTranscriptData: (data: TranscriptData) => void;
-    onBotTranscriptData: (data: TranscriptData) => void;
-  }
->;
+export type RTVIEventCallbacks = Partial<{
+  onGenericMessage: (data: unknown) => void;
+  onMessageError: (message: RTVIMessage) => void;
+  onError: (message: RTVIMessage) => void;
+  onConnected: () => void;
+  onDisconnected: () => void;
+  onTransportStateChanged: (state: TransportState) => void;
+  onConfig: (config: RTVIClientConfigOption[]) => void;
+  onConfigDescribe: (configDescription: unknown) => void;
+  onActionsAvailable: (actions: unknown) => void;
+  onBotConnected: (participant: Participant) => void;
+  onBotReady: (botReadyData: BotReadyData) => void;
+  onBotDisconnected: (participant: Participant) => void;
+  onParticipantJoined: (participant: Participant) => void;
+  onParticipantLeft: (participant: Participant) => void;
+  onMetrics: (data: PipecatMetricsData) => void;
 
-export class RTVIClient extends RTVIClientBase {
+  onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
+  onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
+  onCamUpdated: (cam: MediaDeviceInfo) => void;
+  onMicUpdated: (mic: MediaDeviceInfo) => void;
+  onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
+  onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
+  onLocalAudioLevel: (level: number) => void;
+  onRemoteAudioLevel: (level: number, participant: Participant) => void;
+  onBotStartedSpeaking: (participant: Participant) => void;
+  onBotStoppedSpeaking: (participant: Participant) => void;
+  onUserStartedSpeaking: () => void;
+  onUserStoppedSpeaking: () => void;
+  onUserTranscriptData: (data: TranscriptData) => void;
+  onBotTranscriptData: (data: TranscriptData) => void;
+}>;
+
+abstract class RTVIEventEmitter extends (EventEmitter as unknown as new () => TypedEmitter<RTVIEvents>) {}
+
+export class RTVIClient extends RTVIEventEmitter {
   public params: RTVIClientParams;
   protected _options: RTVIClientOptions;
   private _abortController: AbortController | undefined;
@@ -869,3 +960,15 @@ export class RTVIClient extends RTVIClientBase {
     }
   }
 }
+
+// ----- Deprecated types
+
+/**
+ * @deprecated Use RTVIClientConfigOption.
+ */
+export type VoiceClientConfigOption = RTVIClientConfigOption;
+
+/**
+ * @deprecated No longer used.
+ */
+export type VoiceClientServices = { [key: string]: string };

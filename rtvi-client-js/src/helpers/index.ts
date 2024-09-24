@@ -1,4 +1,4 @@
-import { RTVIClientBase } from "../clients";
+import { RTVIClient } from "../client";
 import { RTVIMessage } from "../messages";
 
 export type RTVIClientHelpers = Partial<Record<string, RTVIClientHelper>>;
@@ -14,7 +14,7 @@ export interface RTVIClientHelperOptions {
 
 export abstract class RTVIClientHelper {
   protected _options: RTVIClientHelperOptions;
-  protected declare _client: RTVIClientBase;
+  protected declare _client: RTVIClient;
   protected declare _service: string;
 
   constructor(options: RTVIClientHelperOptions) {
@@ -23,7 +23,7 @@ export abstract class RTVIClientHelper {
 
   public abstract handleMessage(ev: RTVIMessage): void;
   public abstract getMessageTypes(): string[];
-  public set client(client: RTVIClientBase) {
+  public set client(client: RTVIClient) {
     this._client = client;
   }
   public set service(service: string) {

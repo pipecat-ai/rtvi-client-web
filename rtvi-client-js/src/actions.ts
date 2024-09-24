@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { RTVIClientBase, RTVIClientParams } from "./clients";
+import { RTVIClient, RTVIClientParams } from "./client";
 import { RTVIError } from "./errors";
 
 export const RTVI_ACTION_LABEL = "rtvi-ai";
@@ -121,7 +121,7 @@ async function httpActionGenerator(
 
 //@TODO: implement abortController when mode changes / bad things happen
 export async function dispatchAction(
-  this: RTVIClientBase,
+  this: RTVIClient,
   action: RTVIActionRequest
 ): Promise<RTVIActionResponse> {
   const promise = new Promise((resolve, reject) => {

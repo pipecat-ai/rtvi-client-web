@@ -1,5 +1,5 @@
 import { RTVIClientOptions } from ".";
-import { RTVIEventCallbacks } from "./clients";
+import { RTVIEventCallbacks } from "./client";
 import { RTVIMessage } from "./messages";
 
 export type TransportState =

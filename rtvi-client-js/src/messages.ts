@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { RTVIClientConfigOption } from "./clients";
+import { RTVIClientConfigOption } from "./client";
 import { Transport } from "./transport";
 
 export enum RTVIMessageType {

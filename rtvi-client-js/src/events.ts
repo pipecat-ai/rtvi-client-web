@@ -83,7 +83,7 @@ export type RTVIEvents = Partial<{
 
   metrics: (data: PipecatMetricsData) => void;
   userTranscript: (data: TranscriptData) => void;
-  botTranscript: (text: TranscriptData) => void;
+  botTranscript: (data: TranscriptData) => void;
 
   error: (message: RTVIMessage) => void;
   messageError: (message: RTVIMessage) => void;
