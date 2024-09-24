@@ -3,7 +3,7 @@ import { createContext } from "react";
 import { RTVIClient } from "realtime-ai";
 import { Provider as JotaiProvider } from "jotai/react";
 
-interface Props {
+export interface Props {
   client: RTVIClient;
 }
 

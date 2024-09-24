@@ -8,7 +8,7 @@ interface RTVIClientVideoInterface {
   width: number;
 }
 
-interface Props
+export interface Props
   extends Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "onResize"> {
   participant: "local" | "bot";
 
