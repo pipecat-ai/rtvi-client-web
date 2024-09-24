@@ -12,15 +12,13 @@ import Daily, {
 } from "@daily-co/daily-js";
 import {
   Participant,
-  PipecatMetricsData,
   Tracks,
   Transport,
   TransportStartError,
   TransportState,
-  RTVIVoiceClientOptions,
+  RTVIClientOptions,
   RTVIMessage,
-  RTVIMessageMetrics,
-  RTVIVoiceEventCallbacks,
+  RTVIEventCallbacks,
 } from "realtime-ai";
 
 export interface DailyTransportAuthBundle {
@@ -31,12 +29,12 @@ export interface DailyTransportAuthBundle {
 export class DailyTransport extends Transport {
   private _daily: DailyCall;
   private _botId: string = "";
-  declare _callbacks: RTVIVoiceEventCallbacks;
+  declare _callbacks: RTVIEventCallbacks;
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
 
   constructor(
-    options: RTVIVoiceClientOptions,
+    options: RTVIClientOptions,
     onMessage: (ev: RTVIMessage) => void
   ) {
     super(options, onMessage);
@@ -259,10 +257,6 @@ export class DailyTransport extends Transport {
         type: ev.data.type,
         data: ev.data.data,
       } as RTVIMessage);
-    } else if (ev.data.type === "pipecat-metrics") {
-      // Bubble up pipecat metrics, which don't have the "rtvi-ai" label
-      const vmm = new RTVIMessageMetrics(ev.data.metrics as PipecatMetricsData);
-      this._onMessage(vmm);
     }
   }
 

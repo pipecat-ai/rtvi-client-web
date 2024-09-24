@@ -21,20 +21,20 @@ import {
 import { Participant, Tracks, Transport, TransportState } from "../transport";
 import {
   ConfigOption,
+  RTVIBaseClientOptions,
+  RTVIBaseEventCallbacks,
   RTVIClientBase,
   RTVIClientConfigOption,
-  RTVIClientOptions,
   RTVIClientParams,
-  RTVIEventCallbacks,
-  VoiceClientServices,
+  VoiceClientServices, // @deprecated
 } from ".";
 import { getIfTransportInState, transportReady } from "./decorators";
 
-export interface RTVIVoiceClientOptions extends RTVIClientOptions {
+export interface RTVIClientOptions extends RTVIBaseClientOptions {
   /**
    * Optional callback methods for voice events
    */
-  callbacks?: RTVIVoiceEventCallbacks;
+  callbacks?: RTVIEventCallbacks;
 
   /**
    * Enable user mic input
@@ -51,8 +51,8 @@ export interface RTVIVoiceClientOptions extends RTVIClientOptions {
   enableCam?: boolean;
 }
 
-export type RTVIVoiceEventCallbacks = Partial<
-  RTVIEventCallbacks & {
+export type RTVIEventCallbacks = Partial<
+  RTVIBaseEventCallbacks & {
     onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
     onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
     onCamUpdated: (cam: MediaDeviceInfo) => void;
@@ -78,15 +78,15 @@ export type RTVIVoiceEventCallbacks = Partial<
 
 export class RTVIClient extends RTVIClientBase {
   public params: RTVIClientParams;
-  protected _options: RTVIVoiceClientOptions;
+  protected _options: RTVIClientOptions;
   private _abortController: AbortController | undefined;
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
   private _helpers: RTVIClientHelpers;
   private _startResolve: ((value: unknown) => void) | undefined;
   protected declare _transport: Transport;
-  private declare _messageDispatcher: MessageDispatcher;
+  protected declare _messageDispatcher: MessageDispatcher;
 
-  constructor(options: RTVIVoiceClientOptions) {
+  constructor(options: RTVIClientOptions) {
     super();
 
     this.params = options.params;
@@ -94,7 +94,7 @@ export class RTVIClient extends RTVIClientBase {
 
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
-    const wrappedCallbacks: RTVIVoiceEventCallbacks = {
+    const wrappedCallbacks: RTVIEventCallbacks = {
       ...options.callbacks,
       onMessageError: (message: RTVIMessage) => {
         options?.callbacks?.onMessageError?.(message);

@@ -6,13 +6,14 @@ import { RTVIEvents } from "../events";
 import { RTVIClientHelper } from "../helpers";
 import {
   BotReadyData,
+  MessageDispatcher,
   PipecatMetricsData,
   RTVIMessage,
   RTVIMessageActionResponse,
 } from "../messages";
 import { Participant, Transport, TransportState } from "../transport";
 
-export type RTVIEventCallbacks = Partial<{
+export type RTVIBaseEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
   onMessageError: (message: RTVIMessage) => void;
   onError: (message: RTVIMessage) => void;
@@ -30,7 +31,7 @@ export type RTVIEventCallbacks = Partial<{
   onMetrics: (data: PipecatMetricsData) => void;
 }>;
 
-export interface RTVIClientOptions {
+export interface RTVIBaseClientOptions {
   /**
    * Parameters passed as JSON stringified body params to the baseUrl
    */
@@ -39,13 +40,13 @@ export interface RTVIClientOptions {
   /**
    * Optional callback methods for rtvi events
    */
-  callbacks?: RTVIEventCallbacks;
+  callbacks?: RTVIBaseEventCallbacks;
 
   /**
    * Set transport class for media streaming
    */
   transport?: new (
-    options: RTVIClientOptions,
+    options: RTVIBaseClientOptions,
     onMessage: (ev: RTVIMessage) => void
   ) => Transport;
 
@@ -130,6 +131,7 @@ export type RTVIClientParams = {
 export abstract class RTVIClientBase extends (EventEmitter as unknown as new () => TypedEmitter<RTVIEvents>) {
   abstract params: RTVIClientParams;
   protected abstract _transport: Transport;
+  protected abstract _messageDispatcher: MessageDispatcher;
 
   abstract get connected(): boolean;
   abstract connect(): Promise<unknown>;
@@ -193,4 +195,4 @@ export type VoiceClientServices = { [key: string]: string };
 
 // ----- Exports
 
-export * from "./voice";
+export * from "./core";

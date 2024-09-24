@@ -127,8 +127,7 @@ export async function dispatchAction(
   const promise = new Promise((resolve, reject) => {
     (async () => {
       if (["connected", "ready"].includes(this.state)) {
-        console.log("Send connected action");
-        this._transport.sendMessage(action);
+        return this._messageDispatcher.dispatch(action);
       } else {
         try {
           const result = await httpActionGenerator(
