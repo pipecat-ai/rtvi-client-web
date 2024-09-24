@@ -29,7 +29,7 @@ export const VoiceVisualizer: React.FC<Props> = React.memo(
     );
 
     useEffect(() => {
-      if (!track || !canvasRef.current) return;
+      if (!canvasRef.current) return;
 
       const canvasWidth = 5 * barWidth + 4 * barGap;
       const canvasHeight = barMaxHeight;
@@ -52,6 +52,8 @@ export const VoiceVisualizer: React.FC<Props> = React.memo(
 
       const canvasCtx = canvas.getContext("2d")!;
       resizeCanvas();
+
+      if (!track) return;
 
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(
