@@ -140,7 +140,7 @@ export class DailyTransport extends Transport {
   }
 
   async initDevices() {
-    if (this.state !== "idle") return;
+    if (this.state !== "disconnected") return;
 
     this.state = "initializing";
     const infos = await this._daily.startCamera();
@@ -167,7 +167,7 @@ export class DailyTransport extends Transport {
     authBundle: DailyTransportAuthBundle,
     abortController: AbortController
   ) {
-    if (this.state === "idle") {
+    if (this.state === "disconnected") {
       await this.initDevices();
     }
 
@@ -342,7 +342,7 @@ export class DailyTransport extends Transport {
   }
 
   private handleLeftMeeting() {
-    this.state = "disconnected";
+    this.state = "disconnecting";
     this._botId = "";
     this._callbacks.onDisconnected?.();
   }

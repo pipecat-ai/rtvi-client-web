@@ -3,14 +3,14 @@ import { RTVIEventCallbacks } from "./client";
 import { RTVIMessage } from "./messages";
 
 export type TransportState =
-  | "idle"
+  | "disconnected"
   | "initializing"
   | "initialized"
   | "authenticating"
   | "connecting"
   | "connected"
   | "ready"
-  | "disconnected"
+  | "disconnecting"
   | "error";
 
 export type Participant = {
@@ -34,7 +34,7 @@ export abstract class Transport {
   protected _options: RTVIClientOptions;
   protected _callbacks: RTVIEventCallbacks;
   protected _onMessage: (ev: RTVIMessage) => void;
-  protected _state: TransportState = "idle";
+  protected _state: TransportState = "disconnected";
   protected _expiry?: number = undefined;
 
   constructor(

@@ -1,13 +1,13 @@
 import { createContext } from "react";
 
-import { Client } from "realtime-ai";
+import { RTVIClient } from "realtime-ai";
 import { Provider as JotaiProvider } from "jotai/react";
 
 interface Props {
-  client: Client;
+  client: RTVIClient;
 }
 
-export const RTVIClientContext = createContext<{ client?: Client }>({});
+export const RTVIClientContext = createContext<{ client?: RTVIClient }>({});
 
 export const RTVIClientProvider: React.FC<React.PropsWithChildren<Props>> = ({
   children,
@@ -21,3 +21,4 @@ export const RTVIClientProvider: React.FC<React.PropsWithChildren<Props>> = ({
     </JotaiProvider>
   );
 };
+RTVIClientProvider.displayName = "RTVIClientProvider";

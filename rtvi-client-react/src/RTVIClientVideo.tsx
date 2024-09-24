@@ -180,4 +180,4 @@ export const RTVIClientVideo = forwardRef<HTMLVideoElement, Props>(
     );
   }
 );
-RTVIClientVideo.displayName = "VoiceClientVideo";
+RTVIClientVideo.displayName = "RTVIClientVideo";

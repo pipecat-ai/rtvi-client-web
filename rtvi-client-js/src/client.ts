@@ -44,17 +44,17 @@ export type RTVIClientParams = {
 
 export interface RTVIClientOptions {
   /**
-   * Parameters passed as JSON stringified body params to the baseUrl
+   * Parameters passed as JSON stringified body params to all endpoints (e.g. connect)
    */
   params: RTVIClientParams;
 
   /**
-   * Optional callback methods for rtvi events
+   * Optional callback methods for RTVI events
    */
   callbacks?: RTVIEventCallbacks;
 
   /**
-   * Set transport class for media streaming
+   * Transport class for media streaming
    */
   transport?: new (
     options: RTVIClientOptions,
@@ -97,7 +97,7 @@ export interface RTVIClientOptions {
     abortController: AbortController
   ) => Promise<void>;
 
-  // ----- deprecated options
+  // ----- @deprecated options
 
   /**
    * Base URL for auth handlers and transport services
@@ -302,6 +302,7 @@ export class RTVIClient extends RTVIEventEmitter {
       ...options,
       callbacks: wrappedCallbacks,
       enableMic: options.enableMic ?? true,
+      enableCam: options.enableCam ?? false,
     };
 
     // Instantiate the transport class and bind message handler
@@ -341,7 +342,7 @@ export class RTVIClient extends RTVIEventEmitter {
       (async () => {
         this._startResolve = resolve;
 
-        if (this._transport.state === "idle") {
+        if (this._transport.state === "disconnected") {
           await this._transport.initDevices();
         }
 

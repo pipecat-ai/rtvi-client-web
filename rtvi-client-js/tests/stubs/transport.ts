@@ -45,7 +45,7 @@ export class TransportStub extends Transport {
 
   public async disconnect(): Promise<void> {
     return new Promise<void>((resolve) => {
-      this.state = "disconnected";
+      this.state = "disconnecting";
       resolve();
     });
   }

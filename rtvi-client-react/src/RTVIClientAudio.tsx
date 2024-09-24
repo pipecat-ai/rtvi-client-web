@@ -22,3 +22,4 @@ export const RTVIClientAudio = () => {
     </>
   );
 };
+RTVIClientAudio.displayName = "RTVIClientAudio";

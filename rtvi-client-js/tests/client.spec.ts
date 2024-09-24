@@ -81,7 +81,7 @@ describe("RTVIClient Methods", () => {
     await client.disconnect();
 
     expect(client.connected).toBe(false);
-    expect(client.state === "idle").toBe(true);
+    expect(client.state === "disconnected").toBe(true);
 
     expect(stateChanges).toEqual([
       "initializing",
@@ -90,7 +90,7 @@ describe("RTVIClient Methods", () => {
       "connecting",
       "connected",
       "ready",
-      "disconnected",
+      "disconnecting",
     ]);
   });
 
