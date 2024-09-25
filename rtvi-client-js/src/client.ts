@@ -326,7 +326,6 @@ export class RTVIClient extends RTVIEventEmitter {
 
   public constructUrl(endpoint: RTVIURLEndpoints): string {
     const baseUrl = this.params.baseUrl.replace(/\/+$/, "");
-    console.log("AAA", this.params);
     return baseUrl + (this.params.endpoints?.[endpoint] ?? "");
   }
   // ------ Transport methods

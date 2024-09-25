@@ -9,9 +9,11 @@ export class DailyVoiceClient extends RTVIClient {
   constructor({ ...opts }: RTVIClientOptions) {
     const options: RTVIClientOptions = {
       ...opts,
-      transport: DailyTransport,
+      transport: new DailyTransport(),
     };
 
     super(options);
   }
 }
+
+export * from "./transport";
