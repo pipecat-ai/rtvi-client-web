@@ -18,7 +18,7 @@ import {
   TransportState,
   RTVIClientOptions,
   RTVIMessage,
-  RTVIEventCallbacks,
+  RTVIError,
 } from "realtime-ai";
 
 export interface DailyTransportAuthBundle {
@@ -27,22 +27,27 @@ export interface DailyTransportAuthBundle {
 }
 
 export class DailyTransport extends Transport {
-  private _daily: DailyCall;
+  private declare _daily: DailyCall;
   private _botId: string = "";
-  declare _callbacks: RTVIEventCallbacks;
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
 
-  constructor(
+  constructor() {
+    super();
+  }
+
+  public initialize(
     options: RTVIClientOptions,
-    onMessage: (ev: RTVIMessage) => void
-  ) {
-    super(options, onMessage);
+    messageHandler: (ev: RTVIMessage) => void
+  ): void {
+    this._callbacks = options.callbacks ?? {};
+    this._onMessage = messageHandler;
 
     const existingInstance = Daily.getCallInstance();
     if (existingInstance) {
       void existingInstance.destroy();
     }
+
     this._daily = Daily.createCallObject({
       videoSource: options.enableCam ?? false,
       audioSource: options.enableMic ?? false,
@@ -51,6 +56,8 @@ export class DailyTransport extends Transport {
     });
 
     this.attachEventListeners();
+
+    this.state = "disconnected";
   }
 
   get state(): TransportState {
@@ -140,9 +147,12 @@ export class DailyTransport extends Transport {
   }
 
   async initDevices() {
-    if (this.state !== "disconnected") return;
+    if (!this._daily) {
+      throw new RTVIError("Transport instance not initialized");
+    }
 
     this.state = "initializing";
+
     const infos = await this._daily.startCamera();
     const { devices } = await this._daily.enumerateDevices();
     const cams = devices.filter((d) => d.kind === "videoinput");
@@ -167,6 +177,10 @@ export class DailyTransport extends Transport {
     authBundle: DailyTransportAuthBundle,
     abortController: AbortController
   ) {
+    if (!this._daily) {
+      throw new RTVIError("Transport instance not initialized");
+    }
+
     if (this.state === "disconnected") {
       await this.initDevices();
     }

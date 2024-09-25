@@ -10,11 +10,8 @@ import {
 } from "../../src";
 
 export class TransportStub extends Transport {
-  constructor(
-    options: RTVIClientOptions,
-    onMessage: (ev: RTVIMessage) => void
-  ) {
-    super(options, onMessage);
+  constructor() {
+    super();
   }
 
   public initDevices(): Promise<void> {
@@ -27,11 +24,21 @@ export class TransportStub extends Transport {
     });
   }
 
-  public async connect(): Promise<void> {
+  public initialize(
+    options: RTVIClientOptions,
+    messageHandler: (ev: RTVIMessage) => void
+  ): void {
+    this._onMessage = messageHandler;
+    this._callbacks = options.callbacks ?? {};
+
+    this.state = "disconnected";
+  }
+
+  public async connect(authBundle: boolean = true): Promise<void> {
     return new Promise<void>((resolve) => {
       this.state = "connecting";
 
-      if (this._options.params.baseUrl === "bad-url") {
+      if (!authBundle) {
         this.state = "error";
         throw new TransportStartError();
       }
@@ -61,9 +68,7 @@ export class TransportStub extends Transport {
           label: "rtvi-ai",
           id: "123",
           type: RTVIMessageType.BOT_READY,
-          data: {
-            config: this._options.config,
-          },
+          data: {},
         } as RTVIMessage);
       })();
     });
@@ -132,7 +137,7 @@ export class TransportStub extends Transport {
         case RTVIMessageType.GET_CONFIG:
           this._onMessage({
             ...message,
-            data: { config: this._options.config },
+            data: {},
             type: RTVIMessageType.CONFIG,
           });
           break;

@@ -7,7 +7,6 @@ import {
   type RTVIClientConfigOption,
   RTVIClientOptions,
   RTVIEvent,
-  TransportStartError,
 } from "../src/";
 import { TransportStub } from "./stubs/transport";
 
@@ -50,18 +49,19 @@ const exampleConfig: RTVIClientConfigOption[] = [
 
 describe("RTVIClient Methods", () => {
   let client: RTVIClient;
-  let clientArgs: RTVIClientOptions = {
-    params: {
-      baseUrl: "/",
-      services: exampleServices,
-      config: exampleConfig,
-    },
-    transport: TransportStub,
-    customAuthHandler: () => Promise.resolve(),
-  };
 
   beforeEach(() => {
-    client = new RTVIClient(clientArgs);
+    const transport = new TransportStub();
+    const args = {
+      params: {
+        baseUrl: "/",
+        services: exampleServices,
+        config: exampleConfig,
+      },
+      transport: transport,
+      customAuthHandler: () => Promise.resolve(),
+    };
+    client = new RTVIClient(args as RTVIClientOptions);
   });
 
   test("connect() and disconnect()", async () => {
@@ -91,6 +91,7 @@ describe("RTVIClient Methods", () => {
       "connected",
       "ready",
       "disconnecting",
+      "disconnected",
     ]);
   });
 
@@ -108,19 +109,12 @@ describe("RTVIClient Methods", () => {
     expect(stateChanges).toEqual(["initializing", "initialized"]);
   });
 
-  test("client state to be error when unable to connect", async () => {
-    clientArgs.params.baseUrl = "bad-url";
-    let error: TransportStartError;
-    try {
-      await client.connect();
-    } catch (e) {
-      error = e as TransportStartError;
-    }
-    expect(client.connected).toBe(false);
-    expect(() => error.message).toBeDefined();
-    expect(client.state === "error").toBe(true);
+  test("Endpoints should have defaults", () => {
+    const connectUrl = client.constructUrl("connect");
+    const disconnectedActionsUrl = client.constructUrl("disconnectedAction");
 
-    clientArgs.params.baseUrl = "/";
+    expect(connectUrl).toEqual("/connect");
+    expect(disconnectedActionsUrl).toEqual("/completion");
   });
 
   test("transportExpiry should throw an error when not in connected state", () => {

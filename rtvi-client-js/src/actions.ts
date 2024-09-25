@@ -32,12 +32,13 @@ export type RTVIActionResponse = {
 };
 
 async function httpActionGenerator(
+  actionUrl: string,
   params: RTVIClientParams,
   action: RTVIActionRequest,
   handleResponse: (response: RTVIActionResponse) => void
 ): Promise<void> {
   try {
-    console.debug("[RTVI] Fetch action", params.baseUrl.toString(), action);
+    console.debug("[RTVI] Fetch action", actionUrl, action);
 
     const headers = params.headers || new Headers();
 
@@ -49,10 +50,10 @@ async function httpActionGenerator(
     headers.set("Connection", "keep-alive");
 
     // Perform the fetch request
-    const response = await fetch(params.baseUrl.toString(), {
+    const response = await fetch(actionUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(action),
+      body: JSON.stringify({ ...params.bodyParams, action: action }),
     });
 
     // Check the response content type
@@ -129,8 +130,11 @@ export async function dispatchAction(
       if (["connected", "ready"].includes(this.state)) {
         return this._messageDispatcher.dispatch(action);
       } else {
+        const actionUrl = this.constructUrl("disconnectedAction");
+
         try {
           const result = await httpActionGenerator(
+            actionUrl,
             this.params,
             action,
             (response) => {

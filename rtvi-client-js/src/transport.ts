@@ -1,5 +1,4 @@
-import { RTVIClientOptions } from ".";
-import { RTVIEventCallbacks } from "./client";
+import { RTVIClientOptions, RTVIEventCallbacks } from "./client";
 import { RTVIMessage } from "./messages";
 
 export type TransportState =
@@ -31,20 +30,18 @@ export type Tracks = {
 };
 
 export abstract class Transport {
-  protected _options: RTVIClientOptions;
-  protected _callbacks: RTVIEventCallbacks;
-  protected _onMessage: (ev: RTVIMessage) => void;
+  protected declare _options: RTVIClientOptions;
+  protected declare _onMessage: (ev: RTVIMessage) => void;
+  protected declare _callbacks: RTVIEventCallbacks;
   protected _state: TransportState = "disconnected";
   protected _expiry?: number = undefined;
 
-  constructor(
+  constructor() {}
+
+  abstract initialize(
     options: RTVIClientOptions,
-    onMessage: (ev: RTVIMessage) => void
-  ) {
-    this._options = options;
-    this._callbacks = options.callbacks ?? {};
-    this._onMessage = onMessage;
-  }
+    messageHandler: (ev: RTVIMessage) => void
+  ): void;
 
   abstract initDevices(): Promise<void>;
 

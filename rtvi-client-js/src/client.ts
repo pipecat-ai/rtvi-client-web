@@ -33,10 +33,19 @@ export type RTVIClientConfigOption = {
   options: ConfigOption[];
 };
 
+export type RTVIURLEndpoints = "connect" | "disconnectedAction";
+
+const defaultEndpoints: Record<RTVIURLEndpoints, string> = {
+  connect: "/connect",
+  disconnectedAction: "/completion",
+};
+
 export type RTVIClientParams = {
-  baseUrl: URL | string;
+  baseUrl: string;
 } & Partial<{
   headers?: Headers;
+  endpoints: Record<RTVIURLEndpoints, string>;
+  bodyParams?: object;
   config?: RTVIClientConfigOption[];
 }> & {
     [key: string]: unknown;
@@ -49,17 +58,14 @@ export interface RTVIClientOptions {
   params: RTVIClientParams;
 
   /**
+   * Transport class for media streaming
+   */
+  transport: Transport;
+
+  /**
    * Optional callback methods for RTVI events
    */
   callbacks?: RTVIEventCallbacks;
-
-  /**
-   * Transport class for media streaming
-   */
-  transport?: new (
-    options: RTVIClientOptions,
-    onMessage: (ev: RTVIMessage) => void
-  ) => Transport;
 
   /**
    * Handshake timeout
@@ -174,14 +180,21 @@ export class RTVIClient extends RTVIEventEmitter {
   private _handshakeTimeout: ReturnType<typeof setTimeout> | undefined;
   private _helpers: RTVIClientHelpers;
   private _startResolve: ((value: unknown) => void) | undefined;
-  protected declare _transport: Transport;
+  protected _transport: Transport;
   protected declare _messageDispatcher: MessageDispatcher;
 
   constructor(options: RTVIClientOptions) {
     super();
 
-    this.params = options.params;
+    this.params = {
+      ...options.params,
+      endpoints: {
+        ...defaultEndpoints,
+        ...(options.params.endpoints ?? {}),
+      },
+    };
     this._helpers = {};
+    this._transport = options.transport;
 
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
@@ -311,6 +324,11 @@ export class RTVIClient extends RTVIEventEmitter {
     console.debug("[RTVI Client] Initialized");
   }
 
+  public constructUrl(endpoint: RTVIURLEndpoints): string {
+    const baseUrl = this.params.baseUrl.replace(/\/+$/, "");
+    console.log("AAA", this.params);
+    return baseUrl + (this.params.endpoints?.[endpoint] ?? "");
+  }
   // ------ Transport methods
 
   /**
@@ -360,12 +378,10 @@ export class RTVIClient extends RTVIEventEmitter {
 
         let authBundle: unknown;
         const customAuthHandler = this._options.customAuthHandler;
+        const connectUrl = this.constructUrl("connect");
 
-        console.debug(
-          "[RTVI Client] Connecting to baseUrl",
-          this.params.baseUrl
-        );
-        console.debug("[RTVI Client] Start params", this._options.params);
+        console.debug("[RTVI Client] Connecting to baseUrl", connectUrl);
+        console.debug("[RTVI Client] Start params", this.params);
 
         try {
           if (customAuthHandler) {
@@ -375,7 +391,7 @@ export class RTVIClient extends RTVIEventEmitter {
               this._abortController!
             );
           } else {
-            authBundle = await fetch(`${this.params.baseUrl.toString()}`, {
+            authBundle = await fetch(connectUrl, {
               method: "POST",
               mode: "cors",
               headers: {
@@ -386,7 +402,7 @@ export class RTVIClient extends RTVIEventEmitter {
                 services: this._options.services, // @deprecated
                 config: this._options.config, // @deprecated
                 ...this._options.customBodyParams, // @deprecated
-                ...this._options.params,
+                ...this.params.bodyParams,
               }),
               signal: this._abortController?.signal,
             }).then((res) => {
@@ -457,11 +473,9 @@ export class RTVIClient extends RTVIEventEmitter {
   }
 
   private _initialize() {
-    const cls = this._options.transport;
-    if (!cls) {
-      throw new RTVIErrors.RTVIError("No transport class provided");
-    }
-    this._transport = new cls(this._options, this.handleMessage.bind(this));
+    // Reset transport
+    this._transport = this._options.transport;
+    this._transport.initialize(this._options, this.handleMessage.bind(this));
 
     // Create a new message dispatch queue for async message handling
     this._messageDispatcher = new MessageDispatcher(this._transport);

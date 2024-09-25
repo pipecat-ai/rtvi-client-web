@@ -19,11 +19,12 @@ async function isServerReachable(url: string): Promise<boolean> {
   }
 }
 
+const transport = new TransportStub();
 const client = new RTVIClient({
   params: {
-    baseUrl: new URL("http://localhost"),
+    baseUrl: "http://localhost:8000",
   },
-  transport: TransportStub,
+  transport: transport,
 });
 
 describe("Disconnected actions", () => {
@@ -43,7 +44,7 @@ describe("Disconnected actions", () => {
     }
 
     // Set a valid URL
-    client.params.baseUrl = new URL("http://127.0.0.1:8000/api/completions");
+    client.params.baseUrl = "http://127.0.0.1:8000/api/completions";
 
     // Action request object
     const action: RTVIActionRequestData = {
