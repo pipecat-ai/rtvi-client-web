@@ -1,37 +1,7 @@
-import { v4 as uuidv4 } from "uuid";
+import { RTVIClientParams, RTVIError } from ".";
+import { RTVIActionRequest, RTVIActionResponse } from "./messages";
 
-import { RTVIClient, RTVIClientParams } from "./client";
-import { RTVIError } from "./errors";
-
-export const RTVI_ACTION_LABEL = "rtvi-ai";
-export const RTVI_ACTION_TYPE = "action";
-
-export type RTVIActionRequestData = {
-  service: string;
-  action: string;
-  arguments?: { name: string; value: unknown }[];
-};
-
-export class RTVIActionRequest {
-  id: string;
-  label: string = RTVI_ACTION_LABEL;
-  type: string = RTVI_ACTION_TYPE;
-  data: RTVIActionRequestData;
-
-  constructor(data: RTVIActionRequestData) {
-    this.id = uuidv4().slice(0, 8);
-    this.data = data;
-  }
-}
-
-export type RTVIActionResponse = {
-  id: string;
-  label: string;
-  type: string;
-  data: { result: unknown };
-};
-
-async function httpActionGenerator(
+export async function httpActionGenerator(
   actionUrl: string,
   action: RTVIActionRequest,
   params: RTVIClientParams,
@@ -120,7 +90,7 @@ async function httpActionGenerator(
     throw error;
   }
 }
-
+/*
 //@TODO: implement abortController when mode changes / bad things happen
 export async function dispatchAction(
   this: RTVIClient,
@@ -131,7 +101,6 @@ export async function dispatchAction(
       if (this.connected) {
         return this._messageDispatcher.dispatch(action);
       } else {
-        this._messageDispatcher.dispatch(action);
         const actionUrl = this.constructUrl("action");
         try {
           const result = await httpActionGenerator(
@@ -152,3 +121,4 @@ export async function dispatchAction(
 
   return promise as Promise<RTVIActionResponse>;
 }
+*/

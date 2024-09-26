@@ -1,7 +1,10 @@
-import { RTVIActionRequestData, RTVIActionResponse } from "./../actions";
 import * as RTVIErrors from "./../errors";
 import { RTVIEvent } from "./../events";
-import { RTVIMessage } from "./../messages";
+import {
+  RTVIActionRequestData,
+  RTVIActionResponse,
+  RTVIMessage,
+} from "./../messages";
 import { RTVIClientHelper, RTVIClientHelperOptions } from ".";
 
 // --- Types

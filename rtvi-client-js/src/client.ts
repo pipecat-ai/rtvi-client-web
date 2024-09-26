@@ -2,12 +2,6 @@ import cloneDeep from "clone-deep";
 import EventEmitter from "events";
 import TypedEmitter from "typed-emitter";
 
-import {
-  dispatchAction,
-  RTVIActionRequest,
-  RTVIActionRequestData,
-  RTVIActionResponse,
-} from "./actions";
 import { getIfTransportInState, transportReady } from "./decorators";
 import * as RTVIErrors from "./errors";
 import { RTVIEvent, RTVIEvents } from "./events";
@@ -17,6 +11,9 @@ import {
   ConfigData,
   MessageDispatcher,
   PipecatMetricsData,
+  RTVIActionRequest,
+  RTVIActionRequestData,
+  RTVIActionResponse,
   RTVIMessage,
   RTVIMessageType,
   TextFrameData,
@@ -753,12 +750,15 @@ export class RTVIClient extends RTVIEventEmitter {
   // ------ Actions
 
   /**
-   * Dispatch an action message to the bot
+   * Dispatch an action message to the bot or http single-turn endpoint
    */
   public async action(
     action: RTVIActionRequestData
   ): Promise<RTVIActionResponse> {
-    return dispatchAction.bind(this)(new RTVIActionRequest(action));
+    return this._messageDispatcher.dispatchAction(
+      new RTVIActionRequest(action),
+      this.handleMessage.bind(this)
+    );
   }
 
   /**

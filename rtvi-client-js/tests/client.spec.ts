@@ -105,10 +105,10 @@ describe("RTVIClient Methods", () => {
 
   test("Endpoints should have defaults", () => {
     const connectUrl = client.constructUrl("connect");
-    const disconnectedActionsUrl = client.constructUrl("disconnectedAction");
+    const disconnectedActionsUrl = client.constructUrl("action");
 
     expect(connectUrl).toEqual("/connect");
-    expect(disconnectedActionsUrl).toEqual("/completion");
+    expect(disconnectedActionsUrl).toEqual("/action");
   });
 
   test("transportExpiry should throw an error when not in connected state", () => {

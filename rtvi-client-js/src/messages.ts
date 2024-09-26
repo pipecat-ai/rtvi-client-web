@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from "uuid";
 
+import { httpActionGenerator } from "./actions";
 import { RTVIClient, RTVIClientConfigOption } from "./client";
 
 export const RTVI_MESSAGE_LABEL = "rtvi-ai";
@@ -115,6 +116,29 @@ export class RTVIMessage {
   }
 }
 
+// ----- Action Types
+
+export const RTVI_ACTION_TYPE = "action";
+
+export type RTVIActionRequestData = {
+  service: string;
+  action: string;
+  arguments?: { name: string; value: unknown }[];
+};
+
+export class RTVIActionRequest extends RTVIMessage {
+  constructor(data: RTVIActionRequestData) {
+    super(RTVI_ACTION_TYPE, data);
+  }
+}
+
+export type RTVIActionResponse = {
+  id: string;
+  label: string;
+  type: string;
+  data: { result: unknown };
+};
+
 // ----- Message Dispatcher
 
 interface QueuedRTVIMessage {
@@ -135,9 +159,7 @@ export class MessageDispatcher {
     this._client = client;
   }
 
-  public dispatch(
-    message: RTVIMessage
-  ): Promise<RTVIMessage | RTVIMessageActionResponse> {
+  public dispatch(message: RTVIMessage): Promise<RTVIMessage> {
     const promise = new Promise((resolve, reject) => {
       this._queue.push({
         message,
@@ -149,14 +171,63 @@ export class MessageDispatcher {
 
     console.debug("[MessageDispatcher] dispatch", message);
 
-    // If connected, dispatch message via transport
-    if (this._client.connected) {
-      this._client.sendMessage(message);
-    }
+    this._client.sendMessage(message);
 
     this._gc();
 
     return promise as Promise<RTVIMessage | RTVIMessageActionResponse>;
+  }
+
+  public async dispatchAction(
+    action: RTVIActionRequest,
+    onMessage: (message: RTVIMessage) => void
+  ): Promise<RTVIMessageActionResponse> {
+    const promise = new Promise((resolve, reject) => {
+      this._queue.push({
+        message: action,
+        timestamp: Date.now(),
+        resolve,
+        reject,
+      });
+    });
+
+    console.debug("[MessageDispatcher] action", action);
+
+    if (this._client.connected) {
+      // Send message to transport when connected
+      this._client.sendMessage(action);
+    } else {
+      const actionUrl = this._client.constructUrl("action");
+
+      try {
+        // Dispatch action via HTTP when disconnected
+        await httpActionGenerator(
+          actionUrl,
+          action,
+          this._client.params,
+          (response: RTVIActionResponse) => {
+            console.log("RESPONSE GELIYOR", response);
+            onMessage(response);
+          }
+        );
+      } catch (e) {
+        // On HTTP error, send `error-response` message (for callbacks)
+        onMessage(
+          new RTVIMessage(
+            RTVIMessageType.ERROR_RESPONSE,
+            `Action endpoint '${actionUrl}' returned an error response`,
+            action.id
+          )
+        );
+      }
+
+      // On stream error, send `error-response` message (for callbacks)
+      // On HTTP success (resolve), send `action` message (for callbacks)
+    }
+
+    this._gc();
+
+    return promise as Promise<RTVIMessageActionResponse>;
   }
 
   private _resolveReject(
@@ -202,6 +273,8 @@ export class MessageDispatcher {
     console.debug("[MessageDispatcher] GC", this._queue);
   }
 }
+
+// ----- Deprecated
 
 /**
  * @deprecated Use RTVIMessageActionResponse instead.
