@@ -356,7 +356,6 @@ export class DailyTransport extends Transport {
   }
 
   private handleLeftMeeting() {
-    console.log("Arrived here");
     this.state = "disconnecting";
     this._botId = "";
     this._callbacks.onDisconnected?.();
