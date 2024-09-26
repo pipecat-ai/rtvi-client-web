@@ -19,6 +19,7 @@ import {
   PipecatMetricsData,
   RTVIMessage,
   RTVIMessageType,
+  TextFrameData,
   TranscriptData,
 } from "./messages";
 import { Participant, Tracks, Transport, TransportState } from "./transport";
@@ -45,7 +46,7 @@ export type RTVIClientParams = {
 } & Partial<{
   headers?: Headers;
   endpoints: Record<RTVIURLEndpoints, string>;
-  bodyParams?: object;
+  requestData?: object;
   config?: RTVIClientConfigOption[];
 }> & {
     [key: string]: unknown;
@@ -97,7 +98,7 @@ export interface RTVIClientOptions {
    * @param abortController
    * @returns Promise<void>
    */
-  customAuthHandler?: (
+  customConnectHandler?: (
     params: RTVIClientParams,
     timeout: ReturnType<typeof setTimeout> | undefined,
     abortController: AbortController
@@ -169,6 +170,8 @@ export type RTVIEventCallbacks = Partial<{
   onUserStoppedSpeaking: () => void;
   onUserTranscriptData: (data: TranscriptData) => void;
   onBotTranscriptData: (data: TranscriptData) => void;
+
+  onTextFrame: (text: TextFrameData) => void;
 }>;
 
 abstract class RTVIEventEmitter extends (EventEmitter as unknown as new () => TypedEmitter<RTVIEvents>) {}
@@ -376,15 +379,15 @@ export class RTVIClient extends RTVIEventEmitter {
         }
 
         let authBundle: unknown;
-        const customAuthHandler = this._options.customAuthHandler;
+        const customConnectHandler = this._options.customConnectHandler;
         const connectUrl = this.constructUrl("connect");
 
         console.debug("[RTVI Client] Connecting to baseUrl", connectUrl);
         console.debug("[RTVI Client] Start params", this.params);
 
         try {
-          if (customAuthHandler) {
-            authBundle = await customAuthHandler(
+          if (customConnectHandler) {
+            authBundle = await customConnectHandler(
               this.params,
               this._handshakeTimeout,
               this._abortController!
@@ -401,7 +404,7 @@ export class RTVIClient extends RTVIEventEmitter {
                 services: this._options.services, // @deprecated
                 config: this._options.config, // @deprecated
                 ...this._options.customBodyParams, // @deprecated
-                ...this.params.bodyParams,
+                ...this.params.requestData,
               }),
               signal: this._abortController?.signal,
             }).then((res) => {
@@ -846,6 +849,9 @@ export class RTVIClient extends RTVIEventEmitter {
         this._options.callbacks?.onBotTranscriptData?.(TranscriptData);
         break;
       }
+      case RTVIMessageType.TEXT_FRAME:
+        this._options.callbacks?.onTextFrame?.(ev.data as TextFrameData);
+        break;
       case RTVIMessageType.METRICS:
         this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);
         this._options.callbacks?.onMetrics?.(ev.data as PipecatMetricsData);

@@ -33,8 +33,8 @@ export type RTVIActionResponse = {
 
 async function httpActionGenerator(
   actionUrl: string,
-  params: RTVIClientParams,
   action: RTVIActionRequest,
+  params: RTVIClientParams,
   handleResponse: (response: RTVIActionResponse) => void
 ): Promise<void> {
   try {
@@ -42,7 +42,6 @@ async function httpActionGenerator(
 
     const headers = params.headers || new Headers();
 
-    // Ensure the "Content-Type" header is always set to "application/json"
     if (!headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
     }
@@ -53,7 +52,7 @@ async function httpActionGenerator(
     const response = await fetch(actionUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify({ ...params.bodyParams, action: action }),
+      body: JSON.stringify({ ...params.requestData, actions: [action] }),
     });
 
     // Check the response content type
@@ -131,12 +130,11 @@ export async function dispatchAction(
         return this._messageDispatcher.dispatch(action);
       } else {
         const actionUrl = this.constructUrl("disconnectedAction");
-
         try {
           const result = await httpActionGenerator(
             actionUrl,
-            this.params,
             action,
+            this.params,
             (response) => {
               this.handleMessage(response);
             }

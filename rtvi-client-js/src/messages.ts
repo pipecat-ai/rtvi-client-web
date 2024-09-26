@@ -28,6 +28,8 @@ export enum RTVIMessageType {
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
   BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
   BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
+  // Inbound frames
+  TEXT_FRAME = "llm-text", // Text frame from the bot
 }
 
 // ----- Message Data Types
@@ -57,6 +59,10 @@ export type TranscriptData = {
   final: boolean;
   timestamp: string;
   user_id: string;
+};
+
+export type TextFrameData = {
+  text: string;
 };
 
 // ----- Message Classes

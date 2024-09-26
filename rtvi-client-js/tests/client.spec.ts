@@ -59,7 +59,7 @@ describe("RTVIClient Methods", () => {
         config: exampleConfig,
       },
       transport: transport,
-      customAuthHandler: () => Promise.resolve(),
+      customConnectHandler: () => Promise.resolve(),
     };
     client = new RTVIClient(args as RTVIClientOptions);
   });
