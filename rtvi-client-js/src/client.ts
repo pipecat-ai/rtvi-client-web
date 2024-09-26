@@ -196,6 +196,7 @@ export class RTVIClient extends RTVIEventEmitter {
         ...(options.params.endpoints ?? {}),
       },
     };
+
     this._helpers = {};
     this._transport = options.transport;
 
@@ -370,9 +371,9 @@ export class RTVIClient extends RTVIEventEmitter {
 
         // Set a timer for the bot to enter a ready state, otherwise abort the attempt
         if (this._options.timeout) {
-          this._handshakeTimeout = setTimeout(() => {
+          this._handshakeTimeout = setTimeout(async () => {
             this._abortController?.abort();
-            this._transport.disconnect();
+            await this.disconnect();
             this._transport.state = "error";
             reject(new RTVIErrors.ConnectionTimeoutError());
           }, this._options.timeout);
@@ -396,10 +397,12 @@ export class RTVIClient extends RTVIEventEmitter {
             authBundle = await fetch(connectUrl, {
               method: "POST",
               mode: "cors",
-              headers: {
+              headers: new Headers({
                 "Content-Type": "application/json",
-                ...(this.params.headers ?? this._options.customHeaders), // @deprecated
-              },
+                ...Object.fromEntries(
+                  (this.params.headers ?? new Headers()).entries()
+                ),
+              }),
               body: JSON.stringify({
                 services: this._options.services, // @deprecated
                 config: this._options.config, // @deprecated
@@ -413,31 +416,29 @@ export class RTVIClient extends RTVIEventEmitter {
               if (res.ok) {
                 return res.json();
               }
+
               return Promise.reject(res);
             });
           }
         } catch (e) {
           clearTimeout(this._handshakeTimeout);
-          this._transport.state = "error";
-          try {
-            if (e instanceof Response) {
-              const errorResp = await e.json();
-              reject(
-                new RTVIErrors.StartBotError(
-                  errorResp.info,
-                  e.status,
-                  errorResp.error
-                )
-              );
-            }
-          } catch (innerError) {
-            reject(
-              new RTVIErrors.StartBotError(
-                `Failed to connect / invalid auth bundle from base url ${this.params.baseUrl}`
-              )
-            );
+          // Handle errors if the request was not aborted
+          if (this._abortController?.signal.aborted) {
             return;
           }
+          this._transport.state = "error";
+          if (e instanceof Response) {
+            const errorResp = await e.json();
+            reject(
+              new RTVIErrors.StartBotError(
+                errorResp.info ?? errorResp.detail ?? e.statusText,
+                e.status
+              )
+            );
+          } else {
+            reject(new RTVIErrors.StartBotError());
+          }
+          return;
         }
 
         console.debug("[RTVI Client] Auth bundle received", authBundle);
@@ -480,7 +481,7 @@ export class RTVIClient extends RTVIEventEmitter {
     this._transport.initialize(this._options, this.handleMessage.bind(this));
 
     // Create a new message dispatch queue for async message handling
-    this._messageDispatcher = new MessageDispatcher(this._transport);
+    this._messageDispatcher = new MessageDispatcher(this);
   }
 
   /**

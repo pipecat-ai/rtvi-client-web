@@ -1,7 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 
-import { RTVIClientConfigOption } from "./client";
-import { Transport } from "./transport";
+import { RTVIClient, RTVIClientConfigOption } from "./client";
+
+export const RTVI_MESSAGE_LABEL = "rtvi-ai";
 
 export enum RTVIMessageType {
   // Outbound
@@ -74,8 +75,6 @@ export type RTVIMessageActionResponse = {
   data: { result: unknown };
 };
 
-export const RTVI_MESSAGE_LABEL = "rtvi-ai";
-
 export class RTVIMessage {
   id: string;
   label: string = RTVI_MESSAGE_LABEL;
@@ -126,14 +125,14 @@ interface QueuedRTVIMessage {
 }
 
 export class MessageDispatcher {
-  private _transport: Transport;
+  private _client: RTVIClient;
   private _gcTime: number;
   private _queue = new Array<QueuedRTVIMessage>();
 
-  constructor(transport: Transport) {
+  constructor(client: RTVIClient) {
     this._gcTime = 10000; // How long to wait before resolving the message
     this._queue = [];
-    this._transport = transport;
+    this._client = client;
   }
 
   public dispatch(
@@ -149,7 +148,11 @@ export class MessageDispatcher {
     });
 
     console.debug("[MessageDispatcher] dispatch", message);
-    this._transport.sendMessage(message);
+
+    // If connected, dispatch message via transport
+    if (this._client.connected) {
+      this._client.sendMessage(message);
+    }
 
     this._gc();
 

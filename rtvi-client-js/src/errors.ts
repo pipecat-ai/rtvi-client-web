@@ -1,10 +1,8 @@
 export class RTVIError extends Error {
   readonly status: number | undefined;
-  readonly error: unknown | undefined;
 
   constructor(message?: string, status?: number | undefined) {
     super(message);
-    this.error = { message };
     this.status = status;
   }
 }
@@ -20,12 +18,11 @@ export class ConnectionTimeoutError extends RTVIError {
 
 export class StartBotError extends RTVIError {
   readonly error: string = "invalid-request-error";
-  constructor(message?: string | undefined, status?: number, error?: string) {
+  constructor(message?: string | undefined, status?: number) {
     super(
       message ?? `Failed to connect / invalid auth bundle from base url`,
       status ?? 500
     );
-    this.error = error ?? this.error;
   }
 }
 

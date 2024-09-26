@@ -40,7 +40,9 @@ async function httpActionGenerator(
   try {
     console.debug("[RTVI] Fetch action", actionUrl, action);
 
-    const headers = params.headers || new Headers();
+    const headers = new Headers({
+      ...Object.fromEntries((params.headers ?? new Headers()).entries()),
+    });
 
     if (!headers.has("Content-Type")) {
       headers.set("Content-Type", "application/json");
@@ -126,9 +128,10 @@ export async function dispatchAction(
 ): Promise<RTVIActionResponse> {
   const promise = new Promise((resolve, reject) => {
     (async () => {
-      if (["connected", "ready"].includes(this.state)) {
+      if (this.connected) {
         return this._messageDispatcher.dispatch(action);
       } else {
+        this._messageDispatcher.dispatch(action);
         const actionUrl = this.constructUrl("disconnectedAction");
         try {
           const result = await httpActionGenerator(
