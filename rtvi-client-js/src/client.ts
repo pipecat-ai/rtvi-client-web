@@ -34,11 +34,11 @@ export type RTVIClientConfigOption = {
   options: ConfigOption[];
 };
 
-export type RTVIURLEndpoints = "connect" | "disconnectedAction";
+export type RTVIURLEndpoints = "connect" | "action";
 
 const defaultEndpoints: Record<RTVIURLEndpoints, string> = {
   connect: "/connect",
-  disconnectedAction: "/completion",
+  action: "/action",
 };
 
 export type RTVIClientParams = {

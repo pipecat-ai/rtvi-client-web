@@ -132,7 +132,7 @@ export async function dispatchAction(
         return this._messageDispatcher.dispatch(action);
       } else {
         this._messageDispatcher.dispatch(action);
-        const actionUrl = this.constructUrl("disconnectedAction");
+        const actionUrl = this.constructUrl("action");
         try {
           const result = await httpActionGenerator(
             actionUrl,
