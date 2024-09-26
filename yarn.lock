@@ -299,9 +299,15 @@
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
 "@daily-co/daily-js@>=0.68.0":
+<<<<<<< HEAD
   version "0.71.2"
   resolved "https://registry.yarnpkg.com/@daily-co/daily-js/-/daily-js-0.71.2.tgz#7dcbacaf35eed06436af0e478b4bbd8546cf9fd1"
   integrity sha512-wBhINS5gJE+EKp1RoWcnpjVn2cW5/3AhVsOroFvvU8DJHjwOgTffFoiVfPmn7Tes33Gx91h0diNOflDkEs1AQw==
+=======
+  version "0.72.0"
+  resolved "https://registry.yarnpkg.com/@daily-co/daily-js/-/daily-js-0.72.0.tgz#a54986506ff2658ebcedcfe26e0d5988b5e61f1b"
+  integrity sha512-kDzrfTmNr7p7YT1TzQ6bomxhrYWjbpD2od0Fx02Ovuam3YdiZgidW5Z4V0U0wHl8aP7buiUvvSC3k9gOW8yB7Q==
+>>>>>>> d73bd2a19cf84548bff468a8a6dec2000acd0d3c
   dependencies:
     "@babel/runtime" "^7.12.5"
     "@sentry/browser" "^7.60.1"
@@ -1710,9 +1716,15 @@
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
 
 "@types/node@*":
+<<<<<<< HEAD
   version "22.7.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-22.7.0.tgz#670aa1874bc836863e5c116f9f2c32416ff27e1f"
   integrity sha512-MOdOibwBs6KW1vfqz2uKMlxq5xAfAZ98SZjO8e3XnAbFnTJtAspqhWk7hrdSAs9/Y14ZWMiy7/MxMUzAOadYEw==
+=======
+  version "22.7.2"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-22.7.2.tgz#80ed66c0a5025ffa037587fd69a816f29b54e4c7"
+  integrity sha512-866lXSrpGpgyHBZUa2m9YNWqHDjjM0aBTJlNtYaGEw4rqY/dcD7deRVTbBBAJelfA7oaGDbNftXF/TL/A6RgoA==
+>>>>>>> d73bd2a19cf84548bff468a8a6dec2000acd0d3c
   dependencies:
     undici-types "~6.19.2"
 
@@ -2072,9 +2084,15 @@ camelcase@^6.2.0:
   integrity sha512-Gmy6FhYlCY7uOElZUSbxo2UCDH8owEk996gkbrpsgGtrJLM3J7jGxl9Ic7Qwwj4ivOE5AWZWRMecDdF7hqGjFA==
 
 caniuse-lite@^1.0.30001663:
+<<<<<<< HEAD
   version "1.0.30001663"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001663.tgz#1529a723505e429fdfd49532e9fc42273ba7fed7"
   integrity sha512-o9C3X27GLKbLeTYZ6HBOLU1tsAcBZsLis28wrVzddShCS16RujjHp9GDHKZqrB3meE0YjhawvMFsGb/igqiPzA==
+=======
+  version "1.0.30001664"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001664.tgz#d588d75c9682d3301956b05a3749652a80677df4"
+  integrity sha512-AmE7k4dXiNKQipgn7a2xg558IRqPN3jMQY/rOsbxDhrd0tyChwbITBfiwtnqz8bi2M5mIWbxAYBvk7W7QBUS2g==
+>>>>>>> d73bd2a19cf84548bff468a8a6dec2000acd0d3c
 
 chalk@^2.4.2:
   version "2.4.2"
@@ -2355,9 +2373,15 @@ ejs@^3.1.10:
     jake "^10.8.5"
 
 electron-to-chromium@^1.5.28:
+<<<<<<< HEAD
   version "1.5.28"
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.28.tgz#aee074e202c6ee8a0030a9c2ef0b3fe9f967d576"
   integrity sha512-VufdJl+rzaKZoYVUijN13QcXVF5dWPZANeFTLNy+OSpHdDL5ynXTF35+60RSBbaQYB1ae723lQXHCrf4pyLsMw==
+=======
+  version "1.5.29"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.5.29.tgz#aa592a3caa95d07cc26a66563accf99fa573a1ee"
+  integrity sha512-PF8n2AlIhCKXQ+gTpiJi0VhcHDb69kYX4MtCiivctc2QD3XuNZ/XIOlbGzt7WAjjEev0TtaH6Cu3arZExm5DOw==
+>>>>>>> d73bd2a19cf84548bff468a8a6dec2000acd0d3c
 
 emittery@^0.13.1:
   version "0.13.1"
