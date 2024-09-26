@@ -206,12 +206,11 @@ export class MessageDispatcher {
           action,
           this._client.params,
           (response: RTVIActionResponse) => {
-            console.log("RESPONSE GELIYOR", response);
             onMessage(response);
           }
         );
+        // On HTTP success (resolve), send `action` message (for callbacks)
       } catch (e) {
-        // On HTTP error, send `error-response` message (for callbacks)
         onMessage(
           new RTVIMessage(
             RTVIMessageType.ERROR_RESPONSE,
@@ -220,9 +219,6 @@ export class MessageDispatcher {
           )
         );
       }
-
-      // On stream error, send `error-response` message (for callbacks)
-      // On HTTP success (resolve), send `action` message (for callbacks)
     }
 
     this._gc();
