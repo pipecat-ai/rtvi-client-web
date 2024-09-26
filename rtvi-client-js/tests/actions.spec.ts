@@ -1,14 +1,8 @@
-import { beforeAll, describe, jest, test } from "@jest/globals";
+import { beforeAll, describe, test } from "@jest/globals";
 
 import { RTVIClient } from "../src";
 import { RTVIActionRequestData } from "../src/actions";
 import { TransportStub } from "./stubs/transport";
-
-jest.mock("nanoid", () => {
-  return {
-    nanoid: () => "123",
-  };
-});
 
 async function isServerReachable(url: string): Promise<boolean> {
   try {

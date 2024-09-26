@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, jest, test } from "@jest/globals";
+import { beforeEach, describe, expect, test } from "@jest/globals";
 
 import {
   BotNotReadyError,
@@ -9,12 +9,6 @@ import {
   RTVIEvent,
 } from "../src/";
 import { TransportStub } from "./stubs/transport";
-
-jest.mock("nanoid", () => {
-  return {
-    nanoid: () => "123",
-  };
-});
 
 const exampleServices = {
   tts: "tts",

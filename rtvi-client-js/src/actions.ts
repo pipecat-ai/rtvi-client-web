@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { v4 as uuidv4 } from "uuid";
 
 import { RTVIClient, RTVIClientParams } from "./client";
 import { RTVIError } from "./errors";
@@ -19,7 +19,7 @@ export class RTVIActionRequest {
   data: RTVIActionRequestData;
 
   constructor(data: RTVIActionRequestData) {
-    this.id = nanoid(8);
+    this.id = uuidv4().slice(0, 8);
     this.data = data;
   }
 }

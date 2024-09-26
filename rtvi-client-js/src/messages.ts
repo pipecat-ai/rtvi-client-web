@@ -1,4 +1,4 @@
-import { nanoid } from "nanoid";
+import { v4 as uuidv4 } from "uuid";
 
 import { RTVIClientConfigOption } from "./client";
 import { Transport } from "./transport";
@@ -85,7 +85,7 @@ export class RTVIMessage {
   constructor(type: string, data: unknown, id?: string) {
     this.type = type;
     this.data = data;
-    this.id = id || nanoid(8);
+    this.id = id || uuidv4().slice(0, 8);
   }
 
   // Outbound message types
