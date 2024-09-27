@@ -859,7 +859,7 @@ export class RTVIClient extends RTVIEventEmitter {
         break;
       default: {
         let match: boolean = false;
-        // Pass message to registered helpered
+        // Pass message to registered helpers
         for (const helper of Object.values(
           this._helpers
         ) as RTVIClientHelper[]) {

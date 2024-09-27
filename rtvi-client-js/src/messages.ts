@@ -15,7 +15,6 @@ export enum RTVIMessageType {
 
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
-  TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
   ERROR = "error", // Bot initialization error
   ERROR_RESPONSE = "error-response", // Error response from the bot in response to an action
   CONFIG = "config", // Bot configuration

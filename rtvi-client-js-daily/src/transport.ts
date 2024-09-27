@@ -58,6 +58,8 @@ export class DailyTransport extends Transport {
     this.attachEventListeners();
 
     this.state = "disconnected";
+
+    console.debug("[RTVI Transport] Initialized");
   }
 
   get state(): TransportState {
@@ -264,7 +266,7 @@ export class DailyTransport extends Transport {
   }
 
   private handleAppMessage(ev: DailyEventObjectAppMessage) {
-    // Bubble any messages with realtime-ai label
+    // Bubble any messages with rtvi-ai label
     if (ev.data.label === "rtvi-ai") {
       this._onMessage({
         id: ev.data.id,
