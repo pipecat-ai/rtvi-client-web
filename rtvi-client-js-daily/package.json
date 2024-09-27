@@ -1,6 +1,6 @@
 {
     "name": "realtime-ai-daily",
-    "version": "0.2.0",
+    "version": "0.2.0-rc.1",
     "license": "BSD-2-Clause",
     "main": "dist/index.js",
     "module": "dist/index.module.js",

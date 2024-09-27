@@ -23,14 +23,19 @@ export enum RTVIMessageType {
   ACTIONS_AVAILABLE = "actions-available", // Actions available on the bot
   ACTION_RESPONSE = "action-response", // Action response from the bot
   METRICS = "metrics", // RTVI reporting metrics
-  USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
-  BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
+  USER_TRANSCRIPTION = "user-transcription", // Local user speech to text transcription
+  BOT_TRANSCRIPTION = "bot-transcription", // Bot full text transcription
   USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
   BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
   BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
-  // Inbound frames
-  TEXT_FRAME = "llm-text", // Text frame from the bot
+  // Service-specific
+  BOT_LLM_TEXT = "bot-llm-text", // Streaming chunk/word, directly after LLM
+  BOT_LLM_STARTED = "bot-llm-started", // Unused
+  BOT_LLM_STOPPED = "bot-llm-stopped", // Unused
+  BOT_TTS_TEXT = "bot-tts-text", // Unused
+  BOT_TTS_STARTED = "bot-tts-started", // Unused
+  BOT_TTS_STOPPED = "bot-tts-stopped", // Unused
 }
 
 // ----- Message Data Types
@@ -62,7 +67,7 @@ export type TranscriptData = {
   user_id: string;
 };
 
-export type TextFrameData = {
+export type BotLLMTextData = {
   text: string;
 };
 

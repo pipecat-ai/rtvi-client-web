@@ -7,6 +7,7 @@ import * as RTVIErrors from "./errors";
 import { RTVIEvent, RTVIEvents } from "./events";
 import { RTVIClientHelper, RTVIClientHelpers } from "./helpers";
 import {
+  BotLLMTextData,
   BotReadyData,
   ConfigData,
   MessageDispatcher,
@@ -16,7 +17,6 @@ import {
   RTVIActionResponse,
   RTVIMessage,
   RTVIMessageType,
-  TextFrameData,
   TranscriptData,
 } from "./messages";
 import { Participant, Tracks, Transport, TransportState } from "./transport";
@@ -165,10 +165,10 @@ export type RTVIEventCallbacks = Partial<{
   onBotStoppedSpeaking: (participant: Participant) => void;
   onUserStartedSpeaking: () => void;
   onUserStoppedSpeaking: () => void;
-  onUserTranscriptData: (data: TranscriptData) => void;
-  onBotTranscriptData: (data: TranscriptData) => void;
 
-  onTextFrame: (text: TextFrameData) => void;
+  onUserTranscript: (data: TranscriptData) => void;
+  onBotTranscript: (data: TranscriptData) => void;
+  onBotText: (text: BotLLMTextData) => void;
 }>;
 
 abstract class RTVIEventEmitter extends (EventEmitter as unknown as new () => TypedEmitter<RTVIEvents>) {}
@@ -301,13 +301,17 @@ export class RTVIClient extends RTVIEventEmitter {
         options?.callbacks?.onLocalAudioLevel?.(level);
         this.emit(RTVIEvent.LocalAudioLevel, level);
       },
-      onUserTranscriptData: (data) => {
-        options?.callbacks?.onUserTranscriptData?.(data);
+      onUserTranscript: (data) => {
+        options?.callbacks?.onUserTranscript?.(data);
         this.emit(RTVIEvent.UserTranscript, data);
       },
-      onBotTranscriptData: (data) => {
-        options?.callbacks?.onBotTranscriptData?.(data);
+      onBotTranscript: (data) => {
+        options?.callbacks?.onBotTranscript?.(data);
         this.emit(RTVIEvent.BotTranscript, data);
+      },
+      onBotText: (text) => {
+        options?.callbacks?.onBotText?.(text);
+        this.emit(RTVIEvent.BotText, text);
       },
     };
 
@@ -842,16 +846,16 @@ export class RTVIClient extends RTVIEventEmitter {
         break;
       case RTVIMessageType.USER_TRANSCRIPTION: {
         const TranscriptData = ev.data as TranscriptData;
-        this._options.callbacks?.onUserTranscriptData?.(TranscriptData);
+        this._options.callbacks?.onUserTranscript?.(TranscriptData);
         break;
       }
       case RTVIMessageType.BOT_TRANSCRIPTION: {
         const TranscriptData = ev.data as TranscriptData;
-        this._options.callbacks?.onBotTranscriptData?.(TranscriptData);
+        this._options.callbacks?.onBotTranscript?.(TranscriptData);
         break;
       }
-      case RTVIMessageType.TEXT_FRAME:
-        this._options.callbacks?.onTextFrame?.(ev.data as TextFrameData);
+      case RTVIMessageType.BOT_LLM_TEXT:
+        this._options.callbacks?.onBotText?.(ev.data as BotLLMTextData);
         break;
       case RTVIMessageType.METRICS:
         this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);

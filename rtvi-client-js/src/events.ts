@@ -1,6 +1,7 @@
 import { RTVIClientConfigOption } from ".";
 import { LLMFunctionCallData } from "./helpers/llm";
 import {
+  BotLLMTextData,
   BotReadyData,
   PipecatMetricsData,
   RTVIMessage,
@@ -42,8 +43,10 @@ export enum RTVIEvent {
   LocalAudioLevel = "localAudioLevel",
 
   Metrics = "metrics",
+
   UserTranscript = "userTranscript",
   BotTranscript = "botTranscript",
+  BotText = "botText",
 
   LLMFunctionCall = "llmFunctionCall",
   LLMFunctionCallStart = "llmFunctionCallStart",
@@ -82,8 +85,10 @@ export type RTVIEvents = Partial<{
   localAudioLevel: (level: number) => void;
 
   metrics: (data: PipecatMetricsData) => void;
+
   userTranscript: (data: TranscriptData) => void;
   botTranscript: (data: TranscriptData) => void;
+  botText: (text: BotLLMTextData) => void;
 
   error: (message: RTVIMessage) => void;
   messageError: (message: RTVIMessage) => void;
