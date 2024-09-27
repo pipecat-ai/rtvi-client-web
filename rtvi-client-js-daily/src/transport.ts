@@ -49,8 +49,8 @@ export class DailyTransport extends Transport {
     }
 
     this._daily = Daily.createCallObject({
-      videoSource: options.enableCam ?? false,
-      audioSource: options.enableMic ?? false,
+      startVideoOff: !(options.enableCam == true),
+      startAudioOff: options.enableMic == false,
       allowMultipleCallInstances: true,
       dailyConfig: {},
     });
