@@ -49,8 +49,8 @@ export class DailyTransport extends Transport {
     }
 
     this._daily = Daily.createCallObject({
-      videoSource: options.enableCam ?? false,
-      audioSource: options.enableMic ?? false,
+      startVideoOff: !(options.enableCam == true),
+      startAudioOff: options.enableMic == false,
       allowMultipleCallInstances: true,
       dailyConfig: {},
     });
@@ -77,6 +77,7 @@ export class DailyTransport extends Transport {
   }
 
   updateCam(camId: string) {
+    console.log("updateCam", camId)
     this._daily
       .setInputDevicesAsync({
         videoDeviceId: camId,
@@ -96,6 +97,7 @@ export class DailyTransport extends Transport {
   }
 
   updateMic(micId: string) {
+    console.log("updateMic", micId)
     this._daily
       .setInputDevicesAsync({
         audioDeviceId: micId,
@@ -288,6 +290,7 @@ export class DailyTransport extends Transport {
   private handleSelectedDevicesUpdated(
     ev: DailyEventObjectSelectedDevicesUpdated
   ) {
+    console.log("handleSelectedDevicesUpdated", ev.devices)
     if (this._selectedCam?.deviceId !== ev.devices.camera) {
       this._selectedCam = ev.devices.camera;
       this._callbacks.onCamUpdated?.(ev.devices.camera as MediaDeviceInfo);
