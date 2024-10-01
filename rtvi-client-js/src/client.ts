@@ -339,6 +339,7 @@ export class RTVIClient extends RTVIEventEmitter {
    * Initialize local media devices
    */
   public async initDevices() {
+    console.debug("[RTVI Client] Initializing devices...");
     await this._transport.initDevices();
   }
 
@@ -384,7 +385,7 @@ export class RTVIClient extends RTVIEventEmitter {
         const customConnectHandler = this._options.customConnectHandler;
         const connectUrl = this.constructUrl("connect");
 
-        console.debug("[RTVI Client] Connecting to baseUrl", connectUrl);
+        console.debug("[RTVI Client] Connecting...", connectUrl);
         console.debug("[RTVI Client] Start params", this.params);
 
         try {
@@ -406,7 +407,7 @@ export class RTVIClient extends RTVIEventEmitter {
               }),
               body: JSON.stringify({
                 services: this._options.services, // @deprecated
-                config: this._options.config, // @deprecated
+                config: this.params.config ?? this._options.config, // @deprecated
                 ...this._options.customBodyParams, // @deprecated
                 ...this.params.requestData,
               }),

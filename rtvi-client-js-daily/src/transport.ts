@@ -183,10 +183,6 @@ export class DailyTransport extends Transport {
       throw new RTVIError("Transport instance not initialized");
     }
 
-    if (this.state === "disconnected") {
-      await this.initDevices();
-    }
-
     if (abortController.signal.aborted) return;
 
     this.state = "connecting";
