@@ -36,6 +36,8 @@ export enum RTVIMessageType {
   BOT_TTS_TEXT = "bot-tts-text", // Unused
   BOT_TTS_STARTED = "bot-tts-started", // Unused
   BOT_TTS_STOPPED = "bot-tts-stopped", // Unused
+  // Storage
+  STORAGE_ITEM_STORED = "storage-item-stored", // Item was stored to storage
 }
 
 // ----- Message Data Types
@@ -69,6 +71,11 @@ export type TranscriptData = {
 
 export type BotLLMTextData = {
   text: string;
+};
+
+export type StorageItemStoredData = {
+  action: string;
+  items: unknown;
 };
 
 // ----- Message Classes

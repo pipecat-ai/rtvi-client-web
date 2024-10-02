@@ -5,6 +5,7 @@ import {
   BotReadyData,
   PipecatMetricsData,
   RTVIMessage,
+  StorageItemStoredData,
   TranscriptData,
 } from "./messages";
 import { Participant, TransportState } from "./transport";
@@ -51,6 +52,8 @@ export enum RTVIEvent {
   LLMFunctionCall = "llmFunctionCall",
   LLMFunctionCallStart = "llmFunctionCallStart",
   LLMJsonCompletion = "llmJsonCompletion",
+
+  StorageItemStored = "storageItemStored",
 }
 
 export type RTVIEvents = Partial<{
@@ -96,6 +99,8 @@ export type RTVIEvents = Partial<{
   llmFunctionCall: (func: LLMFunctionCallData) => void;
   llmFunctionCallStart: (functionName: string) => void;
   llmJsonCompletion: (data: string) => void;
+
+  storageItemStored: (data: StorageItemStoredData) => void;
 }>;
 
 export type RTVIEventHandler<E extends RTVIEvent> = E extends keyof RTVIEvents

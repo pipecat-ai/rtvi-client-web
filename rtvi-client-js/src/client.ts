@@ -17,6 +17,7 @@ import {
   RTVIActionResponse,
   RTVIMessage,
   RTVIMessageType,
+  StorageItemStoredData,
   TranscriptData,
 } from "./messages";
 import { Participant, Tracks, Transport, TransportState } from "./transport";
@@ -169,6 +170,8 @@ export type RTVIEventCallbacks = Partial<{
   onUserTranscript: (data: TranscriptData) => void;
   onBotTranscript: (data: TranscriptData) => void;
   onBotText: (text: BotLLMTextData) => void;
+
+  onStorageItemStored: (data: StorageItemStoredData) => void;
 }>;
 
 abstract class RTVIEventEmitter extends (EventEmitter as unknown as new () => TypedEmitter<RTVIEvents>) {}
@@ -312,6 +315,10 @@ export class RTVIClient extends RTVIEventEmitter {
       onBotText: (text) => {
         options?.callbacks?.onBotText?.(text);
         this.emit(RTVIEvent.BotText, text);
+      },
+      onStorageItemStored: (data) => {
+        options?.callbacks?.onStorageItemStored?.(data);
+        this.emit(RTVIEvent.StorageItemStored, data);
       },
     };
 
@@ -861,6 +868,11 @@ export class RTVIClient extends RTVIEventEmitter {
       case RTVIMessageType.METRICS:
         this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);
         this._options.callbacks?.onMetrics?.(ev.data as PipecatMetricsData);
+        break;
+      case RTVIMessageType.STORAGE_ITEM_STORED:
+        this._options.callbacks?.onStorageItemStored?.(
+          ev.data as StorageItemStoredData
+        );
         break;
       default: {
         let match: boolean = false;
