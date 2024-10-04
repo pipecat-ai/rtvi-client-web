@@ -431,7 +431,7 @@ export class RTVIClient extends RTVIEventEmitter {
                 services: this._options.services, // @deprecated
                 config: this.params.config ?? this._options.config, // @deprecated
                 ...this._options.customBodyParams, // @deprecated
-                ...{ ...this.params.requestData },
+                ...this.params.requestData,
               }),
               signal: this._abortController?.signal,
             }).then((res) => {
