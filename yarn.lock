@@ -298,7 +298,7 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@daily-co/daily-js@>=0.72.0":
+"@daily-co/daily-js@^0.72.0":
   version "0.72.0"
   resolved "https://registry.yarnpkg.com/@daily-co/daily-js/-/daily-js-0.72.0.tgz#a54986506ff2658ebcedcfe26e0d5988b5e61f1b"
   integrity sha512-kDzrfTmNr7p7YT1TzQ6bomxhrYWjbpD2od0Fx02Ovuam3YdiZgidW5Z4V0U0wHl8aP7buiUvvSC3k9gOW8yB7Q==
@@ -3660,6 +3660,11 @@ msgpackr@^1.9.5, msgpackr@^1.9.9:
   optionalDependencies:
     msgpackr-extract "^3.0.2"
 
+nanoid@^5.0.7:
+  version "5.0.7"
+  resolved "https://registry.yarnpkg.com/nanoid/-/nanoid-5.0.7.tgz#6452e8c5a816861fd9d2b898399f7e5fd6944cc6"
+  integrity sha512-oLxFY2gd2IqnjcYyOXD8XGCftpGtZP2AbHbOkthDkvRywH5ayNtPVy9YlOPcHckXzbLTCHpkb7FB+yuxKV13pQ==
+
 natural-compare@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/natural-compare/-/natural-compare-1.4.0.tgz#4abebfeed7541f2c27acfb29bdbbd15c8d5ba4f7"
@@ -3971,6 +3976,17 @@ react@^18.3.1:
   integrity sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==
   dependencies:
     loose-envify "^1.1.0"
+
+realtime-ai@*:
+  version "0.1.9"
+  resolved "https://registry.yarnpkg.com/realtime-ai/-/realtime-ai-0.1.9.tgz#213c64ea707c7cbc0ac3c65aa73ed1e56b0805f0"
+  integrity sha512-jgUHfzjW6qYRayE2sbZ2Yl+wa9iHcztWp/DUQ6RjJnn1uesz3AhL9091cYkJhw49vPVRl4yq9S9mFSW8tg4jzw==
+  dependencies:
+    "@types/events" "^3.0.3"
+    clone-deep "^4.0.1"
+    events "^3.3.0"
+    nanoid "^5.0.7"
+    typed-emitter "^2.1.0"
 
 regenerator-runtime@^0.13.7:
   version "0.13.11"

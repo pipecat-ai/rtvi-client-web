@@ -1,6 +1,6 @@
 {
   "name": "realtime-ai",
-  "version": "0.2.0-rc.3",
+  "version": "0.2.0-rc.4",
   "license": "BSD-2-Clause",
   "main": "dist/index.js",
   "module": "dist/index.module.js",

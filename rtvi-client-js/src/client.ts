@@ -2,6 +2,7 @@ import cloneDeep from "clone-deep";
 import EventEmitter from "events";
 import TypedEmitter from "typed-emitter";
 
+import packageJson from "../package.json";
 import { getIfTransportInState, transportReady } from "./decorators";
 import * as RTVIErrors from "./errors";
 import { RTVIEvent, RTVIEvents } from "./events";
@@ -333,10 +334,16 @@ export class RTVIClient extends RTVIEventEmitter {
     // Instantiate the transport class and bind message handler
     this._initialize();
 
-    console.debug("[RTVI Client] Initialized");
+    // Get package version number
+    console.debug("[RTVI Client] Initialized", this.version);
   }
 
   public constructUrl(endpoint: RTVIURLEndpoints): string {
+    if (!this.params.baseUrl) {
+      throw new RTVIErrors.RTVIError(
+        "Base URL not set. Please set rtviClient.params.baseUrl"
+      );
+    }
     const baseUrl = this.params.baseUrl.replace(/\/+$/, "");
     return baseUrl + (this.params.endpoints?.[endpoint] ?? "");
   }
@@ -392,6 +399,14 @@ export class RTVIClient extends RTVIEventEmitter {
         const customConnectHandler = this._options.customConnectHandler;
         const connectUrl = this.constructUrl("connect");
 
+        this.params = {
+          ...this.params,
+          requestData: {
+            ...this.params.requestData,
+            rtviClientVersion: packageJson.version,
+          },
+        };
+
         console.debug("[RTVI Client] Connecting...", connectUrl);
         console.debug("[RTVI Client] Start params", this.params);
 
@@ -416,7 +431,7 @@ export class RTVIClient extends RTVIEventEmitter {
                 services: this._options.services, // @deprecated
                 config: this.params.config ?? this._options.config, // @deprecated
                 ...this._options.customBodyParams, // @deprecated
-                ...this.params.requestData,
+                ...{ ...this.params.requestData },
               }),
               signal: this._abortController?.signal,
             }).then((res) => {
@@ -502,6 +517,10 @@ export class RTVIClient extends RTVIEventEmitter {
 
   public get state(): TransportState {
     return this._transport.state;
+  }
+
+  public get version(): string {
+    return packageJson.version;
   }
 
   // ------ Device methods
