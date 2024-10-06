@@ -30,6 +30,7 @@ export enum RTVIMessageType {
   BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
   BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
   // Service-specific
+  USER_LLM_TEXT = "user-llm-text", // Aggregated user text which is sent to LLM
   BOT_LLM_TEXT = "bot-llm-text", // Streaming chunk/word, directly after LLM
   BOT_LLM_STARTED = "bot-llm-started", // Unused
   BOT_LLM_STOPPED = "bot-llm-stopped", // Unused
@@ -67,6 +68,10 @@ export type TranscriptData = {
   final: boolean;
   timestamp: string;
   user_id: string;
+};
+
+export type UserLLMTextData = {
+  text: string;
 };
 
 export type BotLLMTextData = {

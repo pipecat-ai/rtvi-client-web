@@ -20,6 +20,7 @@ import {
   RTVIMessageType,
   StorageItemStoredData,
   TranscriptData,
+  UserLLMTextData,
 } from "./messages";
 import { Participant, Tracks, Transport, TransportState } from "./transport";
 
@@ -170,6 +171,7 @@ export type RTVIEventCallbacks = Partial<{
 
   onUserTranscript: (data: TranscriptData) => void;
   onBotTranscript: (data: TranscriptData) => void;
+  onUserText: (text: UserLLMTextData) => void;
   onBotText: (text: BotLLMTextData) => void;
 
   onStorageItemStored: (data: StorageItemStoredData) => void;
@@ -312,6 +314,10 @@ export class RTVIClient extends RTVIEventEmitter {
       onBotTranscript: (data) => {
         options?.callbacks?.onBotTranscript?.(data);
         this.emit(RTVIEvent.BotTranscript, data);
+      },
+      onUserText: (text) => {
+        options?.callbacks?.onUserText?.(text);
+        this.emit(RTVIEvent.UserText, text);
       },
       onBotText: (text) => {
         options?.callbacks?.onBotText?.(text);
@@ -881,6 +887,9 @@ export class RTVIClient extends RTVIEventEmitter {
         this._options.callbacks?.onBotTranscript?.(TranscriptData);
         break;
       }
+      case RTVIMessageType.USER_LLM_TEXT:
+        this._options.callbacks?.onUserText?.(ev.data as UserLLMTextData);
+        break;
       case RTVIMessageType.BOT_LLM_TEXT:
         this._options.callbacks?.onBotText?.(ev.data as BotLLMTextData);
         break;

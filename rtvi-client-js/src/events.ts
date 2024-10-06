@@ -7,6 +7,7 @@ import {
   RTVIMessage,
   StorageItemStoredData,
   TranscriptData,
+  UserLLMTextData
 } from "./messages";
 import { Participant, TransportState } from "./transport";
 
@@ -46,6 +47,7 @@ export enum RTVIEvent {
   Metrics = "metrics",
 
   UserTranscript = "userTranscript",
+  UserText = "userText",
   BotTranscript = "botTranscript",
   BotText = "botText",
 
@@ -90,6 +92,7 @@ export type RTVIEvents = Partial<{
   metrics: (data: PipecatMetricsData) => void;
 
   userTranscript: (data: TranscriptData) => void;
+  userText: (text: UserLLMTextData) => void;
   botTranscript: (data: TranscriptData) => void;
   botText: (text: BotLLMTextData) => void;
 
