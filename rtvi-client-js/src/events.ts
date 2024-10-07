@@ -51,6 +51,9 @@ export enum RTVIEvent {
   BotTranscript = "botTranscript",
   BotText = "botText",
 
+  BotLlmStarted = "botLlmStarted",
+  BotLlmStopped = "botLlmStopped",
+
   LLMFunctionCall = "llmFunctionCall",
   LLMFunctionCallStart = "llmFunctionCallStart",
   LLMJsonCompletion = "llmJsonCompletion",
@@ -95,6 +98,8 @@ export type RTVIEvents = Partial<{
   userText: (text: UserLLMTextData) => void;
   botTranscript: (data: TranscriptData) => void;
   botText: (text: BotLLMTextData) => void;
+  botLlmStarted: (p: Participant) => void;
+  botLlmStopped: (p: Participant) => void;
 
   error: (message: RTVIMessage) => void;
   messageError: (message: RTVIMessage) => void;

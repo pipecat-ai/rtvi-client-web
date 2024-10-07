@@ -173,6 +173,8 @@ export type RTVIEventCallbacks = Partial<{
   onBotTranscript: (data: TranscriptData) => void;
   onUserText: (text: UserLLMTextData) => void;
   onBotText: (text: BotLLMTextData) => void;
+  onBotLlmStarted: (participant: Participant) => void;
+  onBotLlmStopped: (participant: Participant) => void;
 
   onStorageItemStored: (data: StorageItemStoredData) => void;
 }>;
@@ -322,6 +324,14 @@ export class RTVIClient extends RTVIEventEmitter {
       onBotText: (text) => {
         options?.callbacks?.onBotText?.(text);
         this.emit(RTVIEvent.BotText, text);
+      },
+      onBotLlmStarted: (p) => {
+        options?.callbacks?.onBotLlmStarted?.(p);
+        this.emit(RTVIEvent.BotLlmStarted, p);
+      },
+      onBotLlmStopped: (p) => {
+        options?.callbacks?.onBotLlmStopped?.(p);
+        this.emit(RTVIEvent.BotLlmStopped, p);
       },
       onStorageItemStored: (data) => {
         options?.callbacks?.onStorageItemStored?.(data);
@@ -892,6 +902,12 @@ export class RTVIClient extends RTVIEventEmitter {
         break;
       case RTVIMessageType.BOT_LLM_TEXT:
         this._options.callbacks?.onBotText?.(ev.data as BotLLMTextData);
+        break;
+      case RTVIMessageType.BOT_LLM_STARTED:
+        this._options.callbacks?.onBotLlmStarted?.(ev.data as Participant);
+        break;
+      case RTVIMessageType.BOT_LLM_STOPPED:
+        this._options.callbacks?.onBotLlmStopped?.(ev.data as Participant);
         break;
       case RTVIMessageType.METRICS:
         this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);
