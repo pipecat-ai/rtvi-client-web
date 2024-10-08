@@ -7,6 +7,7 @@ import {
   RTVIMessage,
   StorageItemStoredData,
   TranscriptData,
+  TTSTextData,
   UserLLMTextData
 } from "./messages";
 import { Participant, TransportState } from "./transport";
@@ -49,10 +50,14 @@ export enum RTVIEvent {
   UserTranscript = "userTranscript",
   UserText = "userText",
   BotTranscript = "botTranscript",
-  BotText = "botText",
 
+  BotText = "botText",
   BotLlmStarted = "botLlmStarted",
   BotLlmStopped = "botLlmStopped",
+
+  BotTtsText = "botTtsText",
+  BotTtsStarted = "botTtsStarted",
+  BotTtsStopped = "botTtsStopped",
 
   LLMFunctionCall = "llmFunctionCall",
   LLMFunctionCallStart = "llmFunctionCallStart",
@@ -97,9 +102,14 @@ export type RTVIEvents = Partial<{
   userTranscript: (data: TranscriptData) => void;
   userText: (text: UserLLMTextData) => void;
   botTranscript: (data: TranscriptData) => void;
+
   botText: (text: BotLLMTextData) => void;
   botLlmStarted: (p: Participant) => void;
   botLlmStopped: (p: Participant) => void;
+
+  botTtsText: (text: TTSTextData) => void;
+  botTtsStarted: (p: Participant) => void;
+  botTtsStopped: (p: Participant) => void;
 
   error: (message: RTVIMessage) => void;
   messageError: (message: RTVIMessage) => void;

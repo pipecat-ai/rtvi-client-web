@@ -32,11 +32,11 @@ export enum RTVIMessageType {
   // Service-specific
   USER_LLM_TEXT = "user-llm-text", // Aggregated user text which is sent to LLM
   BOT_LLM_TEXT = "bot-llm-text", // Streaming chunk/word, directly after LLM
-  BOT_LLM_STARTED = "bot-llm-started", // Unused
-  BOT_LLM_STOPPED = "bot-llm-stopped", // Unused
-  BOT_TTS_TEXT = "bot-tts-text", // Unused
-  BOT_TTS_STARTED = "bot-tts-started", // Unused
-  BOT_TTS_STOPPED = "bot-tts-stopped", // Unused
+  BOT_LLM_STARTED = "bot-llm-started", // Bot LLM response starts
+  BOT_LLM_STOPPED = "bot-llm-stopped", // Bot LLM response stops
+  BOT_TTS_TEXT = "bot-tts-text", // Bot TTS text output
+  BOT_TTS_STARTED = "bot-tts-started", // Bot TTS response starts
+  BOT_TTS_STOPPED = "bot-tts-stopped", // Bot TTS response stops
   // Storage
   STORAGE_ITEM_STORED = "storage-item-stored", // Item was stored to storage
 }
@@ -75,6 +75,10 @@ export type UserLLMTextData = {
 };
 
 export type BotLLMTextData = {
+  text: string;
+};
+
+export type TTSTextData = {
   text: string;
 };
 

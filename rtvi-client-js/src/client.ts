@@ -20,6 +20,7 @@ import {
   RTVIMessageType,
   StorageItemStoredData,
   TranscriptData,
+  TTSTextData,
   UserLLMTextData,
 } from "./messages";
 import { Participant, Tracks, Transport, TransportState } from "./transport";
@@ -175,6 +176,10 @@ export type RTVIEventCallbacks = Partial<{
   onBotText: (text: BotLLMTextData) => void;
   onBotLlmStarted: (participant: Participant) => void;
   onBotLlmStopped: (participant: Participant) => void;
+
+  onBotTtsText: (text: TTSTextData) => void;
+  onBotTtsStarted: (participant: Participant) => void;
+  onBotTtsStopped: (participant: Participant) => void;
 
   onStorageItemStored: (data: StorageItemStoredData) => void;
 }>;
@@ -332,6 +337,18 @@ export class RTVIClient extends RTVIEventEmitter {
       onBotLlmStopped: (p) => {
         options?.callbacks?.onBotLlmStopped?.(p);
         this.emit(RTVIEvent.BotLlmStopped, p);
+      },
+      onBotTtsText: (text) => {
+        options?.callbacks?.onBotTtsText?.(text);
+        this.emit(RTVIEvent.BotTtsText, text);
+      },
+      onBotTtsStarted: (p) => {
+        options?.callbacks?.onBotTtsStarted?.(p);
+        this.emit(RTVIEvent.BotTtsStarted, p);
+      },
+      onBotTtsStopped: (p) => {
+        options?.callbacks?.onBotTtsStopped?.(p);
+        this.emit(RTVIEvent.BotTtsStopped, p);
       },
       onStorageItemStored: (data) => {
         options?.callbacks?.onStorageItemStored?.(data);
@@ -908,6 +925,15 @@ export class RTVIClient extends RTVIEventEmitter {
         break;
       case RTVIMessageType.BOT_LLM_STOPPED:
         this._options.callbacks?.onBotLlmStopped?.(ev.data as Participant);
+        break;
+      case RTVIMessageType.BOT_TTS_TEXT:
+        this._options.callbacks?.onBotTtsText?.(ev.data as TTSTextData);
+        break;
+      case RTVIMessageType.BOT_TTS_STARTED:
+        this._options.callbacks?.onBotTtsStarted?.(ev.data as Participant);
+        break;
+      case RTVIMessageType.BOT_TTS_STOPPED:
+        this._options.callbacks?.onBotTtsStopped?.(ev.data as Participant);
         break;
       case RTVIMessageType.METRICS:
         this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);
