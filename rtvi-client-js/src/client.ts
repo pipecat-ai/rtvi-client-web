@@ -436,7 +436,7 @@ export class RTVIClient extends RTVIEventEmitter {
           ...this.params,
           requestData: {
             ...this.params.requestData,
-            rtviClientVersion: packageJson.version,
+            rtvi_client_version: this.version,
           },
         };
 
