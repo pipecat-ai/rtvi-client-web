@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
-import { useVoiceClientMediaTrack } from "./useVoiceClientMediaTrack";
+import { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
 
-type ParticipantType = Parameters<typeof useVoiceClientMediaTrack>[1];
+type ParticipantType = Parameters<typeof useRTVIClientMediaTrack>[1];
 
 interface Props {
   backgroundColor?: string;
@@ -23,13 +23,13 @@ export const VoiceVisualizer: React.FC<Props> = React.memo(
   }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
-    const track: MediaStreamTrack | null = useVoiceClientMediaTrack(
+    const track: MediaStreamTrack | null = useRTVIClientMediaTrack(
       "audio",
       participantType
     );
 
     useEffect(() => {
-      if (!track || !canvasRef.current) return;
+      if (!canvasRef.current) return;
 
       const canvasWidth = 5 * barWidth + 4 * barGap;
       const canvasHeight = barMaxHeight;
@@ -52,6 +52,8 @@ export const VoiceVisualizer: React.FC<Props> = React.memo(
 
       const canvasCtx = canvas.getContext("2d")!;
       resizeCanvas();
+
+      if (!track) return;
 
       const audioContext = new AudioContext();
       const source = audioContext.createMediaStreamSource(

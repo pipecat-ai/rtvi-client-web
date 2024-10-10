@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
-import { useVoiceClientMediaTrack } from "./useVoiceClientMediaTrack";
+import { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
 
-export const VoiceClientAudio = () => {
+export const RTVIClientAudio = () => {
   const botAudioRef = useRef<HTMLAudioElement>(null);
-  const botAudioTrack = useVoiceClientMediaTrack("audio", "bot");
+  const botAudioTrack = useRTVIClientMediaTrack("audio", "bot");
 
   useEffect(() => {
     if (!botAudioRef.current || !botAudioTrack) return;
@@ -22,3 +22,4 @@ export const VoiceClientAudio = () => {
     </>
   );
 };
+RTVIClientAudio.displayName = "RTVIClientAudio";

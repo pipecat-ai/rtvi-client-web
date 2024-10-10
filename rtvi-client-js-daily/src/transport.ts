@@ -12,14 +12,13 @@ import Daily, {
 } from "@daily-co/daily-js";
 import {
   Participant,
-  PipecatMetrics,
   Tracks,
   Transport,
   TransportStartError,
   TransportState,
-  VoiceClientOptions,
-  VoiceMessage,
-  VoiceMessageMetrics,
+  RTVIClientOptions,
+  RTVIMessage,
+  RTVIError,
 } from "realtime-ai";
 
 export interface DailyTransportAuthBundle {
@@ -28,30 +27,39 @@ export interface DailyTransportAuthBundle {
 }
 
 export class DailyTransport extends Transport {
-  private _daily: DailyCall;
+  private declare _daily: DailyCall;
   private _botId: string = "";
-
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
 
-  constructor(
-    options: VoiceClientOptions,
-    onMessage: (ev: VoiceMessage) => void
-  ) {
-    super(options, onMessage);
+  constructor() {
+    super();
+  }
+
+  public initialize(
+    options: RTVIClientOptions,
+    messageHandler: (ev: RTVIMessage) => void
+  ): void {
+    this._callbacks = options.callbacks ?? {};
+    this._onMessage = messageHandler;
 
     const existingInstance = Daily.getCallInstance();
     if (existingInstance) {
       void existingInstance.destroy();
     }
+
     this._daily = Daily.createCallObject({
-      videoSource: options.enableCam ?? false,
-      audioSource: options.enableMic ?? false,
+      startVideoOff: !(options.enableCam == true),
+      startAudioOff: options.enableMic == false,
       allowMultipleCallInstances: true,
       dailyConfig: {},
     });
 
     this.attachEventListeners();
+
+    this.state = "disconnected";
+
+    console.debug("[RTVI Transport] Initialized");
   }
 
   get state(): TransportState {
@@ -141,9 +149,12 @@ export class DailyTransport extends Transport {
   }
 
   async initDevices() {
-    if (this.state !== "idle") return;
+    if (!this._daily) {
+      throw new RTVIError("Transport instance not initialized");
+    }
 
     this.state = "initializing";
+
     const infos = await this._daily.startCamera();
     const { devices } = await this._daily.enumerateDevices();
     const cams = devices.filter((d) => d.kind === "videoinput");
@@ -168,8 +179,8 @@ export class DailyTransport extends Transport {
     authBundle: DailyTransportAuthBundle,
     abortController: AbortController
   ) {
-    if (this.state === "idle") {
-      await this.initDevices();
+    if (!this._daily) {
+      throw new RTVIError("Transport instance not initialized");
     }
 
     if (abortController.signal.aborted) return;
@@ -203,7 +214,8 @@ export class DailyTransport extends Transport {
       (async () => {
         this._daily.on("track-started", (ev) => {
           if (!ev.participant?.local) {
-            this.sendMessage(VoiceMessage.clientReady());
+            this.state = "ready";
+            this.sendMessage(RTVIMessage.clientReady());
             resolve();
           }
         });
@@ -245,22 +257,18 @@ export class DailyTransport extends Transport {
     await this._daily.destroy();
   }
 
-  public sendMessage(message: VoiceMessage) {
+  public sendMessage(message: RTVIMessage) {
     this._daily.sendAppMessage(message, "*");
   }
 
   private handleAppMessage(ev: DailyEventObjectAppMessage) {
-    // Bubble any messages with realtime-ai label
+    // Bubble any messages with rtvi-ai label
     if (ev.data.label === "rtvi-ai") {
       this._onMessage({
         id: ev.data.id,
         type: ev.data.type,
         data: ev.data.data,
-      } as VoiceMessage);
-    } else if (ev.data.type === "pipecat-metrics") {
-      // Bubble up pipecat metrics, which don't have the "rtvi-ai" label
-      const vmm = new VoiceMessageMetrics(ev.data.metrics as PipecatMetrics);
-      this._onMessage(vmm);
+      } as RTVIMessage);
     }
   }
 
@@ -346,7 +354,7 @@ export class DailyTransport extends Transport {
   }
 
   private handleLeftMeeting() {
-    this.state = "disconnected";
+    this.state = "disconnecting";
     this._botId = "";
     this._callbacks.onDisconnected?.();
   }

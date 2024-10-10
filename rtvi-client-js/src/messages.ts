@@ -1,154 +1,185 @@
-import { nanoid } from "nanoid";
+import { v4 as uuidv4 } from "uuid";
 
-import { Transport, VoiceClientConfigOption } from ".";
+import { httpActionGenerator } from "./actions";
+import { RTVIClient, RTVIClientConfigOption } from "./client";
 
-export enum VoiceMessageType {
+export const RTVI_MESSAGE_LABEL = "rtvi-ai";
+
+export enum RTVIMessageType {
   // Outbound
   CLIENT_READY = "client-ready",
   UPDATE_CONFIG = "update-config",
   GET_CONFIG = "get-config",
   DESCRIBE_CONFIG = "describe-config",
-  ACTION = "action",
   DESCRIBE_ACTIONS = "describe-actions",
 
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
-  TRANSCRIPT = "transcript", // STT transcript (both local and remote) flagged with partial, final or sentence
-  CONFIG = "config", // Bot configuration
   ERROR = "error", // Bot initialization error
   ERROR_RESPONSE = "error-response", // Error response from the bot in response to an action
+  CONFIG = "config", // Bot configuration
   CONFIG_AVAILABLE = "config-available", // Configuration options available on the bot
-  CONFIG_UPDATED = "config-updated", // Configuration options have changed successfully
   CONFIG_ERROR = "config-error", // Configuration options have changed failed
   ACTIONS_AVAILABLE = "actions-available", // Actions available on the bot
-  ACTION_RESPONSE = "action-response",
+  ACTION_RESPONSE = "action-response", // Action response from the bot
   METRICS = "metrics", // RTVI reporting metrics
-  USER_TRANSCRIPTION = "user-transcription", // Local user speech to text
-  BOT_TRANSCRIPTION = "tts-text", // Bot speech to text
+  USER_TRANSCRIPTION = "user-transcription", // Local user speech to text transcription
+  BOT_TRANSCRIPTION = "bot-transcription", // Bot full text transcription
   USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
   BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
   BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
+  // Service-specific
+  USER_LLM_TEXT = "user-llm-text", // Aggregated user text which is sent to LLM
+  BOT_LLM_TEXT = "bot-llm-text", // Streaming chunk/word, directly after LLM
+  BOT_LLM_STARTED = "bot-llm-started", // Bot LLM response starts
+  BOT_LLM_STOPPED = "bot-llm-stopped", // Bot LLM response stops
+  BOT_TTS_TEXT = "bot-tts-text", // Bot TTS text output
+  BOT_TTS_STARTED = "bot-tts-started", // Bot TTS response starts
+  BOT_TTS_STOPPED = "bot-tts-stopped", // Bot TTS response stops
+  // Storage
+  STORAGE_ITEM_STORED = "storage-item-stored", // Item was stored to storage
 }
 
+// ----- Message Data Types
+
 export type ConfigData = {
-  config: VoiceClientConfigOption[];
+  config: RTVIClientConfigOption[];
 };
 
 export type BotReadyData = {
-  config: VoiceClientConfigOption[];
+  config: RTVIClientConfigOption[];
   version: string;
 };
 
-export type ActionData = {
-  service: string;
-  action: string;
-  arguments: { name: string; value: unknown }[];
-};
-
-export type PipecatMetricsData = {
+export type PipecatMetricData = {
   processor: string;
   value: number;
 };
 
-export type PipecatMetrics = {
-  processing?: PipecatMetricsData[];
-  ttfb?: PipecatMetricsData[];
-  characters?: PipecatMetricsData[];
+export type PipecatMetricsData = {
+  processing?: PipecatMetricData[];
+  ttfb?: PipecatMetricData[];
+  characters?: PipecatMetricData[];
 };
 
-export type Transcript = {
+export type TranscriptData = {
   text: string;
   final: boolean;
   timestamp: string;
   user_id: string;
 };
 
-export type VoiceMessageActionResponse = {
+export type UserLLMTextData = {
+  text: string;
+};
+
+export type BotLLMTextData = {
+  text: string;
+};
+
+export type TTSTextData = {
+  text: string;
+};
+
+export type StorageItemStoredData = {
+  action: string;
+  items: unknown;
+};
+
+// ----- Message Classes
+
+export type RTVIMessageActionResponse = {
   id: string;
   label: string;
   type: string;
   data: { result: unknown };
 };
 
-export class VoiceMessage {
+export class RTVIMessage {
   id: string;
-  label: string = "rtvi-ai";
+  label: string = RTVI_MESSAGE_LABEL;
   type: string;
   data: unknown;
 
   constructor(type: string, data: unknown, id?: string) {
     this.type = type;
     this.data = data;
-    if (id) {
-      this.id = id;
-    } else {
-      this.id = nanoid(8);
-    }
+    this.id = id || uuidv4().slice(0, 8);
   }
 
   // Outbound message types
-  static clientReady(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.CLIENT_READY, {});
+  static clientReady(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.CLIENT_READY, {});
   }
 
   static updateConfig(
-    config: VoiceClientConfigOption[],
+    config: RTVIClientConfigOption[],
     interrupt: boolean = false
-  ): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.UPDATE_CONFIG, {
+  ): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.UPDATE_CONFIG, {
       config,
       interrupt,
     });
   }
 
-  static describeConfig(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.DESCRIBE_CONFIG, {});
+  static describeConfig(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.DESCRIBE_CONFIG, {});
   }
 
-  static getBotConfig(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.GET_CONFIG, {});
+  static getBotConfig(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.GET_CONFIG, {});
   }
 
-  static describeActions(): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.DESCRIBE_ACTIONS, {});
-  }
-
-  // Actions (generic)
-  static action(data: ActionData): VoiceMessage {
-    return new VoiceMessage(VoiceMessageType.ACTION, data);
+  static describeActions(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.DESCRIBE_ACTIONS, {});
   }
 }
 
-export class VoiceMessageMetrics extends VoiceMessage {
-  constructor(data: PipecatMetrics) {
-    super(VoiceMessageType.METRICS, data, "0");
+// ----- Action Types
+
+export const RTVI_ACTION_TYPE = "action";
+
+export type RTVIActionRequestData = {
+  service: string;
+  action: string;
+  arguments?: { name: string; value: unknown }[];
+};
+
+export class RTVIActionRequest extends RTVIMessage {
+  constructor(data: RTVIActionRequestData) {
+    super(RTVI_ACTION_TYPE, data);
   }
 }
+
+export type RTVIActionResponse = {
+  id: string;
+  label: string;
+  type: string;
+  data: { result: unknown };
+};
 
 // ----- Message Dispatcher
 
-interface QueuedVoiceMessage {
-  message: VoiceMessage;
+interface QueuedRTVIMessage {
+  message: RTVIMessage;
   timestamp: number;
   resolve: (value: unknown) => void;
   reject: (reason?: unknown) => void;
 }
 
 export class MessageDispatcher {
-  private _transport: Transport;
+  private _client: RTVIClient;
   private _gcTime: number;
-  private _queue = new Array<QueuedVoiceMessage>();
+  private _queue = new Array<QueuedRTVIMessage>();
 
-  constructor(transport: Transport) {
+  constructor(client: RTVIClient) {
     this._gcTime = 10000; // How long to wait before resolving the message
     this._queue = [];
-    this._transport = transport;
+    this._client = client;
   }
 
-  public dispatch(
-    message: VoiceMessage
-  ): Promise<VoiceMessage | VoiceMessageActionResponse> {
+  public dispatch(message: RTVIMessage): Promise<RTVIMessage> {
     const promise = new Promise((resolve, reject) => {
       this._queue.push({
         message,
@@ -159,17 +190,66 @@ export class MessageDispatcher {
     });
 
     console.debug("[MessageDispatcher] dispatch", message);
-    this._transport.sendMessage(message);
+
+    this._client.sendMessage(message);
 
     this._gc();
 
-    return promise as Promise<VoiceMessage | VoiceMessageActionResponse>;
+    return promise as Promise<RTVIMessage | RTVIMessageActionResponse>;
+  }
+
+  public async dispatchAction(
+    action: RTVIActionRequest,
+    onMessage: (message: RTVIMessage) => void
+  ): Promise<RTVIMessageActionResponse> {
+    const promise = new Promise((resolve, reject) => {
+      this._queue.push({
+        message: action,
+        timestamp: Date.now(),
+        resolve,
+        reject,
+      });
+    });
+
+    console.debug("[MessageDispatcher] action", action);
+
+    if (this._client.connected) {
+      // Send message to transport when connected
+      this._client.sendMessage(action);
+    } else {
+      const actionUrl = this._client.constructUrl("action");
+
+      try {
+        // Dispatch action via HTTP when disconnected
+        await httpActionGenerator(
+          actionUrl,
+          action,
+          this._client.params,
+          (response: RTVIActionResponse) => {
+            onMessage(response);
+          }
+        );
+        // On HTTP success (resolve), send `action` message (for callbacks)
+      } catch (e) {
+        onMessage(
+          new RTVIMessage(
+            RTVIMessageType.ERROR_RESPONSE,
+            `Action endpoint '${actionUrl}' returned an error response`,
+            action.id
+          )
+        );
+      }
+    }
+
+    this._gc();
+
+    return promise as Promise<RTVIMessageActionResponse>;
   }
 
   private _resolveReject(
-    message: VoiceMessage,
+    message: RTVIMessage,
     resolve: boolean = true
-  ): VoiceMessage {
+  ): RTVIMessage {
     const queuedMessage = this._queue.find(
       (msg) => msg.message.id === message.id
     );
@@ -178,13 +258,13 @@ export class MessageDispatcher {
       if (resolve) {
         console.debug("[MessageDispatcher] Resolve", message);
         queuedMessage.resolve(
-          message.type === VoiceMessageType.ACTION_RESPONSE
-            ? (message as VoiceMessageActionResponse)
-            : (message as VoiceMessage)
+          message.type === RTVIMessageType.ACTION_RESPONSE
+            ? (message as RTVIMessageActionResponse)
+            : (message as RTVIMessage)
         );
       } else {
         console.debug("[MessageDispatcher] Reject", message);
-        queuedMessage.reject(message as VoiceMessage);
+        queuedMessage.reject(message as RTVIMessage);
       }
       // Remove message from queue
       this._queue = this._queue.filter((msg) => msg.message.id !== message.id);
@@ -194,11 +274,11 @@ export class MessageDispatcher {
     return message;
   }
 
-  public resolve(message: VoiceMessage): VoiceMessage {
+  public resolve(message: RTVIMessage): RTVIMessage {
     return this._resolveReject(message, true);
   }
 
-  public reject(message: VoiceMessage): VoiceMessage {
+  public reject(message: RTVIMessage): RTVIMessage {
     return this._resolveReject(message, false);
   }
 
@@ -209,3 +289,18 @@ export class MessageDispatcher {
     console.debug("[MessageDispatcher] GC", this._queue);
   }
 }
+
+// ----- Deprecated
+
+/**
+ * @deprecated Use RTVIMessageActionResponse instead.
+ */
+export type VoiceMessageActionResponse = RTVIMessageActionResponse;
+/**
+ * @deprecated Use RTVIMessageType instead.
+ */
+export type VoiceMessageType = RTVIMessageType;
+/**
+ * @deprecated Use RTVIMessage instead.
+ */
+export class VoiceMessage extends RTVIMessage {}

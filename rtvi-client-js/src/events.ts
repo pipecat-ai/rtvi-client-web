@@ -1,14 +1,18 @@
+import { RTVIClientConfigOption } from ".";
+import { LLMFunctionCallData } from "./helpers/llm";
 import {
+  BotLLMTextData,
   BotReadyData,
-  LLMFunctionCallData,
-  PipecatMetrics,
-  Transcript,
-  VoiceClientConfigOption,
-  VoiceMessage,
-} from ".";
+  PipecatMetricsData,
+  RTVIMessage,
+  StorageItemStoredData,
+  TranscriptData,
+  TTSTextData,
+  UserLLMTextData
+} from "./messages";
 import { Participant, TransportState } from "./transport";
 
-export enum VoiceEvent {
+export enum RTVIEvent {
   MessageError = "messageError",
   Error = "error",
 
@@ -16,7 +20,7 @@ export enum VoiceEvent {
   Disconnected = "disconnected",
   TransportStateChanged = "transportStateChanged",
 
-  ConfigUpdated = "configUpdated",
+  Config = "config",
   ConfigDescribe = "configDescribe",
   ActionsAvailable = "actionsAvailable",
 
@@ -42,20 +46,33 @@ export enum VoiceEvent {
   LocalAudioLevel = "localAudioLevel",
 
   Metrics = "metrics",
+
   UserTranscript = "userTranscript",
+  UserText = "userText",
   BotTranscript = "botTranscript",
+
+  BotText = "botText",
+  BotLlmStarted = "botLlmStarted",
+  BotLlmStopped = "botLlmStopped",
+
+  BotTtsText = "botTtsText",
+  BotTtsStarted = "botTtsStarted",
+  BotTtsStopped = "botTtsStopped",
 
   LLMFunctionCall = "llmFunctionCall",
   LLMFunctionCallStart = "llmFunctionCallStart",
   LLMJsonCompletion = "llmJsonCompletion",
+
+  StorageItemStored = "storageItemStored",
 }
 
-export type VoiceEvents = Partial<{
+export type RTVIEvents = Partial<{
   connected: () => void;
   disconnected: () => void;
   transportStateChanged: (state: TransportState) => void;
 
-  configUpdated: (config: VoiceClientConfigOption[]) => void;
+  config: (config: RTVIClientConfigOption[]) => void;
+  configUpdated: (config: RTVIClientConfigOption[]) => void;
   configDescribe: (configDescription: unknown) => void;
   actionsAvailable: (actions: unknown) => void;
 
@@ -80,17 +97,39 @@ export type VoiceEvents = Partial<{
   userStoppedSpeaking: () => void;
   localAudioLevel: (level: number) => void;
 
-  metrics: (data: PipecatMetrics) => void;
-  userTranscript: (data: Transcript) => void;
-  botTranscript: (text: string) => void;
+  metrics: (data: PipecatMetricsData) => void;
 
-  error: (message: VoiceMessage) => void;
-  messageError: (message: VoiceMessage) => void;
+  userTranscript: (data: TranscriptData) => void;
+  userText: (text: UserLLMTextData) => void;
+  botTranscript: (data: TranscriptData) => void;
+
+  botText: (text: BotLLMTextData) => void;
+  botLlmStarted: (p: Participant) => void;
+  botLlmStopped: (p: Participant) => void;
+
+  botTtsText: (text: TTSTextData) => void;
+  botTtsStarted: (p: Participant) => void;
+  botTtsStopped: (p: Participant) => void;
+
+  error: (message: RTVIMessage) => void;
+  messageError: (message: RTVIMessage) => void;
 
   llmFunctionCall: (func: LLMFunctionCallData) => void;
   llmFunctionCallStart: (functionName: string) => void;
   llmJsonCompletion: (data: string) => void;
+
+  storageItemStored: (data: StorageItemStoredData) => void;
 }>;
 
-export type VoiceEventHandler<E extends VoiceEvent> =
-  E extends keyof VoiceEvents ? VoiceEvents[E] : never;
+export type RTVIEventHandler<E extends RTVIEvent> = E extends keyof RTVIEvents
+  ? RTVIEvents[E]
+  : never;
+
+/**
+ * @deprecated Use RTVIEventHandler instead.
+ */
+export type VoiceEventHandler = RTVIEventHandler<RTVIEvent>;
+/**
+ * @deprecated Use RTVIEvents instead.
+ */
+export type VoiceEvents = RTVIEvents;

@@ -1,12 +1,11 @@
+import * as RTVIErrors from "./../errors";
+import { RTVIEvent } from "./../events";
 import {
-  ActionData,
-  VoiceClientConfigOption,
-  VoiceEvent,
-  VoiceMessage,
-  VoiceMessageActionResponse,
-} from "..";
-import * as VoiceErrors from "./../errors";
-import { VoiceClientHelper, VoiceClientHelperOptions } from ".";
+  RTVIActionRequestData,
+  RTVIActionResponse,
+  RTVIMessage,
+} from "./../messages";
+import { RTVIClientHelper, RTVIClientHelperOptions } from ".";
 
 // --- Types
 
@@ -19,13 +18,13 @@ export type LLMFunctionCallData = {
 
 export type LLMContextMessage = {
   role: string;
-  content: string;
+  content: unknown;
 };
 
-export type LLMContext = {
+export type LLMContext = Partial<{
   messages?: LLMContextMessage[];
   tools?: [];
-};
+}>;
 
 export type FunctionCallParams = {
   functionName: string;
@@ -51,11 +50,11 @@ export type LLMHelperCallbacks = Partial<{
 }>;
 
 // --- Interface and class
-export interface LLMHelperOptions extends VoiceClientHelperOptions {
+export interface LLMHelperOptions extends RTVIClientHelperOptions {
   callbacks?: LLMHelperCallbacks;
 }
 
-export class LLMHelper extends VoiceClientHelper {
+export class LLMHelper extends RTVIClientHelper {
   protected declare _options: LLMHelperOptions;
   private _functionCallCallback: FunctionCallCallback | null;
 
@@ -69,41 +68,23 @@ export class LLMHelper extends VoiceClientHelper {
     return Object.values(LLMMessageType) as string[];
   }
 
-  /**
-   * LLM context messages key
-   * If the transport is in the ready state, the key is "messages"
-   * Otherwise, the key is "initial_messages"
-   * @returns string
-   */
-  private _getMessagesKey(): string {
-    return this._voiceClient.state === "ready"
-      ? "messages"
-      : "initial_messages";
-  }
-
   // --- Actions
 
   /**
    * Retrieve the bot's current LLM context.
-   * Note: returns `messages` array when the transport is not in the ready state vs. full config
    * @returns Promise<LLMContext>
    */
   public async getContext(): Promise<LLMContext> {
-    if (this._voiceClient.state === "ready") {
-      const actionResponseMsg: VoiceMessageActionResponse =
-        await this._voiceClient.action({
-          service: this._service,
-          action: "get_context",
-        } as ActionData);
-      return actionResponseMsg.data.result as LLMContext;
-    } else {
-      const currentContext: LLMContextMessage[] =
-        this._voiceClient.getServiceOptionValueFromConfig(
-          this._service,
-          this._getMessagesKey()
-        ) as LLMContextMessage[];
-      return { messages: currentContext } as LLMContext;
+    if (this._client.state !== "ready") {
+      throw new RTVIErrors.BotNotReadyError(
+        "getContext called while transport not in ready state"
+      );
     }
+    const actionResponseMsg: RTVIActionResponse = await this._client.action({
+      service: this._service,
+      action: "get_context",
+    } as RTVIActionRequestData);
+    return actionResponseMsg.data.result as LLMContext;
   }
 
   /**
@@ -113,53 +94,33 @@ export class LLMHelper extends VoiceClientHelper {
    * @param interrupt boolean - Whether to interrupt the bot, or wait until it has finished speaking
    * @returns Promise<boolean>
    */
+
   public async setContext(
     context: LLMContext,
     interrupt: boolean = false
   ): Promise<boolean> {
-    const currentContext = this._voiceClient.getServiceOptionsFromConfig(
-      this._service
-    ) as VoiceClientConfigOption;
-
-    const messages_key = this._getMessagesKey();
-
-    currentContext.options = [
-      ...currentContext.options.filter(
-        (option) => option.name !== messages_key
-      ),
-      {
-        name: messages_key,
-        value: context.messages,
-      },
-    ];
-
-    if (this._voiceClient.state === "ready") {
-      const actionResponse: VoiceMessageActionResponse =
-        (await this._voiceClient.action({
-          service: this._service,
-          action: "set_context",
-          arguments: [
-            {
-              name: messages_key,
-              value: context.messages,
-            },
-            {
-              name: "interrupt",
-              value: interrupt,
-            },
-          ],
-        } as ActionData)) as VoiceMessageActionResponse;
-      return !!actionResponse.data.result;
-    } else {
-      const newConfig: VoiceClientConfigOption[] =
-        this._voiceClient.setServiceOptionInConfig(this._service, {
-          name: messages_key,
-          value: context.messages,
-        });
-      this._voiceClient.updateConfig(newConfig);
-
-      return true;
+    if (this._client.state !== "ready") {
+      throw new RTVIErrors.BotNotReadyError(
+        "setContext called while transport not in ready state"
+      );
     }
+
+    const actionResponse: RTVIActionResponse = (await this._client.action({
+      service: this._service,
+      action: "set_context",
+      arguments: [
+        {
+          name: "messages",
+          value: context.messages,
+        },
+        {
+          name: "interrupt",
+          value: interrupt,
+        },
+      ],
+    } as RTVIActionRequestData)) as RTVIActionResponse;
+
+    return !!actionResponse.data.result;
   }
 
   /**
@@ -169,43 +130,32 @@ export class LLMHelper extends VoiceClientHelper {
    * @param runImmediately boolean - wait until pipeline is idle before running
    * @returns boolean
    */
+
   public async appendToMessages(
     context: LLMContextMessage,
     runImmediately: boolean = false
   ): Promise<boolean> {
-    const messages_key = this._getMessagesKey();
-
-    if (this._voiceClient.state === "ready") {
-      const actionResponse = (await this._voiceClient.action({
-        service: this._service,
-        action: "append_to_messages",
-        arguments: [
-          {
-            name: messages_key,
-            value: [context],
-          },
-          {
-            name: "run_immediately",
-            value: runImmediately,
-          },
-        ],
-      } as ActionData)) as VoiceMessageActionResponse;
-      return !!actionResponse.data.result;
-    } else {
-      const currentMessages = this._voiceClient.getServiceOptionValueFromConfig(
-        this._service,
-        messages_key
-      ) as LLMContextMessage[];
-
-      const newConfig: VoiceClientConfigOption[] =
-        this._voiceClient.setServiceOptionInConfig(this._service, {
-          name: messages_key,
-          value: [...currentMessages, context],
-        });
-      this._voiceClient.updateConfig(newConfig);
-
-      return true;
+    if (this._client.state !== "ready") {
+      throw new RTVIErrors.BotNotReadyError(
+        "setContext called while transport not in ready state"
+      );
     }
+
+    const actionResponse = (await this._client.action({
+      service: this._service,
+      action: "append_to_messages",
+      arguments: [
+        {
+          name: "messages",
+          value: [context],
+        },
+        {
+          name: "run_immediately",
+          value: runImmediately,
+        },
+      ],
+    } as RTVIActionRequestData)) as RTVIActionResponse;
+    return !!actionResponse.data.result;
   }
 
   /**
@@ -216,11 +166,11 @@ export class LLMHelper extends VoiceClientHelper {
    * @returns Promise<unknown>
    */
   public async run(interrupt: boolean = false): Promise<unknown> {
-    if (this._voiceClient.state !== "ready") {
+    if (this._client.state !== "ready") {
       return;
     }
 
-    return this._voiceClient.action({
+    return this._client.action({
       service: this._service,
       action: "run",
       arguments: [
@@ -229,7 +179,7 @@ export class LLMHelper extends VoiceClientHelper {
           value: interrupt,
         },
       ],
-    } as ActionData);
+    } as RTVIActionRequestData);
   }
 
   // --- Handlers
@@ -244,19 +194,19 @@ export class LLMHelper extends VoiceClientHelper {
     this._functionCallCallback = callback;
   }
 
-  public handleMessage(ev: VoiceMessage): void {
+  public handleMessage(ev: RTVIMessage): void {
     switch (ev.type) {
       case LLMMessageType.LLM_JSON_COMPLETION:
         this._options.callbacks?.onLLMJsonCompletion?.(ev.data as string);
-        this._voiceClient.emit(VoiceEvent.LLMJsonCompletion, ev.data as string);
+        this._client.emit(RTVIEvent.LLMJsonCompletion, ev.data as string);
         break;
       case LLMMessageType.LLM_FUNCTION_CALL: {
         const d = ev.data as LLMFunctionCallData;
         this._options.callbacks?.onLLMFunctionCall?.(
           ev.data as LLMFunctionCallData
         );
-        this._voiceClient.emit(
-          VoiceEvent.LLMFunctionCall,
+        this._client.emit(
+          RTVIEvent.LLMFunctionCall,
           ev.data as LLMFunctionCallData
         );
         if (this._functionCallCallback) {
@@ -264,10 +214,10 @@ export class LLMHelper extends VoiceClientHelper {
             functionName: d.function_name,
             arguments: d.args,
           };
-          if (this._voiceClient.state === "ready") {
+          if (this._client.state === "ready") {
             this._functionCallCallback(fn).then((result) => {
-              this._voiceClient.sendMessage(
-                new VoiceMessage(LLMMessageType.LLM_FUNCTION_CALL_RESULT, {
+              this._client.sendMessage(
+                new RTVIMessage(LLMMessageType.LLM_FUNCTION_CALL_RESULT, {
                   function_name: d.function_name,
                   tool_call_id: d.tool_call_id,
                   arguments: d.args,
@@ -276,7 +226,7 @@ export class LLMHelper extends VoiceClientHelper {
               );
             });
           } else {
-            throw new VoiceErrors.BotNotReadyError(
+            throw new RTVIErrors.BotNotReadyError(
               "Attempted to send a function call result from bot while transport not in ready state"
             );
           }
@@ -288,10 +238,7 @@ export class LLMHelper extends VoiceClientHelper {
         this._options.callbacks?.onLLMFunctionCallStart?.(
           e.function_name as string
         );
-        this._voiceClient.emit(
-          VoiceEvent.LLMFunctionCallStart,
-          e.function_name
-        );
+        this._client.emit(RTVIEvent.LLMFunctionCallStart, e.function_name);
         break;
       }
     }

@@ -5,6 +5,78 @@ All notable changes to **RTVI Client Web** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2024-09-13
+
+RTVI 0.2.0 removes client-side configuration, ensuring that state management is handled exclusively by the bot or the developer’s application logic. Clients no longer maintain an internal config array that can be modified outside of a ready state. Developers who require stateful configuration before a session starts should implement it independently.
+
+This change reinforces a key design principle of the RTVI standard: the bot should always be the single source of truth for configuration, and RTVI clients should remain stateless.
+
+Additionally, this release expands action capabilities, enabling disconnected action dispatch, and renames key classes and types from` VoiceClientX` to `RTVIClientX`. Where possible, we have left deprecated aliases to maintain backward compatibility.
+
+### Added
+
+- `params` client constructor option, a partial object that will be sent as JSON stringified body params at `connect()` to your hosted endpoint. If you want to declare initial configuration in your client, or specify start services on the client, you can declare them here.
+    - baseUrl: string;
+    - headers?: Headers;
+    - endpoints?: connect | action;
+    - requestData?: object;
+    - config?: RTVIClientConfigOption[];
+    - Any additional request params for all fetch requests, e.g. `[key: string]: unknown;`
+- `endpoints` (as part of `params`) declares two default endpoints that are appended to your `baseUrl`. `connect/` (start a realtime bot session) and `/action` (for disconnect actions).
+- `onConfig` and `RTVIEvent.Config` callback & event added, triggered by `getConfig` voice message.
+- `@transportReady` decorator added to methods that should only be called at runtime. Note: decorator support required several Parcel configuration changes and additional dev dependencies.
+- `@getIfTransportInState` getter decorator added to getter methods that should only be called in a specified transport state.
+- `rtvi_client_version` is now sent as a body parameter to the `connect` fetch request, enabling bot <> client compatibility checks.
+- `action()` will now function when in a disconnected state. When not connected, this method expects a HTTP streamed response from the `action` endpoint declared in your params.
+- New callbacks and events:
+    - `onBotTtsText` Bot TTS text output
+    - `onBotTtsStarted` Bot TTS response starts
+    - `onBotTtsStopped` Bot TTS response stops
+    - `onBotText` Streaming chunk/word, directly after LLM
+    - `onBotLlmStarted` Bot LLM response starts
+    - `onBotLlmStopped` Bot LLM response stops
+    - `onUserText` Aggregated user text which is sent to LLM
+    - `onStorageItemStored` Item was stored to storage
+
+### Changed
+
+- `start()` has been renamed to `connect()`.
+- Client no longer expects a `services` map as a constructor param (note: remains in place but flagged as deprecated.) If you want to pass a services map to your endpoint, please use `params`.
+- `customHeaders` has been renamed to `headers`.
+- Config getter and setter methods (`getConfig` and `updateConfig`) are only supported at runtime. 
+- `updateConfig` promise is typed to `Promise<VoiceMessage>` (previously `unknown` to support offline updates.)
+- `getConfig` promise is typed to `Promise<VoiceClientOptions[]>` (previously `unknown` to support offline updates.)
+- `services` getter and setter methods have been deprecated.
+- `getServiceOptionsFromConfig`, `getServiceOptionValueFromConfig`, `setConfigOptions` and `setServiceOptionInConfig` are now async to support `getConfig` at runtime and accept an optional `config` param for working with local config arrays.
+- `registerHelper` no longer checks for a registered service and instead relies on string matching.
+- LLM Helper `getContext()` now accepts optional `config` param for working with local configs.
+- `customAuthHandler` updated to receive `startParams` as second dependency.
+- jest tests updated to reflect changes.
+- `VoiceClientOptions` is now `RTVIClientOptions`.
+- `VoiceClientConfigOption` is now `RTVIClientConfigOption`.
+- `VoiceEvent` is now `RTVIEvent`.
+
+### Fixed
+
+- `RTVIMessageType.CONFIG` message now correctly calls `onConfig` and `RTIEvents.Config`.
+
+### Deprecated 
+
+- `getBotConfig` has been renamed to `getConfig` to match the bot action name / for consistency.
+- voiceClient.config getter is deprecated.
+- `config` and `services` constructor params should now be set inside of `params` and are optional. 
+- `customBodyParams` and `customHeaders` have been marked as deprecated. Use `params` instead.
+
+### Removed
+
+- `RTVIClient.partialToConfig` removed (unused)
+- `nanoid` dependency removed.
+
+
+## [0.1.10] - 2024-09-06
+
+- LLMContextMessage content not types to `unknown` to support broader LLM use-cases.
+
 ## [0.1.9] - 2024-09-04
 
 ### Changed
