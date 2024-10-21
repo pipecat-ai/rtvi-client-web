@@ -36,7 +36,7 @@ For example, if you were looking to use WebRTC as a transport layer, you may use
 
 ```ts
 import { RTVIClient } from "realtime-ai";
-import { DailyTransport } from "realtime-ai-daily";
+import { DailyTransport } from "@daily-co/realtime-ai-daily";
 
 const dailyTransport = new DailyTransport();
 const rtviClient = new RTVIClient({
@@ -54,9 +54,9 @@ All transport packages (such as `DailyTransport`) extend from the Transport base
 
 ```bash
 # Install latest package from NPM
-npm install realtime-ai realtime-ai-daily
+npm install realtime-ai @daily-co/realtime-ai-daily
 # or 
-yarn add realtime-ai realtime-ai-daily
+yarn add realtime-ai @daily-co/realtime-ai-daily
 ```
 
 ## Quickstart
@@ -71,7 +71,7 @@ Creating and starting a session with RTVI Web (using Daily as transport):
 
 ```typescript
 import { RTVIEvent, RTVIMessage, RTVIClient } from "realtime-ai";
-import { DailyTransport } from "realtime-ai-daily";
+import { DailyTransport } from "@daily-co/realtime-ai-daily";
 
 const dailyTransport = new DailyTransport();
 

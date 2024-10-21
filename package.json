@@ -1,11 +1,10 @@
 {
   "private": true,
   "name": "rtvi-client-web",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "workspaces": [
     "rtvi-sandbox",
     "rtvi-client-js",
-    "rtvi-client-js-daily",
     "rtvi-client-react"
   ],
   "devDependencies": {
