@@ -117,7 +117,8 @@ export interface RTVIClientOptions {
 
   /**
    * Service key value pairs (e.g. {llm: "openai"} )
-   * @deprecated Use params.services instead
+   * @deprecated Set on the server-side or pass services as part of
+   * params.requestData
    */
   services?: VoiceClientServices;
 
@@ -129,13 +130,13 @@ export interface RTVIClientOptions {
 
   /**
    * Custom HTTP headers to be send with the POST request to baseUrl
-   * @deprecated Use startHeaders instead
+   * @deprecated Use headers instead
    */
   customHeaders?: { [key: string]: string };
 
   /**
    * Custom request parameters to send with the POST request to baseUrl
-   * @deprecated Use params instead
+   * @deprecated Use params.requestData instead
    */
   customBodyParams?: object;
 }
