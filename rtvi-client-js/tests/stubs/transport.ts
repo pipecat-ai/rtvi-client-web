@@ -80,6 +80,9 @@ export class TransportStub extends Transport {
   public getAllCams(): Promise<MediaDeviceInfo[]> {
     return Promise.resolve([]);
   }
+  public getAllSpeakers(): Promise<MediaDeviceInfo[]> {
+    return Promise.resolve([]);
+  }
 
   public updateMic(micId: string): void {
     console.log(micId);
@@ -89,11 +92,18 @@ export class TransportStub extends Transport {
     console.log(camId);
     return;
   }
+  public updateSpeaker(speakerId: string): void {
+    console.log(speakerId);
+    return;
+  }
 
   public get selectedMic(): MediaDeviceInfo | Record<string, never> {
     return {};
   }
   public get selectedCam(): MediaDeviceInfo | Record<string, never> {
+    return {};
+  }
+  public get selectedSpeaker(): MediaDeviceInfo | Record<string, never> {
     return {};
   }
 
