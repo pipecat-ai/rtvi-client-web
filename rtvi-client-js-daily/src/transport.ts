@@ -31,6 +31,7 @@ export class DailyTransport extends Transport {
   private _botId: string = "";
   private _selectedCam: MediaDeviceInfo | Record<string, never> = {};
   private _selectedMic: MediaDeviceInfo | Record<string, never> = {};
+  private _selectedSpeaker: MediaDeviceInfo | Record<string, never> = {};
 
   constructor() {
     super();
@@ -109,6 +110,23 @@ export class DailyTransport extends Transport {
 
   get selectedMic() {
     return this._selectedMic;
+  }
+
+  async getAllSpeakers() {
+    const { devices } = await this._daily.enumerateDevices();
+    return devices.filter((d) => d.kind === "audiooutput");
+  }
+
+  updateSpeaker(speakerId: string) {
+    this._daily
+      .setOutputDeviceAsync({ outputDeviceId: speakerId })
+      .then((infos) => {
+        this._selectedSpeaker = infos.speaker;
+      });
+  }
+
+  get selectedSpeaker() {
+    return this._selectedSpeaker;
   }
 
   enableMic(enable: boolean) {
