@@ -9,16 +9,20 @@ type OptionalMediaDeviceInfo = MediaDeviceInfo | Record<string, never>;
 
 const availableMicsAtom = atom<MediaDeviceInfo[]>([]);
 const availableCamsAtom = atom<MediaDeviceInfo[]>([]);
+const availableSpeakersAtom = atom<MediaDeviceInfo[]>([]);
 const selectedMicAtom = atom<OptionalMediaDeviceInfo>({});
 const selectedCamAtom = atom<OptionalMediaDeviceInfo>({});
+const selectedSpeakerAtom = atom<OptionalMediaDeviceInfo>({});
 
 export const useRTVIClientMediaDevices = () => {
   const client = useRTVIClient();
 
   const availableCams = useAtomValue(availableCamsAtom);
   const availableMics = useAtomValue(availableMicsAtom);
+  const availableSpeakers = useAtomValue(availableSpeakersAtom);
   const selectedCam = useAtomValue(selectedCamAtom);
   const selectedMic = useAtomValue(selectedMicAtom);
+  const selectedSpeaker = useAtomValue(selectedSpeakerAtom);
 
   useRTVIClientEvent(
     RTVIEvent.AvailableCamsUpdated,
@@ -33,6 +37,14 @@ export const useRTVIClientMediaDevices = () => {
     useAtomCallback(
       useCallback((_get, set, mics) => {
         set(availableMicsAtom, mics);
+      }, [])
+    )
+  );
+  useRTVIClientEvent(
+    RTVIEvent.AvailableSpeakersUpdated,
+    useAtomCallback(
+      useCallback((_get, set, speakers) => {
+        set(availableSpeakersAtom, speakers);
       }, [])
     )
   );
@@ -52,6 +64,14 @@ export const useRTVIClientMediaDevices = () => {
       }, [])
     )
   );
+  useRTVIClientEvent(
+    RTVIEvent.SpeakerUpdated,
+    useAtomCallback(
+      useCallback((_get, set, speaker) => {
+        set(selectedSpeakerAtom, speaker);
+      }, [])
+    )
+  );
 
   const updateCam = useCallback(
     (id: string) => {
@@ -65,13 +85,22 @@ export const useRTVIClientMediaDevices = () => {
     },
     [client]
   );
+  const updateSpeaker = useCallback(
+    (id: string) => {
+      client?.updateSpeaker(id);
+    },
+    [client]
+  );
 
   return {
     availableCams,
     availableMics,
+    availableSpeakers,
     selectedCam,
     selectedMic,
+    selectedSpeaker,
     updateCam,
     updateMic,
+    updateSpeaker,
   };
 };
