@@ -10,6 +10,7 @@ import { RTVIClientHelper, RTVIClientHelpers } from "./helpers";
 import {
   BotLLMTextData,
   BotReadyData,
+  BotTTSTextData,
   ConfigData,
   MessageDispatcher,
   PipecatMetricsData,
@@ -20,7 +21,6 @@ import {
   RTVIMessageType,
   StorageItemStoredData,
   TranscriptData,
-  TTSTextData,
 } from "./messages";
 import { Participant, Tracks, Transport, TransportState } from "./transport";
 
@@ -171,11 +171,11 @@ export type RTVIEventCallbacks = Partial<{
   onUserStartedSpeaking: () => void;
   onUserStoppedSpeaking: () => void;
   onUserTranscript: (data: TranscriptData) => void;
-  onBotTranscript: (text: BotLLMTextData) => void;
-  onBotLlmText: (text: BotLLMTextData) => void;
+  onBotTranscript: (data: BotLLMTextData) => void;
+  onBotLlmText: (data: BotLLMTextData) => void;
   onBotLlmStarted: () => void;
   onBotLlmStopped: () => void;
-  onBotTtsText: (text: TTSTextData) => void;
+  onBotTtsText: (data: BotTTSTextData) => void;
   onBotTtsStarted: () => void;
   onBotTtsStopped: () => void;
 
@@ -917,7 +917,7 @@ export class RTVIClient extends RTVIEventEmitter {
         this._options.callbacks?.onBotLlmStopped?.();
         break;
       case RTVIMessageType.BOT_TTS_TEXT:
-        this._options.callbacks?.onBotTtsText?.(ev.data as TTSTextData);
+        this._options.callbacks?.onBotTtsText?.(ev.data as BotTTSTextData);
         break;
       case RTVIMessageType.BOT_TTS_STARTED:
         this._options.callbacks?.onBotTtsStarted?.();

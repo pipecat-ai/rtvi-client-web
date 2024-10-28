@@ -3,11 +3,11 @@ import { LLMFunctionCallData } from "./helpers/llm";
 import {
   BotLLMTextData,
   BotReadyData,
+  BotTTSTextData,
   PipecatMetricsData,
   RTVIMessage,
   StorageItemStoredData,
   TranscriptData,
-  TTSTextData,
 } from "./messages";
 import { Participant, TransportState } from "./transport";
 
@@ -98,12 +98,12 @@ export type RTVIEvents = Partial<{
   metrics: (data: PipecatMetricsData) => void;
 
   userTranscript: (data: TranscriptData) => void;
-  botTranscript: (text: BotLLMTextData) => void;
-  botLlmText: (text: BotLLMTextData) => void;
+  botTranscript: (data: BotLLMTextData) => void;
+  botLlmText: (data: BotLLMTextData) => void;
   botLlmStarted: () => void;
   botLlmStopped: () => void;
 
-  botTtsText: (text: TTSTextData) => void;
+  botTtsText: (data: BotTTSTextData) => void;
   botTtsStarted: () => void;
   botTtsStopped: () => void;
 

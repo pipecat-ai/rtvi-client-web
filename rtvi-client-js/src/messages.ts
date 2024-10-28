@@ -31,7 +31,7 @@ export enum RTVIMessageType {
   BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
   // Service-specific
   USER_LLM_TEXT = "user-llm-text", // Aggregated user input text which is sent to LLM
-  BOT_LLM_TEXT = "bot-llm-text", // Streamed token returned by the LLM
+  BOT_LLM_TEXT = "bot-llm-text", // Streamed token returned by the LLM (note: not sent when in connected state, use BOT_TTS_TEXT instead)
   BOT_LLM_STARTED = "bot-llm-started", // Bot LLM inference starts
   BOT_LLM_STOPPED = "bot-llm-stopped", // Bot LLM inference stops
   BOT_TTS_TEXT = "bot-tts-text", // Bot TTS text output (streamed word as it is spoken)
@@ -74,7 +74,7 @@ export type BotLLMTextData = {
   text: string;
 };
 
-export type TTSTextData = {
+export type BotTTSTextData = {
   text: string;
 };
 
