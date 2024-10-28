@@ -45,7 +45,7 @@ export type RTVIClientParams = {
   baseUrl: string;
 } & Partial<{
   headers?: Headers;
-  endpoints: Record<RTVIURLEndpoints, string>;
+  endpoints: Partial<Record<RTVIURLEndpoints, string>>;
   requestData?: object;
   config?: RTVIClientConfigOption[];
 }> & {

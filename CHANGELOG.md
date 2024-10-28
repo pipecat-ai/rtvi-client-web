@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `onBotTranscript` callback correctly accepts a `text:BotLLMTextData` typed parameter (previously `TranscriptData`)
 - `botLlmStarted`, `botLlmStopped`, `botTtsStarted`, `botTtsStopped` pass no parameters. Previously, these callbacks were given a participant object which was unused.
 
+### Fixed
+
+- `endpoints` is redefined as a partial, meaning you no longer receive a linting error when you only want to override a single endpoint.
+
 ## [0.2.0] - 2024-09-13
 
 RTVI 0.2.0 removes client-side configuration, ensuring that state management is handled exclusively by the bot or the developer’s application logic. Clients no longer maintain an internal config array that can be modified outside of a ready state. Developers who require stateful configuration before a session starts should implement it independently.
