@@ -21,7 +21,6 @@ import {
   StorageItemStoredData,
   TranscriptData,
   TTSTextData,
-  UserLLMTextData,
 } from "./messages";
 import { Participant, Tracks, Transport, TransportState } from "./transport";
 
@@ -166,21 +165,19 @@ export type RTVIEventCallbacks = Partial<{
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
+
   onBotStartedSpeaking: (participant: Participant) => void;
   onBotStoppedSpeaking: (participant: Participant) => void;
   onUserStartedSpeaking: () => void;
   onUserStoppedSpeaking: () => void;
-
   onUserTranscript: (data: TranscriptData) => void;
-  onBotTranscript: (data: TranscriptData) => void;
-  onUserText: (text: UserLLMTextData) => void;
-  onBotText: (text: BotLLMTextData) => void;
-  onBotLlmStarted: (participant: Participant) => void;
-  onBotLlmStopped: (participant: Participant) => void;
-
+  onBotTranscript: (text: BotLLMTextData) => void;
+  onBotLlmText: (text: BotLLMTextData) => void;
+  onBotLlmStarted: () => void;
+  onBotLlmStopped: () => void;
   onBotTtsText: (text: TTSTextData) => void;
-  onBotTtsStarted: (participant: Participant) => void;
-  onBotTtsStopped: (participant: Participant) => void;
+  onBotTtsStarted: () => void;
+  onBotTtsStopped: () => void;
 
   onStorageItemStored: (data: StorageItemStoredData) => void;
 }>;
@@ -319,37 +316,33 @@ export class RTVIClient extends RTVIEventEmitter {
         options?.callbacks?.onUserTranscript?.(data);
         this.emit(RTVIEvent.UserTranscript, data);
       },
-      onBotTranscript: (data) => {
-        options?.callbacks?.onBotTranscript?.(data);
-        this.emit(RTVIEvent.BotTranscript, data);
+      onBotTranscript: (text) => {
+        options?.callbacks?.onBotTranscript?.(text);
+        this.emit(RTVIEvent.BotTranscript, text);
       },
-      onUserText: (text) => {
-        options?.callbacks?.onUserText?.(text);
-        this.emit(RTVIEvent.UserText, text);
+      onBotLlmText: (text) => {
+        options?.callbacks?.onBotLlmText?.(text);
+        this.emit(RTVIEvent.BotLlmText, text);
       },
-      onBotText: (text) => {
-        options?.callbacks?.onBotText?.(text);
-        this.emit(RTVIEvent.BotText, text);
+      onBotLlmStarted: () => {
+        options?.callbacks?.onBotLlmStarted?.();
+        this.emit(RTVIEvent.BotLlmStarted);
       },
-      onBotLlmStarted: (p) => {
-        options?.callbacks?.onBotLlmStarted?.(p);
-        this.emit(RTVIEvent.BotLlmStarted, p);
-      },
-      onBotLlmStopped: (p) => {
-        options?.callbacks?.onBotLlmStopped?.(p);
-        this.emit(RTVIEvent.BotLlmStopped, p);
+      onBotLlmStopped: () => {
+        options?.callbacks?.onBotLlmStopped?.();
+        this.emit(RTVIEvent.BotLlmStopped);
       },
       onBotTtsText: (text) => {
         options?.callbacks?.onBotTtsText?.(text);
         this.emit(RTVIEvent.BotTtsText, text);
       },
-      onBotTtsStarted: (p) => {
-        options?.callbacks?.onBotTtsStarted?.(p);
-        this.emit(RTVIEvent.BotTtsStarted, p);
+      onBotTtsStarted: () => {
+        options?.callbacks?.onBotTtsStarted?.();
+        this.emit(RTVIEvent.BotTtsStarted);
       },
-      onBotTtsStopped: (p) => {
-        options?.callbacks?.onBotTtsStopped?.(p);
-        this.emit(RTVIEvent.BotTtsStopped, p);
+      onBotTtsStopped: () => {
+        options?.callbacks?.onBotTtsStopped?.();
+        this.emit(RTVIEvent.BotTtsStopped);
       },
       onStorageItemStored: (data) => {
         options?.callbacks?.onStorageItemStored?.(data);
@@ -648,7 +641,7 @@ export class RTVIClient extends RTVIEventEmitter {
   /**
    * Returns configuration options for specified service key
    * @param serviceKey - Service name to get options for (e.g. "llm")
-   * @param config? - Optional RTVIClientConfigOption[] to update (vs. using remote config)
+   * @param config? - Optional RTVIClientConfigOption[] to query (vs. using remote config)
    * @returns RTVIClientConfigOption | undefined - Configuration options array for the service with specified key or undefined
    */
   public async getServiceOptionsFromConfig(
@@ -788,7 +781,7 @@ export class RTVIClient extends RTVIEventEmitter {
   }
 
   /**
-   * Returns config object with update properties from passed array
+   * Returns config object with updated properties from passed array.
    * @param configOptions - Array of RTVIClientConfigOption[] to update
    * @param config? - Optional RTVIClientConfigOption[] to update (vs. using current config)
    * @returns Promise<RTVIClientConfigOption[]> - Configuration options
@@ -911,30 +904,26 @@ export class RTVIClient extends RTVIEventEmitter {
         break;
       }
       case RTVIMessageType.BOT_TRANSCRIPTION: {
-        const TranscriptData = ev.data as TranscriptData;
-        this._options.callbacks?.onBotTranscript?.(TranscriptData);
+        this._options.callbacks?.onBotTranscript?.(ev.data as BotLLMTextData);
         break;
       }
-      case RTVIMessageType.USER_LLM_TEXT:
-        this._options.callbacks?.onUserText?.(ev.data as UserLLMTextData);
-        break;
       case RTVIMessageType.BOT_LLM_TEXT:
-        this._options.callbacks?.onBotText?.(ev.data as BotLLMTextData);
+        this._options.callbacks?.onBotLlmText?.(ev.data as BotLLMTextData);
         break;
       case RTVIMessageType.BOT_LLM_STARTED:
-        this._options.callbacks?.onBotLlmStarted?.(ev.data as Participant);
+        this._options.callbacks?.onBotLlmStarted?.();
         break;
       case RTVIMessageType.BOT_LLM_STOPPED:
-        this._options.callbacks?.onBotLlmStopped?.(ev.data as Participant);
+        this._options.callbacks?.onBotLlmStopped?.();
         break;
       case RTVIMessageType.BOT_TTS_TEXT:
         this._options.callbacks?.onBotTtsText?.(ev.data as TTSTextData);
         break;
       case RTVIMessageType.BOT_TTS_STARTED:
-        this._options.callbacks?.onBotTtsStarted?.(ev.data as Participant);
+        this._options.callbacks?.onBotTtsStarted?.();
         break;
       case RTVIMessageType.BOT_TTS_STOPPED:
-        this._options.callbacks?.onBotTtsStopped?.(ev.data as Participant);
+        this._options.callbacks?.onBotTtsStopped?.();
         break;
       case RTVIMessageType.METRICS:
         this.emit(RTVIEvent.Metrics, ev.data as PipecatMetricsData);

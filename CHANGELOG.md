@@ -5,6 +5,16 @@ All notable changes to **RTVI Client Web** will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2024-10-28
+
+### Changed
+
+- `onBotText` callback renamed to `onBotLlmText` for consistency.
+- `onUserText` callback and events removed as unused.
+- `onBotLlmText` callback correctly accepts a `text:BotLLMTextData` typed parameter.
+- `onBotTranscript` callback correctly accepts a `text:BotLLMTextData` typed parameter (previously `TranscriptData`)
+- `botLlmStarted`, `botLlmStopped`, `botTtsStarted`, `botTtsStopped` pass no parameters. Previously, these callbacks were given a participant object which was unused.
+
 ## [0.2.0] - 2024-09-13
 
 RTVI 0.2.0 removes client-side configuration, ensuring that state management is handled exclusively by the bot or the developer’s application logic. Clients no longer maintain an internal config array that can be modified outside of a ready state. Developers who require stateful configuration before a session starts should implement it independently.
