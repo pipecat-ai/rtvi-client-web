@@ -87,8 +87,8 @@ export type RTVIEvents = Partial<{
   botReady: (botData: BotReadyData) => void;
   botConnected: (participant: Participant) => void;
   botDisconnected: (participant: Participant) => void;
-  botStartedSpeaking: (participant: Participant) => void;
-  botStoppedSpeaking: (participant: Participant) => void;
+  botStartedSpeaking: () => void;
+  botStoppedSpeaking: () => void;
   remoteAudioLevel: (level: number, p: Participant) => void;
 
   userStartedSpeaking: () => void;

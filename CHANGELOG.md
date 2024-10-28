@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `onUserText` callback and events removed as unused.
 - `onBotLlmText` callback correctly accepts a `text:BotLLMTextData` typed parameter.
 - `onBotTranscript` callback correctly accepts a `text:BotLLMTextData` typed parameter (previously `TranscriptData`)
-- `botLlmStarted`, `botLlmStopped`, `botTtsStarted`, `botTtsStopped` pass no parameters. Previously, these callbacks were given a participant object which was unused.
+- `botLlmStarted`, `botLlmStopped`, `botTtsStarted`, `botTtsStopped`, `onBotStartedSpeaking` and `onBotStoppedSpeaking` pass no parameters. Previously, these callbacks were given a participant object which was unused.
 - `TTSTextData` type renamed to `BotTTSTextData` for consistency.
 
 ### Fixed

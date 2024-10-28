@@ -166,8 +166,8 @@ export type RTVIEventCallbacks = Partial<{
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
 
-  onBotStartedSpeaking: (participant: Participant) => void;
-  onBotStoppedSpeaking: (participant: Participant) => void;
+  onBotStartedSpeaking: () => void;
+  onBotStoppedSpeaking: () => void;
   onUserStartedSpeaking: () => void;
   onUserStoppedSpeaking: () => void;
   onUserTranscript: (data: TranscriptData) => void;
@@ -288,13 +288,13 @@ export class RTVIClient extends RTVIEventEmitter {
         options?.callbacks?.onBotDisconnected?.(p);
         this.emit(RTVIEvent.BotDisconnected, p);
       },
-      onBotStartedSpeaking: (p) => {
-        options?.callbacks?.onBotStartedSpeaking?.(p);
-        this.emit(RTVIEvent.BotStartedSpeaking, p);
+      onBotStartedSpeaking: () => {
+        options?.callbacks?.onBotStartedSpeaking?.();
+        this.emit(RTVIEvent.BotStartedSpeaking);
       },
-      onBotStoppedSpeaking: (p) => {
-        options?.callbacks?.onBotStoppedSpeaking?.(p);
-        this.emit(RTVIEvent.BotStoppedSpeaking, p);
+      onBotStoppedSpeaking: () => {
+        options?.callbacks?.onBotStoppedSpeaking?.();
+        this.emit(RTVIEvent.BotStoppedSpeaking);
       },
       onRemoteAudioLevel: (level, p) => {
         options?.callbacks?.onRemoteAudioLevel?.(level, p);
@@ -893,10 +893,10 @@ export class RTVIClient extends RTVIEventEmitter {
         this._options.callbacks?.onUserStoppedSpeaking?.();
         break;
       case RTVIMessageType.BOT_STARTED_SPEAKING:
-        this._options.callbacks?.onBotStartedSpeaking?.(ev.data as Participant);
+        this._options.callbacks?.onBotStartedSpeaking?.();
         break;
       case RTVIMessageType.BOT_STOPPED_SPEAKING:
-        this._options.callbacks?.onBotStoppedSpeaking?.(ev.data as Participant);
+        this._options.callbacks?.onBotStoppedSpeaking?.();
         break;
       case RTVIMessageType.USER_TRANSCRIPTION: {
         const TranscriptData = ev.data as TranscriptData;
