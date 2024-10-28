@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.1] - 2024-10-28
 
+### Removed
+
+- `realtime-ai-daily` has been moved to [@daily-co/realtime-ai-daily](https://github.com/daily-co/realtime-ai-daily) to align to being a provider agnostic codebase. The last release for the Daily transport package is `0.2.0`, which is still available with `npm install realtime-ai-daily` (https://www.npmjs.com/package/realtime-ai-daily). Please update your project imports to the new package install. 
+
 ### Changed
 
 - `onBotText` callback renamed to `onBotLlmText` for consistency.
