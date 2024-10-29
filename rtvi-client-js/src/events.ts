@@ -62,6 +62,11 @@ export enum RTVIEvent {
   LLMJsonCompletion = "llmJsonCompletion",
 
   StorageItemStored = "storageItemStored",
+
+  /**
+   * @deprecated Use BotLlmText instead
+   */
+  BotText = "botText",
 }
 
 export type RTVIEvents = Partial<{
@@ -99,6 +104,7 @@ export type RTVIEvents = Partial<{
 
   userTranscript: (data: TranscriptData) => void;
   botTranscript: (data: BotLLMTextData) => void;
+
   botLlmText: (data: BotLLMTextData) => void;
   botLlmStarted: () => void;
   botLlmStopped: () => void;
@@ -115,6 +121,11 @@ export type RTVIEvents = Partial<{
   llmJsonCompletion: (data: string) => void;
 
   storageItemStored: (data: StorageItemStoredData) => void;
+
+  /**
+   * @deprecated Use BotLlmText instead
+   */
+  botText: (data: BotLLMTextData) => void;
 }>;
 
 export type RTVIEventHandler<E extends RTVIEvent> = E extends keyof RTVIEvents

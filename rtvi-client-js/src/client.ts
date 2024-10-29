@@ -172,6 +172,7 @@ export type RTVIEventCallbacks = Partial<{
   onUserStoppedSpeaking: () => void;
   onUserTranscript: (data: TranscriptData) => void;
   onBotTranscript: (data: BotLLMTextData) => void;
+
   onBotLlmText: (data: BotLLMTextData) => void;
   onBotLlmStarted: () => void;
   onBotLlmStopped: () => void;
@@ -180,6 +181,9 @@ export type RTVIEventCallbacks = Partial<{
   onBotTtsStopped: () => void;
 
   onStorageItemStored: (data: StorageItemStoredData) => void;
+
+  // @deprecated Use onBotLlmText instead
+  onBotText: (data: BotLLMTextData) => void;
 }>;
 
 abstract class RTVIEventEmitter extends (EventEmitter as unknown as new () => TypedEmitter<RTVIEvents>) {}
@@ -347,6 +351,15 @@ export class RTVIClient extends RTVIEventEmitter {
       onStorageItemStored: (data) => {
         options?.callbacks?.onStorageItemStored?.(data);
         this.emit(RTVIEvent.StorageItemStored, data);
+      },
+
+      /**
+       * @deprecated Use BotLlmText instead
+       */
+      onBotText: (text) => {
+        console.warn("onBotText is deprecated. Use onBotLlmText instead");
+        options?.callbacks?.onBotText?.(text);
+        this.emit(RTVIEvent.BotText, text);
       },
     };
 
@@ -909,6 +922,7 @@ export class RTVIClient extends RTVIEventEmitter {
       }
       case RTVIMessageType.BOT_LLM_TEXT:
         this._options.callbacks?.onBotLlmText?.(ev.data as BotLLMTextData);
+        this._options.callbacks?.onBotText?.(ev.data as BotLLMTextData); // @deprecated
         break;
       case RTVIMessageType.BOT_LLM_STARTED:
         this._options.callbacks?.onBotLlmStarted?.();

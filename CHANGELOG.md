@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `onBotText` callback renamed to `onBotLlmText` for consistency.
+- `onBotText` callback renamed to `onBotLlmText` for consistency. `onBotText` has been marked as deprecated.
 - `onUserText` callback and events removed as unused.
 - `onBotLlmText` callback correctly accepts a `text:BotLLMTextData` typed parameter.
 - `onBotTranscript` callback correctly accepts a `text:BotLLMTextData` typed parameter (previously `TranscriptData`)
