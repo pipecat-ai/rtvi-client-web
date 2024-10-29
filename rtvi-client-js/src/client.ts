@@ -359,7 +359,6 @@ export class RTVIClient extends RTVIEventEmitter {
        * @deprecated Use BotLlmText instead
        */
       onBotText: (text) => {
-        console.warn("onBotText is deprecated. Use onBotLlmText instead");
         options?.callbacks?.onBotText?.(text);
         this.emit(RTVIEvent.BotText, text);
       },
