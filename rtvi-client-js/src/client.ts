@@ -182,7 +182,9 @@ export type RTVIEventCallbacks = Partial<{
 
   onStorageItemStored: (data: StorageItemStoredData) => void;
 
-  // @deprecated Use onBotLlmText instead
+  /**
+   * @deprecated Use onBotLlmText instead
+   */
   onBotText: (data: BotLLMTextData) => void;
 }>;
 
