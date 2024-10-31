@@ -23,22 +23,22 @@ export enum RTVIMessageType {
   ACTIONS_AVAILABLE = "actions-available", // Actions available on the bot
   ACTION_RESPONSE = "action-response", // Action response from the bot
   METRICS = "metrics", // RTVI reporting metrics
-  USER_TRANSCRIPTION = "user-transcription", // Local user speech to text transcription
-  BOT_TRANSCRIPTION = "bot-transcription", // Bot full text transcription
+  USER_TRANSCRIPTION = "user-transcription", // Local user speech to text transcription (partials and finals)
+  BOT_TRANSCRIPTION = "bot-transcription", // Bot full text transcription (sentence aggregated)
   USER_STARTED_SPEAKING = "user-started-speaking", // User started speaking
   USER_STOPPED_SPEAKING = "user-stopped-speaking", // User stopped speaking
   BOT_STARTED_SPEAKING = "bot-started-speaking", // Bot started speaking
   BOT_STOPPED_SPEAKING = "bot-stopped-speaking", // Bot stopped speaking
   // Service-specific
-  USER_LLM_TEXT = "user-llm-text", // Aggregated user text which is sent to LLM
-  BOT_LLM_TEXT = "bot-llm-text", // Streaming chunk/word, directly after LLM
-  BOT_LLM_STARTED = "bot-llm-started", // Bot LLM response starts
-  BOT_LLM_STOPPED = "bot-llm-stopped", // Bot LLM response stops
-  BOT_TTS_TEXT = "bot-tts-text", // Bot TTS text output
+  USER_LLM_TEXT = "user-llm-text", // Aggregated user input text which is sent to LLM
+  BOT_LLM_TEXT = "bot-llm-text", // Streamed token returned by the LLM
+  BOT_LLM_STARTED = "bot-llm-started", // Bot LLM inference starts
+  BOT_LLM_STOPPED = "bot-llm-stopped", // Bot LLM inference stops
+  BOT_TTS_TEXT = "bot-tts-text", // Bot TTS text output (streamed word as it is spoken)
   BOT_TTS_STARTED = "bot-tts-started", // Bot TTS response starts
   BOT_TTS_STOPPED = "bot-tts-stopped", // Bot TTS response stops
   // Storage
-  STORAGE_ITEM_STORED = "storage-item-stored", // Item was stored to storage
+  STORAGE_ITEM_STORED = "storage-item-stored", // Item was stored to configured storage, if applicable
 }
 
 // ----- Message Data Types
@@ -70,15 +70,11 @@ export type TranscriptData = {
   user_id: string;
 };
 
-export type UserLLMTextData = {
-  text: string;
-};
-
 export type BotLLMTextData = {
   text: string;
 };
 
-export type TTSTextData = {
+export type BotTTSTextData = {
   text: string;
 };
 

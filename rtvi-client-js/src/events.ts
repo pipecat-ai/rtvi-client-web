@@ -3,12 +3,11 @@ import { LLMFunctionCallData } from "./helpers/llm";
 import {
   BotLLMTextData,
   BotReadyData,
+  BotTTSTextData,
   PipecatMetricsData,
   RTVIMessage,
   StorageItemStoredData,
   TranscriptData,
-  TTSTextData,
-  UserLLMTextData
 } from "./messages";
 import { Participant, TransportState } from "./transport";
 
@@ -48,10 +47,9 @@ export enum RTVIEvent {
   Metrics = "metrics",
 
   UserTranscript = "userTranscript",
-  UserText = "userText",
   BotTranscript = "botTranscript",
 
-  BotText = "botText",
+  BotLlmText = "botLlmText",
   BotLlmStarted = "botLlmStarted",
   BotLlmStopped = "botLlmStopped",
 
@@ -64,6 +62,11 @@ export enum RTVIEvent {
   LLMJsonCompletion = "llmJsonCompletion",
 
   StorageItemStored = "storageItemStored",
+
+  /**
+   * @deprecated Use BotLlmText instead
+   */
+  BotText = "botText",
 }
 
 export type RTVIEvents = Partial<{
@@ -76,10 +79,10 @@ export type RTVIEvents = Partial<{
   configDescribe: (configDescription: unknown) => void;
   actionsAvailable: (actions: unknown) => void;
 
-  participantConnected: (p: Participant) => void;
-  participantLeft: (p: Participant) => void;
-  trackStarted: (track: MediaStreamTrack, p?: Participant) => void;
-  trackStopped: (track: MediaStreamTrack, p?: Participant) => void;
+  participantConnected: (participant: Participant) => void;
+  participantLeft: (participant: Participant) => void;
+  trackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
+  trackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
 
   availableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
   availableMicsUpdated: (cams: MediaDeviceInfo[]) => void;
@@ -87,10 +90,10 @@ export type RTVIEvents = Partial<{
   micUpdated: (cam: MediaDeviceInfo) => void;
 
   botReady: (botData: BotReadyData) => void;
-  botConnected: (p: Participant) => void;
-  botDisconnected: (p: Participant) => void;
-  botStartedSpeaking: (p: Participant) => void;
-  botStoppedSpeaking: (p: Participant) => void;
+  botConnected: (participant: Participant) => void;
+  botDisconnected: (participant: Participant) => void;
+  botStartedSpeaking: () => void;
+  botStoppedSpeaking: () => void;
   remoteAudioLevel: (level: number, p: Participant) => void;
 
   userStartedSpeaking: () => void;
@@ -100,16 +103,15 @@ export type RTVIEvents = Partial<{
   metrics: (data: PipecatMetricsData) => void;
 
   userTranscript: (data: TranscriptData) => void;
-  userText: (text: UserLLMTextData) => void;
-  botTranscript: (data: TranscriptData) => void;
+  botTranscript: (data: BotLLMTextData) => void;
 
-  botText: (text: BotLLMTextData) => void;
-  botLlmStarted: (p: Participant) => void;
-  botLlmStopped: (p: Participant) => void;
+  botLlmText: (data: BotLLMTextData) => void;
+  botLlmStarted: () => void;
+  botLlmStopped: () => void;
 
-  botTtsText: (text: TTSTextData) => void;
-  botTtsStarted: (p: Participant) => void;
-  botTtsStopped: (p: Participant) => void;
+  botTtsText: (data: BotTTSTextData) => void;
+  botTtsStarted: () => void;
+  botTtsStopped: () => void;
 
   error: (message: RTVIMessage) => void;
   messageError: (message: RTVIMessage) => void;
@@ -119,6 +121,11 @@ export type RTVIEvents = Partial<{
   llmJsonCompletion: (data: string) => void;
 
   storageItemStored: (data: StorageItemStoredData) => void;
+
+  /**
+   * @deprecated Use BotLlmText instead
+   */
+  botText: (data: BotLLMTextData) => void;
 }>;
 
 export type RTVIEventHandler<E extends RTVIEvent> = E extends keyof RTVIEvents
