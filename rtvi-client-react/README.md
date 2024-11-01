@@ -13,7 +13,7 @@ npm install realtime-ai realtime-ai-react
 
 ## Quick Start
 
-Instantiate a `RTVIClient` instance and pass it down to the `RTVIClientProvider`. Render the `<RTVIClientAudio>` component to have audio output setup automatically.
+Instantiate an `RTVIClient` instance and pass it down to the `RTVIClientProvider`. Render the `<RTVIClientAudio>` component to have audio output setup automatically.
 
 ```tsx
 import { RTVIClient } from "realtime-ai";
