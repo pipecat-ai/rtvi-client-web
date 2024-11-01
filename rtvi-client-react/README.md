@@ -13,74 +13,225 @@ npm install realtime-ai realtime-ai-react
 
 ## Quick Start
 
-Instantiate a `VoiceClient` instance and pass it down to the `VoiceClientProvider`. Render the `<VoiceClientAudio>` component to have audio output setup automatically.
+Instantiate a `RTVIClient` instance and pass it down to the `RTVIClientProvider`. Render the `<RTVIClientAudio>` component to have audio output setup automatically.
 
 ```tsx
-import { VoiceClient } from "realtime-ai";
-import { VoiceClientAudio, VoiceClientProvider } from "realtime-ai-react";
+import { RTVIClient } from "realtime-ai";
+import { RTVIClientAudio, RTVIClientProvider } from "realtime-ai-react";
 
-const voiceClient = new VoiceClient({
+const client = new RTVIClient({
   baseUrl: "https://rtvi.pipecat.bot",
   enableMic: true,
 });
 
 render(
-  <VoiceClientProvider voiceClient={voiceClient}>
+  <RTVIClientProvider client={client}>
     <MyApp />
-    <VoiceClientAudio />
-  </VoiceClientProvider>
+    <RTVIClientAudio />
+  </RTVIClientProvider>
 );
 ```
 
 We recommend starting the voiceClient from a click of a button, so here's a minimal implementation of `<MyApp>` to get started:
 
 ```tsx
-import { useVoiceClient } from "realtime-ai-react";
+import { useRTVIClient } from "realtime-ai-react";
 
 const MyApp = () => {
-  const voiceClient = useVoiceClient();
-  return <button onClick={() => voiceClient.start()}>OK Computer</button>;
+  const client = useRTVIClient();
+  return <button onClick={() => client.start()}>OK Computer</button>;
 };
 ```
 
 ## Components
 
-### `VoiceClientProvider`
+### RTVIClientProvider
 
-Wrap your app with `<VoiceClientProvider>` and pass it a `voiceClient` instance.
+The root component for providing RTVI client context to your application.
 
-### `VoiceClientAudio`
+#### Props
 
-Creates a new `<audio>` element that mounts the bot's audio track. 
+- `client` (RTVIClient, required): A singleton instance of [RTVIClient](https://docs.rtvi.ai/v02/api-reference/client-constructor)
 
-### `VoiceClientVideo`
+```jsx
+<RTVIClientProvider client={rtviClient}>
+  {/* Child components */}
+</RTVIClientProvider>
+```
 
-Creates a new `<video participant="local | bot">` element that renders either the bot or local participant's video track. 
+### RTVIClientAudio
 
-### `VoiceVisualizer`
+Creates a new `<audio>` element that mounts the bot's audio track.
 
-Creates a new canvas element that renders a customizable waveform effect for visualizing a audio track.
+#### Props
+
+No props
+
+```jsx
+<RTVIClientAudio />
+```
+
+### RTVIClientVideo
+
+Creates a new `<video>` element that renders either the bot or local participant's video track.
+
+#### Props
+
+- `participant` ("local" | "bot"): Defines which participant's video track is rendered
+- `fit` ("contain" | "cover", optional): Defines whether the video should be fully contained or cover the box. Default: 'contain'.
+- `mirror` (boolean, optional): Forces the video to be mirrored, if set.
+- `onResize(dimensions: object)` (function, optional): Triggered whenever the video's rendered width or height changes. Returns the video's native `width`, `height` and `aspectRatio`.
+
+```jsx
+<RTVIClientVideo
+  participant="local"
+  fit="cover"
+  mirror
+  onResize={({ aspectRatio, height, width }) => {
+    console.log("Video dimensions changed:", { aspectRatio, height, width });
+  }}
+/>
+```
+
+### VoiceVisualizer
+
+Renders a visual representation of audio input levels on a `<canvas>` element.
+The visualization consists of five vertical bars.
+
+#### Props
+
+- `participantType` (string, required): The participant type to visualize audio for.
+- `backgroundColor` (string, optional): The background color of the canvas. Default: 'transparent'.
+- `barColor` (string, optional): The color of the audio level bars. Default: 'black'.
+- `barGap` (number, optional): The gap between bars in pixels. Default: 12.
+- `barWidth` (number, optional): The width of each bar in pixels. Default: 30.
+- `barMaxHeight` (number, optional): The maximum height at full volume of each bar in pixels. Default: 120.
+
+```jsx
+<VoiceVisualizer
+  participantType="local"
+  backgroundColor="white"
+  barColor="black"
+  barGap={1}
+  barWidth={4}
+  barMaxHeight={24}
+/>
+```
+
 ## Hooks
 
-### `useVoiceClient()`
+### useRTVIClient
 
-Returns the `voiceClient` instance, that was originally passed to `VoiceClientProvider`.
+Provides access to the `RTVIClient` instance originally passed to [`RTVIClientProvider`](#rtviclientprovider).
 
-### `useVoiceClientEvent(event: VoiceEvent, callback: Function)`
+```jsx
+import { useRTVIClient } from "realtime-ai-react";
 
-Allows to register event handlers for all supported event callbacks in the VoiceClient.
+function MyComponent() {
+  const rtviClient = useRTVIClient();
+}
+```
 
-### `useVoiceClientMediaDevices()`
+### useRTVIClientEvent
 
-Returns a list of `availableMics` and `availableCams`, the `selectedMic` and `selectedCam`, and methods `updateMic` and `updateCam` to switch to different media devices.
+Allows subscribing to RTVI client events.
+It is advised to wrap handlers with `useCallback`.
 
-### `useVoiceClientMediaTrack(trackType, participantType)`
+#### Arguments
 
-Returns the `MediaStreamTrack` with the given `trackType` (`'audio' | 'video'`) for the given `participantType` (`'local' | 'bot'`). In case no track is available, it returns `null`.
+- `event` (RTVIEvent, required)
+- `handler` (function, required)
 
-### `useVoiceClientTransportState()`
+```jsx
+import { useCallback } from "react";
+import { RTVIEvent, TransportState } from "realtime-ai";
+import { useRTVIClientEvent } from "realtime-ai-react";
 
-Returns `voiceClient.state` as React state.
+function EventListener() {
+  useRTVIClientEvent(
+    RTVIEvent.TransportStateChanged,
+    useCallback((transportState: TransportState) => {
+      console.log("Transport state changed to", transportState);
+    }, [])
+  );
+}
+```
+
+### useRTVIClientMediaDevices
+
+Manage and list available media devices.
+
+```jsx
+import { useRTVIClientMediaDevices } from "realtime-ai-react";
+
+function DeviceSelector() {
+  const {
+    availableCams,
+    availableMics,
+    selectedCam,
+    selectedMic,
+    updateCam,
+    updateMic,
+  } = useRTVIClientMediaDevices();
+
+  return (
+    <>
+      <select
+        name="cam"
+        onChange={(ev) => updateCam(ev.target.value)}
+        value={selectedCam?.deviceId}
+      >
+        {availableCams.map((cam) => (
+          <option key={cam.deviceId} value={cam.deviceId}>
+            {cam.label}
+          </option>
+        ))}
+      </select>
+      <select
+        name="mic"
+        onChange={(ev) => updateMic(ev.target.value)}
+        value={selectedMic?.deviceId}
+      >
+        {availableMics.map((mic) => (
+          <option key={mic.deviceId} value={mic.deviceId}>
+            {mic.label}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+}
+```
+
+### useRTVIClientMediaTrack
+
+Access audio and video tracks.
+
+#### Arguments
+
+- `trackType` ("audio" | "video", required)
+- `participantType` ("bot" | "local", required)
+
+```jsx
+import { useRTVIClientMediaTrack } from "realtime-ai-react";
+
+function MyTracks() {
+  const localAudioTrack = useRTVIClientMediaTrack("audio", "local");
+  const botAudioTrack = useRTVIClientMediaTrack("audio", "bot");
+}
+```
+
+### useRTVIClientTransportState
+
+Returns the current transport state.
+
+```jsx
+import { useRTVIClientTransportState } from "realtime-ai-react";
+
+function ConnectionStatus() {
+  const transportState = useRTVIClientTransportState();
+}
+```
 
 ## Contributing
 
