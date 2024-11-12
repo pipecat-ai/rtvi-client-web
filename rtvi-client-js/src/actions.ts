@@ -1,4 +1,4 @@
-import { RTVIClientParams, RTVIError } from ".";
+import { logger, RTVIClientParams, RTVIError } from ".";
 import { RTVIActionRequest, RTVIActionResponse } from "./messages";
 
 export async function httpActionGenerator(
@@ -8,7 +8,7 @@ export async function httpActionGenerator(
   handleResponse: (response: RTVIActionResponse) => void
 ): Promise<void> {
   try {
-    console.debug("[RTVI] Fetch action", actionUrl, action);
+    logger.debug("[RTVI] Fetch action", actionUrl, action);
 
     const headers = new Headers({
       ...Object.fromEntries((params.headers ?? new Headers()).entries()),
@@ -73,7 +73,7 @@ export async function httpActionGenerator(
             const parsedData = JSON.parse(jsonData);
             handleResponse(parsedData);
           } catch (error) {
-            console.error("[RTVI] Failed to parse JSON:", error);
+            logger.error("[RTVI] Failed to parse JSON:", error);
             throw error;
           }
 
@@ -86,7 +86,7 @@ export async function httpActionGenerator(
       handleResponse(data);
     }
   } catch (error) {
-    console.error("[RTVI] Error during fetch:", error);
+    logger.error("[RTVI] Error during fetch:", error);
     throw error;
   }
 }

@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { httpActionGenerator } from "./actions";
 import { RTVIClient, RTVIClientConfigOption } from "./client";
+import { logger } from "./logger";
 
 export const RTVI_MESSAGE_LABEL = "rtvi-ai";
 
@@ -185,7 +186,7 @@ export class MessageDispatcher {
       });
     });
 
-    console.debug("[MessageDispatcher] dispatch", message);
+    logger.debug("[MessageDispatcher] dispatch", message);
 
     this._client.sendMessage(message);
 
@@ -207,7 +208,7 @@ export class MessageDispatcher {
       });
     });
 
-    console.debug("[MessageDispatcher] action", action);
+    logger.debug("[MessageDispatcher] action", action);
 
     if (this._client.connected) {
       // Send message to transport when connected
@@ -252,19 +253,19 @@ export class MessageDispatcher {
 
     if (queuedMessage) {
       if (resolve) {
-        console.debug("[MessageDispatcher] Resolve", message);
+        logger.debug("[MessageDispatcher] Resolve", message);
         queuedMessage.resolve(
           message.type === RTVIMessageType.ACTION_RESPONSE
             ? (message as RTVIMessageActionResponse)
             : (message as RTVIMessage)
         );
       } else {
-        console.debug("[MessageDispatcher] Reject", message);
+        logger.debug("[MessageDispatcher] Reject", message);
         queuedMessage.reject(message as RTVIMessage);
       }
       // Remove message from queue
       this._queue = this._queue.filter((msg) => msg.message.id !== message.id);
-      console.debug("[MessageDispatcher] Queue", this._queue);
+      logger.debug("[MessageDispatcher] Queue", this._queue);
     }
 
     return message;
@@ -282,7 +283,7 @@ export class MessageDispatcher {
     this._queue = this._queue.filter((msg) => {
       return Date.now() - msg.timestamp < this._gcTime;
     });
-    console.debug("[MessageDispatcher] GC", this._queue);
+    logger.debug("[MessageDispatcher] GC", this._queue);
   }
 }
 
