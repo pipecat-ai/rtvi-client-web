@@ -7,6 +7,7 @@ import { getIfTransportInState, transportReady } from "./decorators";
 import * as RTVIErrors from "./errors";
 import { RTVIEvent, RTVIEvents } from "./events";
 import { RTVIClientHelper, RTVIClientHelpers } from "./helpers";
+import { logger, LogLevel } from "./logger";
 import {
   BotLLMTextData,
   BotReadyData,
@@ -376,7 +377,7 @@ export class RTVIClient extends RTVIEventEmitter {
     this._initialize();
 
     // Get package version number
-    console.debug("[RTVI Client] Initialized", this.version);
+    logger.debug("[RTVI Client] Initialized", this.version);
   }
 
   public constructUrl(endpoint: RTVIURLEndpoints): string {
@@ -388,13 +389,18 @@ export class RTVIClient extends RTVIEventEmitter {
     const baseUrl = this.params.baseUrl.replace(/\/+$/, "");
     return baseUrl + (this.params.endpoints?.[endpoint] ?? "");
   }
+
+  public setLogLevel(level: LogLevel) {
+    logger.setLevel(level);
+  }
+
   // ------ Transport methods
 
   /**
    * Initialize local media devices
    */
   public async initDevices() {
-    console.debug("[RTVI Client] Initializing devices...");
+    logger.debug("[RTVI Client] Initializing devices...");
     await this._transport.initDevices();
   }
 
@@ -448,8 +454,8 @@ export class RTVIClient extends RTVIEventEmitter {
           },
         };
 
-        console.debug("[RTVI Client] Connecting...", connectUrl);
-        console.debug("[RTVI Client] Start params", this.params);
+        logger.debug("[RTVI Client] Connecting...", connectUrl);
+        logger.debug("[RTVI Client] Start params", this.params);
 
         try {
           if (customConnectHandler) {
@@ -506,7 +512,7 @@ export class RTVIClient extends RTVIEventEmitter {
           return;
         }
 
-        console.debug("[RTVI Client] Auth bundle received", authBundle);
+        logger.debug("[RTVI Client] Auth bundle received", authBundle);
 
         try {
           await this._transport.connect(
@@ -635,7 +641,7 @@ export class RTVIClient extends RTVIEventEmitter {
     config: RTVIClientConfigOption[],
     interrupt: boolean = false
   ): Promise<RTVIMessage> {
-    console.debug("[RTVI Client] Updating config", config);
+    logger.debug("[RTVI Client] Updating config", config);
     // Only send the partial config if the bot is ready to prevent
     // potential racing conditions whilst pipeline is instantiating
     return this._messageDispatcher.dispatch(
@@ -671,7 +677,7 @@ export class RTVIClient extends RTVIEventEmitter {
     return Promise.resolve().then(async () => {
       // Check if we have registered service with name service
       if (!serviceKey) {
-        console.debug("Target service name is required");
+        logger.debug("Target service name is required");
         return undefined;
       }
 
@@ -684,7 +690,7 @@ export class RTVIClient extends RTVIEventEmitter {
       );
 
       if (!configServiceKey) {
-        console.debug(
+        logger.debug(
           "No service with name " + serviceKey + " not found in config"
         );
         return undefined;
@@ -710,7 +716,7 @@ export class RTVIClient extends RTVIEventEmitter {
       await this.getServiceOptionsFromConfig(serviceKey, config);
 
     if (!configServiceKey) {
-      console.debug("Service with name " + serviceKey + " not found in config");
+      logger.debug("Service with name " + serviceKey + " not found in config");
       return undefined;
     }
 
@@ -768,7 +774,7 @@ export class RTVIClient extends RTVIEventEmitter {
     );
 
     if (!serviceOptions) {
-      console.debug(
+      logger.debug(
         "Service with name '" + serviceKey + "' not found in config"
       );
       return newConfig;
@@ -865,7 +871,7 @@ export class RTVIClient extends RTVIEventEmitter {
   }
 
   protected handleMessage(ev: RTVIMessage): void {
-    console.debug("[RTVI Message]", ev);
+    logger.debug("[RTVI Message]", ev);
 
     switch (ev.type) {
       case RTVIMessageType.BOT_READY:
@@ -1001,7 +1007,7 @@ export class RTVIClient extends RTVIEventEmitter {
   public getHelper<T extends RTVIClientHelper>(service: string): T | undefined {
     const helper = this._helpers[service];
     if (!helper) {
-      console.debug(`Helper targeting service '${service}' not found`);
+      logger.debug(`Helper targeting service '${service}' not found`);
       return undefined;
     }
     return helper as T;
@@ -1029,7 +1035,7 @@ export class RTVIClient extends RTVIEventEmitter {
    */
   @transportReady
   public async getBotConfig(): Promise<RTVIClientConfigOption[]> {
-    console.warn(
+    logger.warn(
       "VoiceClient.getBotConfig is deprecated. Use getConfig instead."
     );
     return this.getConfig();
@@ -1042,7 +1048,7 @@ export class RTVIClient extends RTVIEventEmitter {
    * @returns RTVIClientConfigOption[] - Array of configuration options
    */
   public get config(): RTVIClientConfigOption[] {
-    console.warn("VoiceClient.config is deprecated. Use getConfig instead.");
+    logger.warn("VoiceClient.config is deprecated. Use getConfig instead.");
     return this._options.config!;
   }
 
@@ -1051,7 +1057,7 @@ export class RTVIClient extends RTVIEventEmitter {
    * @deprecated Services not accessible via the client instance
    */
   public get services(): VoiceClientServices {
-    console.warn("VoiceClient.services is deprecated.");
+    logger.warn("VoiceClient.services is deprecated.");
     return this._options.services!;
   }
 
@@ -1059,7 +1065,7 @@ export class RTVIClient extends RTVIEventEmitter {
    * @deprecated Services not accessible via the client instance
    */
   public set services(services: VoiceClientServices) {
-    console.warn("VoiceClient.services is deprecated.");
+    logger.warn("VoiceClient.services is deprecated.");
     if (
       !["authenticating", "connecting", "connected", "ready"].includes(
         this._transport.state
