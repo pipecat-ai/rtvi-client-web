@@ -13,6 +13,7 @@ export enum RTVIMessageType {
   GET_CONFIG = "get-config",
   DESCRIBE_CONFIG = "describe-config",
   DESCRIBE_ACTIONS = "describe-actions",
+  DISCONNECT_BOT = "disconnect-bot",
 
   // Inbound
   BOT_READY = "bot-ready", // Bot is connected and ready to receive messages
@@ -130,6 +131,10 @@ export class RTVIMessage {
 
   static describeActions(): RTVIMessage {
     return new RTVIMessage(RTVIMessageType.DESCRIBE_ACTIONS, {});
+  }
+
+  static disconnectBot(): RTVIMessage {
+    return new RTVIMessage(RTVIMessageType.DISCONNECT_BOT, {});
   }
 }
 

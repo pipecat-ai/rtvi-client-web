@@ -870,6 +870,16 @@ export class RTVIClient extends RTVIEventEmitter {
     this._transport.sendMessage(message);
   }
 
+  /**
+   * Disconnects the bot, but keeps the session alive
+   */
+  @transportReady
+  public disconnectBot(): void {
+    this._transport.sendMessage(
+      new RTVIMessage(RTVIMessageType.DISCONNECT_BOT, {})
+    );
+  }
+
   protected handleMessage(ev: RTVIMessage): void {
     logger.debug("[RTVI Message]", ev);
 
