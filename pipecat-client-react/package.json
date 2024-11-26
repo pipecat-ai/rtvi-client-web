@@ -8,7 +8,7 @@
   "source": "src/index.ts",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rtvi-ai/rtvi-client-web.git"
+    "url": "git+https://github.com/pipecat-ai/rtvi-client-web.git"
   },
   "files": [
     "dist",

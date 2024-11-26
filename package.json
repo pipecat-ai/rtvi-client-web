@@ -1,11 +1,11 @@
 {
   "private": true,
-  "name": "rtvi-client-web",
+  "name": "pipecat-client-web",
   "version": "0.2.2",
   "workspaces": [
-    "rtvi-sandbox",
-    "rtvi-client-js",
-    "rtvi-client-react"
+    "pipecat-sandbox",
+    "pipecat-client-js",
+    "pipecat-client-react"
   ],
   "devDependencies": {
     "@parcel/packager-ts": "^2.12.0",
