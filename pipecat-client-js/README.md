@@ -1,4 +1,6 @@
-# Real-Time Voice Inference Web / JS SDK
+<h1><div align="center">
+ <img alt="pipecat js" width="500px" height="auto" src="https://raw.githubusercontent.com/pipecat-ai/pipecat-client-web/main/pipecat-js.png">
+</div></h1>
 
 [![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.rtvi.ai)
 ![NPM Version](https://img.shields.io/npm/v/realtime-ai)
@@ -33,13 +35,16 @@ const rtviClient = new RTVIClient({
       {
         service: "tts",
         options: [
-          { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" }
-        ]
+          { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" },
+        ],
       },
       {
         service: "llm",
         options: [
-          { name: "model", value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" },
+          {
+            name: "model",
+            value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+          },
           {
             name: "messages",
             value: [
@@ -47,12 +52,12 @@ const rtviClient = new RTVIClient({
                 role: "system",
                 content:
                   "You are a assistant called ExampleBot. You can ask me anything. Keep responses brief and legible. Your responses will be converted to audio, so please avoid using any special characters except '!' or '?'.",
-              }
-            ]
-          }
-        ]
-      }
-    ]
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   enableMic: true,
   enableCam: false,
@@ -103,7 +108,3 @@ rtviClient.on(RTVIEvent.Disconnected, () => {
 ## API
 
 Please see API reference [here](https://docs.rtvi.ai/api-reference/introduction).
-
-## Contributing
-
-We are welcoming contributions to this project in form of issues and pull request. For questions about RTVI head over to the [Pipecat discord server](https://discord.gg/pipecat) and check the [#rtvi](https://discord.com/channels/1239284677165056021/1265086477964935218) channel.

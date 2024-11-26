@@ -1,4 +1,6 @@
-# Real-Time Voice Inference React SDK
+<h1><div align="center">
+ <img alt="pipecat react" width="500px" height="auto" src="https://raw.githubusercontent.com/pipecat-ai/pipecat-client-web/main/pipecat-react.png">
+</div></h1>
 
 [![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.rtvi.ai)
 ![NPM Version](https://img.shields.io/npm/v/realtime-ai-react)
@@ -232,7 +234,3 @@ function ConnectionStatus() {
   const transportState = useRTVIClientTransportState();
 }
 ```
-
-## Contributing
-
-We are welcoming contributions to this project in form of issues and pull request. For questions about RTVI head over to the [Pipecat discord server](https://discord.gg/pipecat) and check the [#rtvi](https://discord.com/channels/1239284677165056021/1265086477964935218) channel.
