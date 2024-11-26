@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 import pluginJs from "@eslint/js";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import globals from "globals";

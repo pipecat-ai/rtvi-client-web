@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 import * as RTVIErrors from "./../errors";
 import { RTVIEvent } from "./../events";
 import {

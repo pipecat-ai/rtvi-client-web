@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 export * from "./actions";
 export * from "./client";
 export * from "./errors";

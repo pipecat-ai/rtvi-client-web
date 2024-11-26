@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 import cloneDeep from "clone-deep";
 import EventEmitter from "events";
 import TypedEmitter from "typed-emitter";

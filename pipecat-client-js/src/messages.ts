@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 import { v4 as uuidv4 } from "uuid";
 
 import { httpActionGenerator } from "./actions";

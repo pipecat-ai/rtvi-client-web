@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 import { useEffect } from "react";
 import type { RTVIEvent, RTVIEventHandler } from "realtime-ai";
 import { useRTVIClient } from "./useRTVIClient";

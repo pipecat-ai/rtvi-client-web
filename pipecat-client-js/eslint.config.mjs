@@ -1,4 +1,8 @@
-// eslint.config.mjs
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
 
 import jsRecommended from "@eslint/js";
 import tsRecommended from "@typescript-eslint/eslint-plugin";

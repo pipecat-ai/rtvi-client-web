@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 import { useCallback, useEffect, useRef } from "react";
 import { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
 import { useRTVIClientEvent } from "./useRTVIClientEvent";

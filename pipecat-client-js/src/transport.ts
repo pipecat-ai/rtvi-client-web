@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 import { RTVIClientOptions, RTVIEventCallbacks } from "./client";
 import { RTVIMessage } from "./messages";
 

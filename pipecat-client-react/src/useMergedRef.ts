@@ -1,7 +1,12 @@
 /**
- * Original source: https://github.com/jaredLunde/react-hook/blob/master/packages/merged-ref/src/index.tsx
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ *
+ * This file contains code derived from:
+ * https://github.com/jaredLunde/react-hook/blob/master/packages/merged-ref/src/index.tsx
  * Original author: Jared Lunde (https://github.com/jaredLunde)
- * Originally published under the MIT license: https://github.com/jaredLunde/react-hook/blob/master/LICENSE
+ * Original license: MIT (https://github.com/jaredLunde/react-hook/blob/master/LICENSE)
  */
 
 import React, { useCallback } from "react";

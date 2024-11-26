@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2024, Daily.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 import { RTVIClientAudio } from "./RTVIClientAudio";
 import { RTVIClientVideo } from "./RTVIClientVideo";
 import { RTVIClientProvider } from "./RTVIClientProvider";
