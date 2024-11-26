@@ -3,7 +3,6 @@
   "name": "pipecat-client-web",
   "version": "0.2.2",
   "workspaces": [
-    "pipecat-sandbox",
     "pipecat-client-js",
     "pipecat-client-react"
   ],
