@@ -1,5 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
+import { useRTVIClientEvent } from "./useRTVIClientEvent";
+import { RTVIEvent } from "realtime-ai";
 
 export const RTVIClientAudio = () => {
   const botAudioRef = useRef<HTMLAudioElement>(null);
@@ -15,6 +17,15 @@ export const RTVIClientAudio = () => {
     }
     botAudioRef.current.srcObject = new MediaStream([botAudioTrack]);
   }, [botAudioTrack]);
+
+  useRTVIClientEvent(
+    RTVIEvent.SpeakerUpdated,
+    useCallback((speaker: MediaDeviceInfo) => {
+      if (!botAudioRef.current) return;
+      if (typeof botAudioRef.current.setSinkId !== "function") return;
+      botAudioRef.current.setSinkId(speaker.deviceId);
+    }, [])
+  );
 
   return (
     <>

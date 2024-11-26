@@ -30,8 +30,10 @@ export enum RTVIEvent {
 
   AvailableCamsUpdated = "availableCamsUpdated",
   AvailableMicsUpdated = "availableMicsUpdated",
+  AvailableSpeakersUpdated = "availableSpeakersUpdated",
   CamUpdated = "camUpdated",
   MicUpdated = "micUpdated",
+  SpeakerUpdated = "speakerUpdated",
 
   BotConnected = "botConnected",
   BotReady = "botReady",
@@ -85,9 +87,11 @@ export type RTVIEvents = Partial<{
   trackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
 
   availableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
-  availableMicsUpdated: (cams: MediaDeviceInfo[]) => void;
+  availableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
+  availableSpeakersUpdated: (speakers: MediaDeviceInfo[]) => void;
   camUpdated: (cam: MediaDeviceInfo) => void;
-  micUpdated: (cam: MediaDeviceInfo) => void;
+  micUpdated: (mic: MediaDeviceInfo) => void;
+  speakerUpdated: (speaker: MediaDeviceInfo) => void;
 
   botReady: (botData: BotReadyData) => void;
   botConnected: (participant: Participant) => void;

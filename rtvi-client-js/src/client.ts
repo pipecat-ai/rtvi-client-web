@@ -160,8 +160,10 @@ export type RTVIEventCallbacks = Partial<{
 
   onAvailableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
   onAvailableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
+  onAvailableSpeakersUpdated: (speakers: MediaDeviceInfo[]) => void;
   onCamUpdated: (cam: MediaDeviceInfo) => void;
   onMicUpdated: (mic: MediaDeviceInfo) => void;
+  onSpeakerUpdated: (speaker: MediaDeviceInfo) => void;
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
   onLocalAudioLevel: (level: number) => void;
@@ -274,6 +276,10 @@ export class RTVIClient extends RTVIEventEmitter {
       onAvailableMicsUpdated: (mics) => {
         options?.callbacks?.onAvailableMicsUpdated?.(mics);
         this.emit(RTVIEvent.AvailableMicsUpdated, mics);
+      },
+      onAvailableSpeakersUpdated: (speakers) => {
+        options?.callbacks?.onAvailableSpeakersUpdated?.(speakers);
+        this.emit(RTVIEvent.AvailableSpeakersUpdated, speakers);
       },
       onCamUpdated: (cam) => {
         options?.callbacks?.onCamUpdated?.(cam);
@@ -580,6 +586,10 @@ export class RTVIClient extends RTVIEventEmitter {
     return await this._transport.getAllCams();
   }
 
+  public async getAllSpeakers(): Promise<MediaDeviceInfo[]> {
+    return await this._transport.getAllSpeakers();
+  }
+
   public get selectedMic() {
     return this._transport.selectedMic;
   }
@@ -588,12 +598,20 @@ export class RTVIClient extends RTVIEventEmitter {
     return this._transport.selectedCam;
   }
 
+  public get selectedSpeaker() {
+    return this._transport.selectedSpeaker;
+  }
+
   public updateMic(micId: string) {
     this._transport.updateMic(micId);
   }
 
   public updateCam(camId: string) {
     this._transport.updateCam(camId);
+  }
+
+  public updateSpeaker(speakerId: string) {
+    this._transport.updateSpeaker(speakerId);
   }
 
   public enableMic(enable: boolean) {
