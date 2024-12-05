@@ -103,7 +103,7 @@ export interface RTVIClientOptions {
     params: RTVIClientParams,
     timeout: ReturnType<typeof setTimeout> | undefined,
     abortController: AbortController
-  ) => Promise<void>;
+  ) => Promise<AuthBundle>;
 
   // ----- @deprecated options
 
@@ -140,6 +140,11 @@ export interface RTVIClientOptions {
    */
   customBodyParams?: object;
 }
+
+export type AuthBundle = {
+  room_url: string;
+  token: string;
+};
 
 export type RTVIEventCallbacks = Partial<{
   onGenericMessage: (data: unknown) => void;
@@ -201,6 +206,7 @@ export class RTVIClient extends RTVIEventEmitter {
   private _helpers: RTVIClientHelpers;
   private _startResolve: ((value: unknown) => void) | undefined;
   protected _transport: Transport;
+  protected _authBundle: AuthBundle | undefined;
   protected declare _messageDispatcher: MessageDispatcher;
 
   constructor(options: RTVIClientOptions) {
@@ -216,6 +222,7 @@ export class RTVIClient extends RTVIEventEmitter {
 
     this._helpers = {};
     this._transport = options.transport;
+    this._authBundle = undefined;
 
     // Wrap transport callbacks with event triggers
     // This allows for either functional callbacks or .on / .off event listeners
@@ -448,7 +455,7 @@ export class RTVIClient extends RTVIEventEmitter {
           }, this._options.timeout);
         }
 
-        let authBundle: unknown;
+        let authBundle: AuthBundle;
         const customConnectHandler = this._options.customConnectHandler;
         const connectUrl = this.constructUrl("connect");
 
@@ -517,7 +524,8 @@ export class RTVIClient extends RTVIEventEmitter {
           }
           return;
         }
-
+        this._authBundle = authBundle;
+        logger.debug("[RTVI Client] Auth bundle stored", this._authBundle);
         logger.debug("[RTVI Client] Auth bundle received", authBundle);
 
         try {
@@ -546,7 +554,7 @@ export class RTVIClient extends RTVIEventEmitter {
     }
 
     clearTimeout(this._handshakeTimeout);
-
+    this._authBundle = undefined;
     await this._transport.disconnect();
 
     this._initialize();
@@ -574,6 +582,10 @@ export class RTVIClient extends RTVIEventEmitter {
 
   public get version(): string {
     return packageJson.version;
+  }
+
+  public get authBundle() {
+    return this._authBundle;
   }
 
   // ------ Device methods
