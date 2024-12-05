@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `disconnectBot()` method added to `RTVIClient` that disconnects the bot from the session, but keeps the session alive for the connected user.
 - `setLogLevel` method added to `RTVIClient` to allow developers to set the log level.
 - `logger` instance added to `RTVIClient` to allow developers to set the log level.
 - `disconnectBot()` method added to `RTVIMessage` to allow developers to tell the bot to leave a session.
