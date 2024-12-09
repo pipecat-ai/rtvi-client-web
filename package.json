@@ -3,7 +3,6 @@
   "name": "rtvi-client-web",
   "version": "0.2.2",
   "workspaces": [
-    "rtvi-sandbox",
     "rtvi-client-js",
     "rtvi-client-react"
   ],
