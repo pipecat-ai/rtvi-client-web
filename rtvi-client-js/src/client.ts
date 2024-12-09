@@ -289,6 +289,10 @@ export class RTVIClient extends RTVIEventEmitter {
         options?.callbacks?.onMicUpdated?.(mic);
         this.emit(RTVIEvent.MicUpdated, mic);
       },
+      onSpeakerUpdated: (speaker) => {
+        options?.callbacks?.onSpeakerUpdated?.(speaker);
+        this.emit(RTVIEvent.SpeakerUpdated, speaker);
+      },
       onBotConnected: (p) => {
         options?.callbacks?.onBotConnected?.(p);
         this.emit(RTVIEvent.BotConnected, p);
