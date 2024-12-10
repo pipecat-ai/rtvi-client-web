@@ -443,6 +443,10 @@ export class RTVIClient extends RTVIEventEmitter {
                 ),
               }),
               body: JSON.stringify({
+                config: this.params.config,
+                ...(this.params.services
+                  ? { services: this.params.services }
+                  : {}), // @deprecated - pass services through request data
                 ...this.params.requestData,
               }),
               signal: this._abortController?.signal,
