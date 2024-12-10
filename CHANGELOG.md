@@ -1,9 +1,20 @@
 # Changelog
 
-All notable changes to **RTVI Client Web** will be documented in this file.
+All notable changes to **Pipecat Client Web** will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.3.0] - 2024-12-10
+
+### Changed
+
+- The RTVI client web libraries are now part of Pipecat. Repo and directory names have changed from RTVI to Pipecat.
+- Package names have also been updated:
+  - `realtime-ai` is now `@pipecat-ai/client-js`
+  - `realtime-ai-react` is now `@pipecat-ai/client-react`
+
+Please update your imports to the new package names. 
 
 ## [0.2.3] - 2024-12-09
 
