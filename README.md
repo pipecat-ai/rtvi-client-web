@@ -152,22 +152,22 @@ const rtviClient = new RTVIClient({
 });
 
 try {
-  await RTVIClient.connect();
+  await rtviClient.connect();
 } catch (e) {
   console.error(e.message);
 }
 
 // Events
-RTVIClient.on(RTVIEvent.TransportStateChanged, (state) => {
+rtviClient.on(RTVIEvent.TransportStateChanged, (state) => {
   console.log("[EVENT] Transport state change:", state);
 });
-RTVIClient.on(RTVIEvent.BotReady, () => {
+rtviClient.on(RTVIEvent.BotReady, () => {
   console.log("[EVENT] Bot is ready");
 });
-RTVIClient.on(RTVIEvent.Connected, () => {
+rtviClient.on(RTVIEvent.Connected, () => {
   console.log("[EVENT] User connected");
 });
-RTVIClient.on(RTVIEvent.Disconnected, () => {
+rtviClient.on(RTVIEvent.Disconnected, () => {
   console.log("[EVENT] User disconnected");
 });
 ```
