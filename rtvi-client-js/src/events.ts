@@ -26,7 +26,7 @@ export enum RTVIEvent {
   ParticipantConnected = "participantConnected",
   ParticipantLeft = "participantLeft",
   TrackStarted = "trackStarted",
-  TrackedStopped = "trackStopped",
+  TrackStopped = "trackStopped",
 
   AvailableCamsUpdated = "availableCamsUpdated",
   AvailableMicsUpdated = "availableMicsUpdated",

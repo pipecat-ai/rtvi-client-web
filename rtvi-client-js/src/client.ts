@@ -267,7 +267,7 @@ export class RTVIClient extends RTVIEventEmitter {
       },
       onTrackStopped: (track, p) => {
         options?.callbacks?.onTrackStopped?.(track, p);
-        this.emit(RTVIEvent.TrackedStopped, track, p);
+        this.emit(RTVIEvent.TrackStopped, track, p);
       },
       onAvailableCamsUpdated: (cams) => {
         options?.callbacks?.onAvailableCamsUpdated?.(cams);
