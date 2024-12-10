@@ -1,5 +1,5 @@
 <h1><div align="center">
- <img alt="pipecat client web" width="500px" height="auto" src="pipecat-web.png">
+ <img alt="pipecat client web" width="500px" height="auto" src="https://raw.githubusercontent.com/pipecat-ai/pipecat-client-web/main/pipecat-web.png">
 </div></h1>
 
 [![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.pipecat.ai/client/introduction)
