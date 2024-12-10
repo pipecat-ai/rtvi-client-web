@@ -1,14 +1,20 @@
-# Real-Time Voice Inference Web SDK
+<h1><div align="center">
+ <img alt="pipecat client web" width="500px" height="auto" src="pipecat-web.png">
+</div></h1>
 
-[![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.rtvi.ai)
-![NPM Version](https://img.shields.io/npm/v/realtime-ai)
+[![Docs](https://img.shields.io/badge/documentation-blue)](https://docs.pipecat.ai/client/introduction)
+![NPM Version](https://img.shields.io/npm/v/@pipecat-ai/client-js)
 
-RTVI Web provides a browser client for real-time voice and video inference.
+The official web client SDK for [Pipecat](https://github.com/pipecat-ai/pipecat), an open source Python framework for building voice and multimodal AI applications.
 
-## Overview 
-RTVI is an open standard that aims to support a wide variety of use cases.
+## Overview
 
-The core functionality of the SDK has a fairly small footprint:
+This monorepo contains two packages:
+
+- `client-js`: JavaScript/TypeScript SDK for connecting to and communicating with Pipecat servers
+- `client-react`: React components and hooks for building Pipecat applications
+
+The SDK handles:
 
 - Device and media stream management
 - Managing bot configuration
@@ -22,11 +28,11 @@ It’s also recommended for you to stand up your own server-side endpoints to ha
 
 The entry point for creating a client can be found via:
 
-- [RTVI JS](/rtvi-client-js/) `realtime-ai`
+- [Pipecat JS](/client-js/) `@pipecat-ai/client-js`
 
 React context, hooks and components:
 
-- [RTVI React](/rtvi-client-react/) `realtime-ai-react`
+- [Pipecat React](/client-react/) `@pipecat-ai/client-react`
 
 **Transport packages:**
 
@@ -35,28 +41,37 @@ For connected use-cases, you must pass a transport instance to the constructor f
 For example, if you were looking to use WebRTC as a transport layer, you may use a provider like [Daily](https://daily.co). In this scenario, you’d construct a transport instance and pass it to the client accordingly:
 
 ```ts
-import { RTVIClient } from "realtime-ai";
-import { DailyTransport } from "@daily-co/realtime-ai-daily";
+import { RTVIClient } from "@pipecat-ai/client-js";
+import { DailyTransport } from "@pipecat-ai/daily-transport";
 
-const dailyTransport = new DailyTransport();
+const DailyTransport = new DailyTransport();
 const rtviClient = new RTVIClient({
-  transport: dailyTransport
+  transport: DailyTransport,
 });
-
 ```
 
-RTVI requires a media transport for sending and receiving audio and video data over the internet. RTVI Web does not include any transport capabilities out of the box, so you will need to install the package for your chosen provider.
+All Pipecat SDKs require a media transport for sending and receiving audio and video data over the Internet. Pipecat Web does not include any transport capabilities out of the box, so you will need to install the package for your chosen provider.
 
-All transport packages (such as `DailyTransport`) extend from the Transport base class defined in RTVI core. You can extend this class if you are looking to implement your own or add additional functionality.
-
+All transport packages (such as `DailyTransport`) extend from the Transport base class. You can extend this class if you are looking to implement your own or add additional functionality.
 
 ## Install
 
+Install the Pipecat JS client library
+
 ```bash
-# Install latest package from NPM
-npm install realtime-ai @daily-co/realtime-ai-daily
-# or 
-yarn add realtime-ai @daily-co/realtime-ai-daily
+npm install @pipecat-ai/client-js
+```
+
+Optionally, install the React client library
+
+```bash
+npm install @pipecat-ai/client-react
+```
+
+Lastly, install a transport layer, like Daily
+
+```bash
+npm install @pipecat-ai/daily-transport
 ```
 
 ## Quickstart
@@ -70,13 +85,13 @@ It’s also recommended for you to stand up your own server-side endpoints to ha
 Creating and starting a session with RTVI Web (using Daily as transport):
 
 ```typescript
-import { RTVIEvent, RTVIMessage, RTVIClient } from "realtime-ai";
-import { DailyTransport } from "@daily-co/realtime-ai-daily";
+import { RTVIClient, RTVIEvent, RTVIMessage } from "@pipecat-ai/client-js";
+import { DailyTransport } from "@pipecat-ai/daily-transport";
 
-const dailyTransport = new DailyTransport();
+const DailyTransport = new DailyTransport();
 
 const rtviClient = new RTVIClient({
-  transport: dailyTransport,
+  transport: DailyTransport,
   params: {
     baseUrl: "https://your-server-side-url",
     services: {
@@ -87,13 +102,16 @@ const rtviClient = new RTVIClient({
       {
         service: "tts",
         options: [
-          { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" }
-        ]
+          { name: "voice", value: "79a125e8-cd45-4c13-8a67-188112f4dd22" },
+        ],
       },
       {
         service: "llm",
         options: [
-          { name: "model", value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo" },
+          {
+            name: "model",
+            value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+          },
           {
             name: "messages",
             value: [
@@ -101,12 +119,12 @@ const rtviClient = new RTVIClient({
                 role: "system",
                 content:
                   "You are a assistant called ExampleBot. You can ask me anything. Keep responses brief and legible. Your responses will be converted to audio, so please avoid using any special characters except '!' or '?'.",
-              }
-            ]
-          }
-        ]
-      }
-    ]
+              },
+            ],
+          },
+        ],
+      },
+    ],
   },
   enableMic: true,
   enableCam: false,
@@ -156,7 +174,7 @@ rtviClient.on(RTVIEvent.Disconnected, () => {
 
 ## Documentation
 
-RTVI projects implement a client instance that:
+Pipecat Client Web implements a client instance that:
 
 - Facilitates web requests to an endpoint you create.
 - Dispatches single-turn actions to a HTTP bot service when disconnected.
@@ -165,7 +183,7 @@ RTVI projects implement a client instance that:
 - Provides callbacks and events for handling bot messages and actions.
 - Optionally configures your AI services and pipeline.
 
-Docs and API reference can be found at https://docs.rtvi.ai
+Docs and API reference can be found at https://docs.pipecat.ai/client/introduction.
 
 ## Hack on the framework
 
@@ -173,11 +191,32 @@ Install a provider transport
 
 ```bash
 yarn
-yarn workspace realtime-ai build
+yarn workspace @pipecat-ai/client-js build
 ```
 
 Watch for file changes:
 
 ```bash
-yarn workspace realtime-ai run dev
+yarn workspace @pipecat-ai/client-js run dev
 ```
+
+## Contributing
+
+We welcome contributions from the community! Whether you're fixing bugs, improving documentation, or adding new features, here's how you can help:
+
+- **Found a bug?** Open an [issue](https://github.com/pipecat-ai/pipecat-client-web/issues)
+- **Have a feature idea?** Start a [discussion](https://discord.gg/pipecat)
+- **Want to contribute code?** Check our [CONTRIBUTING.md](CONTRIBUTING.md) guide
+- **Documentation improvements?** [Docs](https://github.com/pipecat-ai/docs) PRs are always welcome
+
+Before submitting a pull request, please check existing issues and PRs to avoid duplicates.
+
+We aim to review all contributions promptly and provide constructive feedback to help get your changes merged.
+
+## Getting help
+
+➡️ [Join our Discord](https://discord.gg/pipecat)
+
+➡️ [Read the docs](https://docs.pipecat.ai)
+
+➡️ [Reach us on X](https://x.com/pipecat_ai)
