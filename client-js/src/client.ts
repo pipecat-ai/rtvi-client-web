@@ -49,7 +49,7 @@ const defaultEndpoints: Record<RTVIURLEndpoints, string> = {
 };
 
 export type RTVIClientParams = {
-  baseUrl: string;
+  baseUrl?: string;
 } & Partial<{
   headers?: Headers;
   endpoints: Partial<Record<RTVIURLEndpoints, string>>;
@@ -412,7 +412,8 @@ export class RTVIClient extends RTVIEventEmitter {
 
         let authBundle: unknown;
         const customConnectHandler = this._options.customConnectHandler;
-        const connectUrl = this.constructUrl("connect");
+
+        logger.debug("[RTVI Client] Start params", this.params);
 
         this.params = {
           ...this.params,
@@ -422,67 +423,78 @@ export class RTVIClient extends RTVIEventEmitter {
           },
         };
 
-        logger.debug("[RTVI Client] Connecting...", connectUrl);
-        logger.debug("[RTVI Client] Start params", this.params);
-
-        try {
-          if (customConnectHandler) {
-            authBundle = await customConnectHandler(
-              this.params,
-              this._handshakeTimeout,
-              this._abortController!
-            );
-          } else {
-            authBundle = await fetch(connectUrl, {
-              method: "POST",
-              mode: "cors",
-              headers: new Headers({
-                "Content-Type": "application/json",
-                ...Object.fromEntries(
-                  (this.params.headers ?? new Headers()).entries()
-                ),
-              }),
-              body: JSON.stringify({
-                config: this.params.config,
-                ...(this.params.services
-                  ? { services: this.params.services }
-                  : {}), // @deprecated - pass services through request data
-                ...this.params.requestData,
-              }),
-              signal: this._abortController?.signal,
-            }).then((res) => {
-              clearTimeout(this._handshakeTimeout);
-
-              if (res.ok) {
-                return res.json();
-              }
-
-              return Promise.reject(res);
-            });
-          }
-        } catch (e) {
+        if (!this.params.baseUrl && !this.params.endpoints?.connect) {
+          // If baseUrl and endpoints.connect are not set, bypass the handshake and connect directly
+          // This is useful with transports that do not require service side auth, especially in local development
+          // Note: this is not recommended for production use, see [docs link]
+          logger.debug(
+            "[RTVI Client] Connecting directly (skipping handshake / auth)..."
+          );
           clearTimeout(this._handshakeTimeout);
-          // Handle errors if the request was not aborted
-          if (this._abortController?.signal.aborted) {
+        } else {
+          const connectUrl = this.constructUrl("connect");
+
+          logger.debug("[RTVI Client] Connecting...", connectUrl);
+          logger.debug("[RTVI Client] Start params", this.params);
+
+          try {
+            if (customConnectHandler) {
+              authBundle = await customConnectHandler(
+                this.params,
+                this._handshakeTimeout,
+                this._abortController!
+              );
+            } else {
+              authBundle = await fetch(connectUrl, {
+                method: "POST",
+                mode: "cors",
+                headers: new Headers({
+                  "Content-Type": "application/json",
+                  ...Object.fromEntries(
+                    (this.params.headers ?? new Headers()).entries()
+                  ),
+                }),
+                body: JSON.stringify({
+                  config: this.params.config,
+                  ...(this.params.services
+                    ? { services: this.params.services }
+                    : {}), // @deprecated - pass services through request data
+                  ...this.params.requestData,
+                }),
+                signal: this._abortController?.signal,
+              }).then((res) => {
+                clearTimeout(this._handshakeTimeout);
+
+                if (res.ok) {
+                  return res.json();
+                }
+
+                return Promise.reject(res);
+              });
+            }
+          } catch (e) {
+            clearTimeout(this._handshakeTimeout);
+            // Handle errors if the request was not aborted
+            if (this._abortController?.signal.aborted) {
+              return;
+            }
+            this._transport.state = "error";
+            if (e instanceof Response) {
+              const errorResp = await e.json();
+              reject(
+                new RTVIErrors.StartBotError(
+                  errorResp.info ?? errorResp.detail ?? e.statusText,
+                  e.status
+                )
+              );
+            } else {
+              reject(new RTVIErrors.StartBotError());
+            }
             return;
           }
-          this._transport.state = "error";
-          if (e instanceof Response) {
-            const errorResp = await e.json();
-            reject(
-              new RTVIErrors.StartBotError(
-                errorResp.info ?? errorResp.detail ?? e.statusText,
-                e.status
-              )
-            );
-          } else {
-            reject(new RTVIErrors.StartBotError());
-          }
-          return;
+
+          logger.debug("[RTVI Client] Auth bundle received", authBundle);
         }
-
-        logger.debug("[RTVI Client] Auth bundle received", authBundle);
-
         try {
           await this._transport.connect(
             authBundle,
