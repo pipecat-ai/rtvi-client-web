@@ -191,8 +191,8 @@ export class TransportStub extends Transport {
     return Promise.resolve();
   }
 
-  public isSharingScreen(): Promise<boolean> {
-    return Promise.resolve(false);
+  public get isSharingScreen(): boolean {
+    return false;
   }
 }
 
