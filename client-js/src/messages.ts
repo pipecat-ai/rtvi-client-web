@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { httpActionGenerator } from "./actions";
 import { RTVIClient, RTVIClientConfigOption } from "./client";
+import { ActionEndpointNotSetError } from "./errors";
 import { logger } from "./logger";
 
 export const RTVI_MESSAGE_LABEL = "rtvi-ai";
@@ -225,6 +226,12 @@ export class MessageDispatcher {
       // Send message to transport when connected
       this._client.sendMessage(action);
     } else {
+      if (!this._client.params.endpoints?.action) {
+        logger.error(
+          "[MessageDispatcher] Action endpoint is required when dispatching action in disconnected state"
+        );
+        throw new ActionEndpointNotSetError();
+      }
       const actionUrl = this._client.constructUrl("action");
 
       try {

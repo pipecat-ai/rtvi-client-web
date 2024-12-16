@@ -43,16 +43,16 @@ export type RTVIClientConfigOption = {
 
 export type RTVIURLEndpoints = "connect" | "action";
 
-const defaultEndpoints: Record<RTVIURLEndpoints, string> = {
+const defaultEndpoints: Record<RTVIURLEndpoints, string | null> = {
   connect: "/connect",
   action: "/action",
 };
 
 export type RTVIClientParams = {
-  baseUrl?: string;
+  baseUrl?: string | null;
 } & Partial<{
   headers?: Headers;
-  endpoints: Partial<Record<RTVIURLEndpoints, string>>;
+  endpoints: Partial<Record<RTVIURLEndpoints, string | null>>;
   requestData?: object;
   config?: RTVIClientConfigOption[];
 }> & {

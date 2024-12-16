@@ -7,6 +7,7 @@
 import { beforeEach, describe, expect, test } from "@jest/globals";
 
 import {
+  ActionEndpointNotSetError,
   BotNotReadyError,
   LLMHelper,
   RTVIClient,
@@ -115,6 +116,51 @@ describe("RTVIClient Methods", () => {
 
     expect(connectUrl).toEqual("/connect");
     expect(disconnectedActionsUrl).toEqual("/action");
+  });
+
+  test("Base URL and connect endpoint should should be nullable", async () => {
+    const stateChanges: string[] = [];
+    const mockStateChangeHandler = (newState: string) => {
+      stateChanges.push(newState);
+    };
+    client.on(RTVIEvent.TransportStateChanged, mockStateChangeHandler);
+    client.params.baseUrl = "";
+    client.params.endpoints = {
+      connect: null,
+    };
+    await client.connect();
+    expect(client.state === "ready").toBe(true);
+    expect(stateChanges).toEqual([
+      "initializing",
+      "initialized",
+      "authenticating",
+      "connecting",
+      "connected",
+      "ready",
+    ]);
+  });
+
+  test("Connect endpoint should be nullable with base URL", async () => {
+    client.params.baseUrl = "/test";
+    client.params.endpoints = {
+      connect: null,
+    };
+    await client.connect();
+    const connectUrl = client.constructUrl("connect");
+    expect(connectUrl).toEqual("/test");
+    await client.disconnect();
+  });
+
+  test("Client should throw an error when action endpoint is not set in disconnected state", async () => {
+    await client.disconnect();
+
+    client.params.endpoints = {
+      action: null,
+    };
+
+    await expect(
+      client.action({ service: "llm", action: "test" })
+    ).rejects.toThrow(ActionEndpointNotSetError);
   });
 
   test("transportExpiry should throw an error when not in connected state", () => {
