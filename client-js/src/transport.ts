@@ -33,6 +33,8 @@ export type Tracks = {
   };
   bot?: {
     audio?: MediaStreamTrack;
+    screenAudio?: undefined;
+    screenVideo?: undefined;
     video?: MediaStreamTrack;
   };
 };
