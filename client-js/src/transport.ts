@@ -66,8 +66,8 @@ export abstract class Transport {
   abstract getAllCams(): Promise<MediaDeviceInfo[]>;
   abstract getAllSpeakers(): Promise<MediaDeviceInfo[]>;
 
-  abstract startScreenShare(): Promise<void>;
-  abstract stopScreenShare(): Promise<void>;
+  abstract startScreenShare(): void;
+  abstract stopScreenShare(): void;
 
   abstract updateMic(micId: string): void;
   abstract updateCam(camId: string): void;

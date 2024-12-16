@@ -183,12 +183,12 @@ export class TransportStub extends Transport {
     return { local: { audio: undefined, video: undefined } };
   }
 
-  public startScreenShare(): Promise<void> {
-    return Promise.resolve();
+  public startScreenShare(): void {
+    return;
   }
 
-  public stopScreenShare(): Promise<void> {
-    return Promise.resolve();
+  public stopScreenShare(): void {
+    return;
   }
 
   public get isSharingScreen(): boolean {
