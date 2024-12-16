@@ -28,6 +28,8 @@ export type Tracks = {
   local: {
     audio?: MediaStreamTrack;
     video?: MediaStreamTrack;
+    screenAudio?: MediaStreamTrack;
+    screenVideo?: MediaStreamTrack;
   };
   bot?: {
     audio?: MediaStreamTrack;
@@ -61,6 +63,9 @@ export abstract class Transport {
   abstract getAllMics(): Promise<MediaDeviceInfo[]>;
   abstract getAllCams(): Promise<MediaDeviceInfo[]>;
   abstract getAllSpeakers(): Promise<MediaDeviceInfo[]>;
+  abstract startScreenShare(): Promise<void>;
+  abstract stopScreenShare(): Promise<void>;
+  abstract isSharingScreen(): Promise<boolean>;
 
   abstract updateMic(micId: string): void;
   abstract updateCam(camId: string): void;

@@ -137,6 +137,15 @@ export type RTVIEventCallbacks = Partial<{
   onSpeakerUpdated: (speaker: MediaDeviceInfo) => void;
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
+  onScreenTrackStarted: (
+    track: MediaStreamTrack,
+    participant?: Participant
+  ) => void;
+  onScreenTrackStopped: (
+    track: MediaStreamTrack,
+    participant?: Participant
+  ) => void;
+  onScreenShareError: (errorMessage: string) => void;
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
 
@@ -234,6 +243,18 @@ export class RTVIClient extends RTVIEventEmitter {
       onTrackStopped: (track, p) => {
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(RTVIEvent.TrackStopped, track, p);
+      },
+      onScreenTrackStarted: (track, p) => {
+        options?.callbacks?.onScreenTrackStarted?.(track, p);
+        this.emit(RTVIEvent.ScreenTrackStarted, track, p);
+      },
+      onScreenTrackStopped: (track, p) => {
+        options?.callbacks?.onScreenTrackStopped?.(track, p);
+        this.emit(RTVIEvent.ScreenTrackStopped, track, p);
+      },
+      onScreenShareError: (errorMessage) => {
+        options?.callbacks?.onScreenShareError?.(errorMessage);
+        this.emit(RTVIEvent.ScreenShareError, errorMessage);
       },
       onAvailableCamsUpdated: (cams) => {
         options?.callbacks?.onAvailableCamsUpdated?.(cams);
@@ -607,6 +628,18 @@ export class RTVIClient extends RTVIEventEmitter {
 
   public tracks(): Tracks {
     return this._transport.tracks();
+  }
+
+  public startScreenShare() {
+    return this._transport.startScreenShare();
+  }
+
+  public stopScreenShare() {
+    return this._transport.stopScreenShare();
+  }
+
+  public isSharingScreen() {
+    return this._transport.isSharingScreen();
   }
 
   // ------ Config methods
