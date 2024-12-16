@@ -26,19 +26,18 @@ const trackAtom = atomFamily<
   { local: boolean; trackType: TrackType },
   PrimitiveAtom<MediaStreamTrack | null>
 >(({ local, trackType }) => {
-  if (local)
-    if (local) {
-      switch (trackType) {
-        case "audio":
-          return localAudioTrackAtom;
-        case "screenAudio":
-          return localScreenAudioTrackAtom;
-        case "screenVideo":
-          return localScreenVideoTrackAtom;
-        case "video":
-          return localVideoTrackAtom;
-      }
+  if (local) {
+    switch (trackType) {
+      case "audio":
+        return localAudioTrackAtom;
+      case "screenAudio":
+        return localScreenAudioTrackAtom;
+      case "screenVideo":
+        return localScreenVideoTrackAtom;
+      case "video":
+        return localVideoTrackAtom;
     }
+  }
   return trackType === "audio" ? botAudioTrackAtom : botVideoTrackAtom;
 });
 
