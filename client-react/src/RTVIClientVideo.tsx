@@ -21,7 +21,7 @@ export interface Props
   /**
    * Defines the video track type to display. Default: 'video'.
    */
-  trackType: "screenVideo" | "video";
+  trackType?: "screenVideo" | "video";
 
   /**
    * Defines whether the video should be fully contained or cover the box. Default: 'contain'.
