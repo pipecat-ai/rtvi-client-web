@@ -630,12 +630,8 @@ export class RTVIClient extends RTVIEventEmitter {
     return this._transport.tracks();
   }
 
-  public startScreenShare() {
-    return this._transport.startScreenShare();
-  }
-
-  public stopScreenShare() {
-    return this._transport.stopScreenShare();
+  public enableScreenShare(enable: boolean) {
+    return this._transport.enableScreenShare(enable);
   }
 
   public get isSharingScreen(): boolean {

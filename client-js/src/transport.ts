@@ -66,9 +66,6 @@ export abstract class Transport {
   abstract getAllCams(): Promise<MediaDeviceInfo[]>;
   abstract getAllSpeakers(): Promise<MediaDeviceInfo[]>;
 
-  abstract startScreenShare(): void;
-  abstract stopScreenShare(): void;
-
   abstract updateMic(micId: string): void;
   abstract updateCam(camId: string): void;
   abstract updateSpeaker(speakerId: string): void;
@@ -79,7 +76,7 @@ export abstract class Transport {
 
   abstract enableMic(enable: boolean): void;
   abstract enableCam(enable: boolean): void;
-
+  abstract enableScreenShare(enable: boolean): void;
   abstract get isCamEnabled(): boolean;
   abstract get isMicEnabled(): boolean;
   abstract get isSharingScreen(): boolean;

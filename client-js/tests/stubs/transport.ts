@@ -121,12 +121,19 @@ export class TransportStub extends Transport {
     console.log(enable);
     return;
   }
+  public enableScreenShare(enable: boolean): void {
+    console.log(enable);
+    return;
+  }
 
   public get isCamEnabled(): boolean {
     return true;
   }
   public get isMicEnabled(): boolean {
     return true;
+  }
+  public get isSharingScreen(): boolean {
+    return false;
   }
 
   public sendMessage(message: RTVIMessage) {
@@ -181,18 +188,6 @@ export class TransportStub extends Transport {
 
   public tracks(): Tracks {
     return { local: { audio: undefined, video: undefined } };
-  }
-
-  public startScreenShare(): void {
-    return;
-  }
-
-  public stopScreenShare(): void {
-    return;
-  }
-
-  public get isSharingScreen(): boolean {
-    return false;
   }
 }
 
