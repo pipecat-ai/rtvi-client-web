@@ -15,9 +15,16 @@ import {
   TransportState,
 } from "../../src";
 
+class mockState {
+  public isSharingScreen = false;
+}
+
 export class TransportStub extends Transport {
+  private _mockState: mockState;
+
   constructor() {
     super();
+    this._mockState = new mockState();
   }
 
   public initDevices(): Promise<void> {
@@ -121,12 +128,19 @@ export class TransportStub extends Transport {
     console.log(enable);
     return;
   }
+  public enableScreenShare(enable: boolean): void {
+    this._mockState.isSharingScreen = enable;
+    return;
+  }
 
   public get isCamEnabled(): boolean {
     return true;
   }
   public get isMicEnabled(): boolean {
     return true;
+  }
+  public get isSharingScreen(): boolean {
+    return this._mockState.isSharingScreen;
   }
 
   public sendMessage(message: RTVIMessage) {

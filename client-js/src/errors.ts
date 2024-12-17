@@ -53,3 +53,9 @@ export class ConfigUpdateError extends RTVIError {
     super(message ?? "Unable to update configuration");
   }
 }
+
+export class ActionEndpointNotSetError extends RTVIError {
+  constructor(message?: string | undefined) {
+    super(message ?? "Action endpoint is not set");
+  }
+}

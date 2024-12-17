@@ -33,6 +33,9 @@ export enum RTVIEvent {
   ParticipantLeft = "participantLeft",
   TrackStarted = "trackStarted",
   TrackStopped = "trackStopped",
+  ScreenTrackStarted = "screenTrackStarted",
+  ScreenTrackStopped = "screenTrackStopped",
+  ScreenShareError = "screenShareError",
 
   AvailableCamsUpdated = "availableCamsUpdated",
   AvailableMicsUpdated = "availableMicsUpdated",
@@ -86,6 +89,9 @@ export type RTVIEvents = Partial<{
   participantLeft: (participant: Participant) => void;
   trackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   trackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
+  screenTrackStarted: (track: MediaStreamTrack, p?: Participant) => void;
+  screenTrackStopped: (track: MediaStreamTrack, p?: Participant) => void;
+  screenShareError: (errorMessage: string) => void;
 
   availableCamsUpdated: (cams: MediaDeviceInfo[]) => void;
   availableMicsUpdated: (mics: MediaDeviceInfo[]) => void;
