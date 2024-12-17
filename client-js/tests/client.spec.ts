@@ -179,4 +179,10 @@ describe("RTVIClient Methods", () => {
     client.unregisterHelper("llm");
     expect(client.getHelper("llm")).toBeUndefined();
   });
+
+  test("enableScreenShare should enable screen share", async () => {
+    await client.connect();
+    client.enableScreenShare(true);
+    expect(client.isSharingScreen).toBe(true);
+  });
 });

@@ -15,9 +15,16 @@ import {
   TransportState,
 } from "../../src";
 
+class mockState {
+  public isSharingScreen = false;
+}
+
 export class TransportStub extends Transport {
+  private _mockState: mockState;
+
   constructor() {
     super();
+    this._mockState = new mockState();
   }
 
   public initDevices(): Promise<void> {
@@ -122,7 +129,7 @@ export class TransportStub extends Transport {
     return;
   }
   public enableScreenShare(enable: boolean): void {
-    console.log(enable);
+    this._mockState.isSharingScreen = enable;
     return;
   }
 
@@ -133,7 +140,7 @@ export class TransportStub extends Transport {
     return true;
   }
   public get isSharingScreen(): boolean {
-    return false;
+    return this._mockState.isSharingScreen;
   }
 
   public sendMessage(message: RTVIMessage) {
