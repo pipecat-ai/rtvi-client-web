@@ -5,8 +5,8 @@
  */
 
 import React, { forwardRef, useEffect, useRef } from "react";
-import { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
 import useMergedRef from "./useMergedRef";
+import { useRTVIClientMediaTrack } from "./useRTVIClientMediaTrack";
 
 interface RTVIClientVideoInterface {
   aspectRatio: number;
@@ -17,6 +17,11 @@ interface RTVIClientVideoInterface {
 export interface Props
   extends Omit<React.VideoHTMLAttributes<HTMLVideoElement>, "onResize"> {
   participant: "local" | "bot";
+
+  /**
+   * Defines the video track type to display. Default: 'video'.
+   */
+  trackType?: "screenVideo" | "video";
 
   /**
    * Defines whether the video should be fully contained or cover the box. Default: 'contain'.
@@ -42,12 +47,13 @@ export const RTVIClientVideo = forwardRef<HTMLVideoElement, Props>(
       mirror,
       onResize,
       style = {},
+      trackType = "video",
       ...props
     },
     ref
   ) {
     const videoTrack: MediaStreamTrack | null = useRTVIClientMediaTrack(
-      "video",
+      trackType,
       participant
     );
 

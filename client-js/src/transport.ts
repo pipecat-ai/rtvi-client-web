@@ -28,9 +28,13 @@ export type Tracks = {
   local: {
     audio?: MediaStreamTrack;
     video?: MediaStreamTrack;
+    screenAudio?: MediaStreamTrack;
+    screenVideo?: MediaStreamTrack;
   };
   bot?: {
     audio?: MediaStreamTrack;
+    screenAudio?: undefined;
+    screenVideo?: undefined;
     video?: MediaStreamTrack;
   };
 };
@@ -72,9 +76,10 @@ export abstract class Transport {
 
   abstract enableMic(enable: boolean): void;
   abstract enableCam(enable: boolean): void;
-
+  abstract enableScreenShare(enable: boolean): void;
   abstract get isCamEnabled(): boolean;
   abstract get isMicEnabled(): boolean;
+  abstract get isSharingScreen(): boolean;
 
   abstract sendMessage(message: RTVIMessage): void;
 

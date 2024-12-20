@@ -43,16 +43,16 @@ export type RTVIClientConfigOption = {
 
 export type RTVIURLEndpoints = "connect" | "action";
 
-const defaultEndpoints: Record<RTVIURLEndpoints, string> = {
+const defaultEndpoints: Record<RTVIURLEndpoints, string | null> = {
   connect: "/connect",
   action: "/action",
 };
 
 export type RTVIClientParams = {
-  baseUrl: string;
+  baseUrl?: string | null;
 } & Partial<{
   headers?: Headers;
-  endpoints: Partial<Record<RTVIURLEndpoints, string>>;
+  endpoints: Partial<Record<RTVIURLEndpoints, string | null>>;
   requestData?: object;
   config?: RTVIClientConfigOption[];
 }> & {
@@ -137,6 +137,15 @@ export type RTVIEventCallbacks = Partial<{
   onSpeakerUpdated: (speaker: MediaDeviceInfo) => void;
   onTrackStarted: (track: MediaStreamTrack, participant?: Participant) => void;
   onTrackStopped: (track: MediaStreamTrack, participant?: Participant) => void;
+  onScreenTrackStarted: (
+    track: MediaStreamTrack,
+    participant?: Participant
+  ) => void;
+  onScreenTrackStopped: (
+    track: MediaStreamTrack,
+    participant?: Participant
+  ) => void;
+  onScreenShareError: (errorMessage: string) => void;
   onLocalAudioLevel: (level: number) => void;
   onRemoteAudioLevel: (level: number, participant: Participant) => void;
 
@@ -234,6 +243,18 @@ export class RTVIClient extends RTVIEventEmitter {
       onTrackStopped: (track, p) => {
         options?.callbacks?.onTrackStopped?.(track, p);
         this.emit(RTVIEvent.TrackStopped, track, p);
+      },
+      onScreenTrackStarted: (track, p) => {
+        options?.callbacks?.onScreenTrackStarted?.(track, p);
+        this.emit(RTVIEvent.ScreenTrackStarted, track, p);
+      },
+      onScreenTrackStopped: (track, p) => {
+        options?.callbacks?.onScreenTrackStopped?.(track, p);
+        this.emit(RTVIEvent.ScreenTrackStopped, track, p);
+      },
+      onScreenShareError: (errorMessage) => {
+        options?.callbacks?.onScreenShareError?.(errorMessage);
+        this.emit(RTVIEvent.ScreenShareError, errorMessage);
       },
       onAvailableCamsUpdated: (cams) => {
         options?.callbacks?.onAvailableCamsUpdated?.(cams);
@@ -412,7 +433,8 @@ export class RTVIClient extends RTVIEventEmitter {
 
         let authBundle: unknown;
         const customConnectHandler = this._options.customConnectHandler;
-        const connectUrl = this.constructUrl("connect");
+
+        logger.debug("[RTVI Client] Start params", this.params);
 
         this.params = {
           ...this.params,
@@ -422,67 +444,78 @@ export class RTVIClient extends RTVIEventEmitter {
           },
         };
 
-        logger.debug("[RTVI Client] Connecting...", connectUrl);
-        logger.debug("[RTVI Client] Start params", this.params);
-
-        try {
-          if (customConnectHandler) {
-            authBundle = await customConnectHandler(
-              this.params,
-              this._handshakeTimeout,
-              this._abortController!
-            );
-          } else {
-            authBundle = await fetch(connectUrl, {
-              method: "POST",
-              mode: "cors",
-              headers: new Headers({
-                "Content-Type": "application/json",
-                ...Object.fromEntries(
-                  (this.params.headers ?? new Headers()).entries()
-                ),
-              }),
-              body: JSON.stringify({
-                config: this.params.config,
-                ...(this.params.services
-                  ? { services: this.params.services }
-                  : {}), // @deprecated - pass services through request data
-                ...this.params.requestData,
-              }),
-              signal: this._abortController?.signal,
-            }).then((res) => {
-              clearTimeout(this._handshakeTimeout);
-
-              if (res.ok) {
-                return res.json();
-              }
-
-              return Promise.reject(res);
-            });
-          }
-        } catch (e) {
+        if (!this.params.baseUrl && !this.params.endpoints?.connect) {
+          // If baseUrl and endpoints.connect are not set, bypass the handshake and connect directly
+          // This is useful with transports that do not require service side auth, especially in local development
+          // Note: this is not recommended for production use, see [docs link]
+          logger.debug(
+            "[RTVI Client] Connecting directly (skipping handshake / auth)..."
+          );
           clearTimeout(this._handshakeTimeout);
-          // Handle errors if the request was not aborted
-          if (this._abortController?.signal.aborted) {
+        } else {
+          const connectUrl = this.constructUrl("connect");
+
+          logger.debug("[RTVI Client] Connecting...", connectUrl);
+          logger.debug("[RTVI Client] Start params", this.params);
+
+          try {
+            if (customConnectHandler) {
+              authBundle = await customConnectHandler(
+                this.params,
+                this._handshakeTimeout,
+                this._abortController!
+              );
+            } else {
+              authBundle = await fetch(connectUrl, {
+                method: "POST",
+                mode: "cors",
+                headers: new Headers({
+                  "Content-Type": "application/json",
+                  ...Object.fromEntries(
+                    (this.params.headers ?? new Headers()).entries()
+                  ),
+                }),
+                body: JSON.stringify({
+                  config: this.params.config,
+                  ...(this.params.services
+                    ? { services: this.params.services }
+                    : {}), // @deprecated - pass services through request data
+                  ...this.params.requestData,
+                }),
+                signal: this._abortController?.signal,
+              }).then((res) => {
+                clearTimeout(this._handshakeTimeout);
+
+                if (res.ok) {
+                  return res.json();
+                }
+
+                return Promise.reject(res);
+              });
+            }
+          } catch (e) {
+            clearTimeout(this._handshakeTimeout);
+            // Handle errors if the request was not aborted
+            if (this._abortController?.signal.aborted) {
+              return;
+            }
+            this._transport.state = "error";
+            if (e instanceof Response) {
+              const errorResp = await e.json();
+              reject(
+                new RTVIErrors.StartBotError(
+                  errorResp.info ?? errorResp.detail ?? e.statusText,
+                  e.status
+                )
+              );
+            } else {
+              reject(new RTVIErrors.StartBotError());
+            }
             return;
           }
-          this._transport.state = "error";
-          if (e instanceof Response) {
-            const errorResp = await e.json();
-            reject(
-              new RTVIErrors.StartBotError(
-                errorResp.info ?? errorResp.detail ?? e.statusText,
-                e.status
-              )
-            );
-          } else {
-            reject(new RTVIErrors.StartBotError());
-          }
-          return;
+
+          logger.debug("[RTVI Client] Auth bundle received", authBundle);
         }
-
-        logger.debug("[RTVI Client] Auth bundle received", authBundle);
-
         try {
           await this._transport.connect(
             authBundle,
@@ -595,6 +628,14 @@ export class RTVIClient extends RTVIEventEmitter {
 
   public tracks(): Tracks {
     return this._transport.tracks();
+  }
+
+  public enableScreenShare(enable: boolean) {
+    return this._transport.enableScreenShare(enable);
+  }
+
+  public get isSharingScreen(): boolean {
+    return this._transport.isSharingScreen;
   }
 
   // ------ Config methods
